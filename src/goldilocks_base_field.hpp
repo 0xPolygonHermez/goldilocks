@@ -260,7 +260,7 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
             : "r"(in1), "r"(in2), "m"(CQ)
             : "%r10");
 
-#if DEBUG == 1 && USE_MONTGOMERY == 0
+#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
@@ -282,7 +282,7 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in1), "r"(in2), "m"(Q)
             :);
-#if DEBUG == 1 && USE_MONTGOMERY == 0
+#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
@@ -318,7 +318,7 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
         : "=&d"(result.fe)
         : "a"(in1), "rm"(in2), "rm"((uint64_t)GOLDILOCKS_PRIME));
 #endif
-#if DEBUG == 1 && USE_MONTGOMERY == 0
+#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
@@ -359,7 +359,7 @@ inline void Goldilocks::inv(Element &result, const Element &in1)
     }
 
     result = {t};
-#if DEBUG == 1 && USE_MONTGOMERY == 0
+#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 };
