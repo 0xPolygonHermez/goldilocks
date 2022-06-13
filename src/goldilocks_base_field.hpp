@@ -7,6 +7,7 @@
 #include <iostream> // string
 
 #define USE_MONTGOMERY 0
+#define DEBUG 0
 
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
@@ -258,6 +259,10 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in1), "r"(in2), "m"(CQ)
             : "%r10");
+
+#if DEBUG == 1 && USE_MONTGOMERY == 0
+    result.fe = result.fe % GOLDILOCKS_PRIME;
+#endif
 }
 
 inline Goldilocks::Element Goldilocks::sub(const Element &in1, const Element &in2)
@@ -277,6 +282,9 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in1), "r"(in2), "m"(Q)
             :);
+#if DEBUG == 1 && USE_MONTGOMERY == 0
+    result.fe = result.fe % GOLDILOCKS_PRIME;
+#endif
 }
 
 inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in2)
@@ -309,6 +317,9 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
         "divq   %3\n\t"
         : "=&d"(result.fe)
         : "a"(in1), "rm"(in2), "rm"((uint64_t)GOLDILOCKS_PRIME));
+#endif
+#if DEBUG == 1 && USE_MONTGOMERY == 0
+    result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
 inline Goldilocks::Element Goldilocks::inv(const Element &in1)
@@ -348,6 +359,9 @@ inline void Goldilocks::inv(Element &result, const Element &in1)
     }
 
     result = {t};
+#if DEBUG == 1 && USE_MONTGOMERY == 0
+    result.fe = result.fe % GOLDILOCKS_PRIME;
+#endif
 };
 
 inline Goldilocks::Element Goldilocks::mulScalar(const Element &base, const uint64_t &scalar)
