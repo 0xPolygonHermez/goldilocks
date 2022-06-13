@@ -5,37 +5,37 @@
 
 #include "../src/goldilocks_base_field.hpp"
 
-/*
-TEST(GOLDILOCKS_TEST, gl_add)
+typedef Goldilocks::Element Element;
+
+TEST(GOLDILOCKS_TEST, add)
 {
-    ASSERT_EQ(Goldilocks::gl_add(0, 0), 0);
-    ASSERT_EQ(Goldilocks::gl_add(1, 1), 2);
-    ASSERT_EQ(Goldilocks::gl_add(0, 1), 1);
-    ASSERT_EQ(Goldilocks::gl_add(0xFFFFFFFFFFFFFFFFULL, 1), 0xFFFFFFFF); // 18446744073709551616 % 18446744069414584321
-    ASSERT_EQ(Goldilocks::gl_add(Goldilocks::P, Goldilocks::P), Goldilocks::P);
-    ASSERT_EQ(Goldilocks::gl_add(0xFFFFFFFF88265000ULL, 0xFFFFFFFF0F903000ULL), 0xFFFFFFFF97B67FFF);
+    int32_t b = -55;
+    Element e123(b);
+
+    int32_t a = -55;
+    Element e1(a);
+    Element e2(55);
+    Element e4 = 55;
+    ASSERT_EQ((uint64_t)e4, 55);
+
+    uint64_t res_1 = (uint64_t)(e1 + e2);
+    uint64_t res_2 = (uint64_t)(e1 - e2);
+    uint64_t res_3 = (uint64_t)(e1 * e2);
+    uint64_t res_4 = (uint64_t)(e1 / e2);
+    Element as = (e1 + e2);
+
+    Element c("627710173100217585286392776928019145829365870197997568000");
+    std::cout << Goldilocks::toString(a) << " " << b << " " << Goldilocks::toString(c) << "\n";
+
+    ASSERT_EQ(res_1, res_1);
+    ASSERT_EQ(as, Goldilocks::zero());
+
+    ASSERT_EQ(res_1, 0);
+    ASSERT_EQ(res_2, 0);
+    ASSERT_EQ(res_3, 25);
+    ASSERT_EQ(res_4, 1);
 }
 
-TEST(GOLDILOCKS_TEST, add_gl)
-{
-    ASSERT_EQ(Goldilocks::add_gl(0, 0), 0);
-    ASSERT_EQ(Goldilocks::add_gl(1, 1), 2);
-    ASSERT_EQ(Goldilocks::add_gl(0, 1), 1);
-    ASSERT_EQ(Goldilocks::add_gl(0xFFFFFFFFFFFFFFFFULL, 1), 0xFFFFFFFF); // 18446744073709551616 % 18446744069414584321
-    ASSERT_EQ(Goldilocks::add_gl(Goldilocks::P, Goldilocks::P), Goldilocks::P);
-    ASSERT_EQ(Goldilocks::add_gl(0xFFFFFFFF88265000ULL, 0xFFFFFFFF0F903000ULL), 0xFFFFFFFF97B67FFF);
-}
-
-TEST(GOLDILOCKS_TEST, gl_add_2)
-{
-    ASSERT_EQ(Goldilocks::gl_add_2(0, 0), 0);
-    ASSERT_EQ(Goldilocks::gl_add_2(1, 1), 2);
-    ASSERT_EQ(Goldilocks::gl_add_2(0, 1), 1);
-    ASSERT_EQ(Goldilocks::gl_add_2(0xFFFFFFFFFFFFFFFFULL, 1), 0xFFFFFFFF); // 18446744073709551616 % 18446744069414584321
-    ASSERT_EQ(Goldilocks::gl_add_2(Goldilocks::P, Goldilocks::P), Goldilocks::P);
-    ASSERT_EQ(Goldilocks::gl_add_2(0xFFFFFFFF88265000ULL, 0xFFFFFFFF0F903000ULL), 0xFFFFFFFF97B67FFF);
-}
-*/
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
@@ -43,4 +43,4 @@ int main(int argc, char **argv)
     return RUN_ALL_TESTS();
 }
 
-// Build command: g++ main.cpp -lgtest
+// Build command: g++ tests/tests.cpp src/goldilocks_base_field.cpp -lgtest -o test && ./test

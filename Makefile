@@ -1,7 +1,8 @@
-TARGET_EXEC := benchmark
+TARGET_EXEC := example
 
 BUILD_DIR := ./build
 SRC_DIRS := ./src
+TEST_DIRS := ./test
 
 LIBOMP := $(shell find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//')
 ifndef LIBOMP
@@ -29,12 +30,6 @@ endif
 ARCH = $(shell uname -m)
 ifneq ($(ARCH),x86_64)
  $(error "$(ARCH), is not a valid architecture")
-endif
-
-### Check CPU capabilities
-ADX_CAP = $(shell cat /proc/cpuinfo | grep -oq "adx" ; echo $$?)
-ifneq ($(ADX_CAP),0)
- $(error "CPU doesn't support ADX instructions")
 endif
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.asm)
