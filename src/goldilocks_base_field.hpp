@@ -7,7 +7,7 @@
 #include <iostream> // string
 
 #define USE_MONTGOMERY 0
-#define DEBUG 0
+#define GOLDILOCKS_DEBUG 0
 
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
@@ -203,7 +203,7 @@ inline void Goldilocks::toS32(int32_t &result, const Element &in1)
     // Convert from montgomery
 #endif
     mpz_class out = Goldilocks::toU64(in1);
-    
+
     mpz_class maxInt(0x7FFFFFFF);
     mpz_class minInt = (uint64_t)GOLDILOCKS_PRIME - 0x80000000;
 
