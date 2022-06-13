@@ -9,23 +9,23 @@ typedef Goldilocks::Element Element;
 
 TEST(GOLDILOCKS_TEST, add)
 {
-    int32_t b = -55;
-    Element e123(b);
-
     int32_t a = -55;
-    Element e1(a);
-    Element e2(55);
-    Element e4 = 55;
-    ASSERT_EQ((uint64_t)e4, 55);
+    Element e1 = Goldilocks::fromS32(a);
 
-    uint64_t res_1 = (uint64_t)(e1 + e2);
-    uint64_t res_2 = (uint64_t)(e1 - e2);
-    uint64_t res_3 = (uint64_t)(e1 * e2);
-    uint64_t res_4 = (uint64_t)(e1 / e2);
+    Element e2 = Goldilocks::fromU64(55);
+    Element e4 = Goldilocks::fromU64(55);
+
+    ASSERT_EQ(Goldilocks::toU64(e4), 55);
+
+    uint64_t res_1 = Goldilocks::toU64(e1 + e2);
+    uint64_t res_2 = Goldilocks::toU64(e1 - e2);
+    uint64_t res_3 = Goldilocks::toU64(e1 * e2);
+    uint64_t res_4 = Goldilocks::toU64(e1 / e2);
     Element as = (e1 + e2);
 
-    Element c("627710173100217585286392776928019145829365870197997568000");
-    std::cout << Goldilocks::toString(a) << " " << b << " " << Goldilocks::toString(c) << "\n";
+    Element c = Goldilocks::fromString("-627710173100217585286392776928019145829365870197997568000");
+
+    std::cout << Goldilocks::toString(e1) << " " << a << " " << Goldilocks::toString(c) << "\n";
 
     ASSERT_EQ(res_1, res_1);
     ASSERT_EQ(as, Goldilocks::zero());
