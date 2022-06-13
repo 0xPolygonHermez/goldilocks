@@ -11,5 +11,9 @@ int main(int argc, char **argv)
 
     std::cout << Goldilocks::toString(a) << " " << b << " " << Goldilocks::toString(c) << "\n";
 
+    Goldilocks::Element input1 = Goldilocks::one();
+    Goldilocks::Element inv1 = Goldilocks::inv(input1);
+    Goldilocks::Element res = input1 * inv1;
+
     return 0;
 }
