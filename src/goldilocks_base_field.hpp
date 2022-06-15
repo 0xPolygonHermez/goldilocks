@@ -292,10 +292,12 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
             : "%rax", "%r8", "%r9", "%r10");
 #else
     __asm__(
-        "mulq   %2\n\t"
+        "mov   %1, %%rax\n\t"
+        "mul   %2\n\t"
         "divq   %3\n\t"
         : "=&d"(result.fe)
-        : "a"(in1.fe), "rm"(in2.fe), "rm"((uint64_t)GOLDILOCKS_PRIME));
+        : "r"(in1.fe), "r"(in2.fe), "m"(Q)
+        : "%rax");
 #endif
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
