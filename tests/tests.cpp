@@ -25,7 +25,17 @@ TEST(GOLDILOCKS_TEST, one)
     ASSERT_EQ(Goldilocks::toU64(ina3), a);
     ASSERT_EQ(Goldilocks::toU64(inb1), a);
     ASSERT_EQ(Goldilocks::toU64(inc1), a);
+
+    Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+    Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF));
+    Element b1 = (a1 + a2);
+    Element b2 = (b1 + b1);
+    std::cout << Goldilocks::toString(b1, 16) << std::endl;
+    std::cout << Goldilocks::toString(b2, 16) << std::endl;
+
+    ASSERT_EQ(Goldilocks::toU64(b2), 0x200000002);
 }
+
 TEST(GOLDILOCKS_TEST, add)
 {
     uint64_t in1 = 3;

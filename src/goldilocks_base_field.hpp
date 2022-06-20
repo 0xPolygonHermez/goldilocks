@@ -11,6 +11,7 @@
 
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
+// TODO: ROOTS of UNITY: https://github.com/hermeznetwork/starkpil/blob/e990d99d0936ec3de751ed927af98fe816d72ede/circuitsGL/fft.circom#L17
 class Goldilocks
 {
 public:
@@ -20,6 +21,7 @@ public:
     } Element;
 
 private:
+    static const Element ZR;
     static const Element Q;
     static const Element MM;
     static const Element CQ;
@@ -235,8 +237,10 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
             "add   %2, %0\n\t"
             "cmovc %3, %%r10\n\t"
             "add   %%r10, %0\n\t"
+            "cmovnc %4, %%r10\n\t"
+            "add   %%r10, %0\n\t"
             : "=&a"(result.fe)
-            : "r"(in_1), "r"(in_2), "m"(CQ)
+            : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
 
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0

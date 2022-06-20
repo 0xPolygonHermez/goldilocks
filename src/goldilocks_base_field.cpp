@@ -1,5 +1,6 @@
 #include "goldilocks_base_field.hpp"
 
+const Goldilocks::Element Goldilocks::ZR = {(uint64_t)0x0000000000000000LL};
 const Goldilocks::Element Goldilocks::Q = {(uint64_t)0xFFFFFFFF00000001LL};
 const Goldilocks::Element Goldilocks::MM = {(uint64_t)0xFFFFFFFeFFFFFFFFLL};
 const Goldilocks::Element Goldilocks::CQ = {(uint64_t)0x00000000FFFFFFFFLL};
