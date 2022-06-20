@@ -26,6 +26,7 @@ private:
     static const Element MM;
     static const Element CQ;
     static const Element R2;
+    static const Element TWO32;
 
     static const Element ZERO;
     static const Element ONE;
@@ -70,6 +71,7 @@ public:
 
     static Element mul(const Element &in1, const Element &in2);
     static void mul(Element &result, const Element &in1, const Element &in2);
+    static void mul2(Element &result, const Element &in1, const Element &in2);
 
     static Element div(const Element &in1, const Element &in2) { return mul(in1, inv(in2)); };
     static void div(Element &result, const Element &in1, const Element &in2) { mul(result, in1, inv(in2)); };
@@ -237,8 +239,9 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
             "add   %2, %0\n\t"
             "cmovc %3, %%r10\n\t"
             "add   %%r10, %0\n\t"
-            "cmovnc %4, %%r10\n\t"
-            "add   %%r10, %0\n\t"
+            "jnc  1f\n\t"
+            "add   %3, %0\n\t"
+            "1: \n\t"
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
@@ -264,8 +267,9 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
             "sub   %2, %0\n\t"
             "cmovc %3, %%r10\n\t"
             "sub   %%r10, %0\n\t"
-            "cmovnc %4, %%r10\n\t"
-            "sub   %%r10, %0\n\t"
+            "jnc  1f\n\t"
+            "sub   %3, %0\n\t"
+            "1: \n\t"
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
@@ -282,6 +286,65 @@ inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in
 }
 
 inline void Goldilocks::mul(Element &result, const Element &in1, const Element &in2)
+{
+#if USE_MONTGOMERY == 1
+    __asm__("xor   %%r10, %%r10\n\t"
+            "mov   %1, %%rax\n\t"
+            "mul   %2\n\t"
+            "mov   %%rdx, %%r8\n\t"
+            "mov   %%rax, %%r9\n\t"
+            "mulq   %3\n\t"
+            "mulq   %4\n\t"
+            "add    %%r9, %%rax\n\t"
+            "adc    %%r8, %%rdx\n\t"
+            "cmovc %5, %%r10\n\t"
+            "add   %%r10, %%rdx\n\t"
+            //"cmovnc %6, %%r10\n\t"
+            //"add   %%r10, %0\n\t"
+            "jnc  1f\n\t"
+            "add   %5, %0\n\t"
+            "1: \n\t"
+            : "=&d"(result.fe)
+            : "r"(in1.fe), "r"(in2.fe), "m"(MM), "m"(Q), "m"(CQ), "m"(ZR)
+            : "%rax", "%r8", "%r9", "%r10");
+
+#else
+    __asm__("mov   %1, %0\n\t"
+            "mul   %2\n\t"
+            // "xor   %%rbx, %%rbx\n\t"
+            "mov   %%edx, %%ebx\n\t"
+            "sub   %4, %%rbx\n\t"
+            "rol   $32, %%rdx\n\t"
+            //"xor   %%rcx, %%rcx;\n\t"
+            "mov   %%edx, %%ecx\n\t"
+            "sub   %%rcx, %%rdx\n\t"
+            "add   %4, %%rcx\n\t"
+            "sub   %%rbx, %%rdx\n\t"
+            //"mov   %3,%%r10 \n\t"
+            "xor   %%rbx, %%rbx\n\t"
+            "add   %%rdx, %0\n\t"
+            "cmovc %3, %%rbx\n\t"
+            "add   %%rbx, %0\n\t"
+            // TODO: migrate to labels
+            //"xor   %%rbx, %%rbx\n\t"
+            //"sub   %%rcx, %0\n\t"
+            //"cmovc %%r10, %%rbx\n\t"
+            //"sub   %%rbx, %0\n\t"
+            "sub   %%rcx, %0\n\t"
+            "jnc  1f\n\t"
+            "sub   %3, %0\n\t"
+            "1: \n\t"
+            : "=&a"(result.fe)
+            : "r"(in1.fe), "r"(in2.fe), "m"(CQ), "m"(TWO32)
+            : "%rbx", "%rcx", "%rdx");
+
+#endif
+#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
+    result.fe = result.fe % GOLDILOCKS_PRIME;
+#endif
+}
+
+inline void Goldilocks::mul2(Element &result, const Element &in1, const Element &in2)
 {
 #if USE_MONTGOMERY == 1
     __asm__("xor   %%r10, %%r10\n\t"
