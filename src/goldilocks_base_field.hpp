@@ -257,14 +257,18 @@ inline Goldilocks::Element Goldilocks::sub(const Element &in1, const Element &in
 
 inline void Goldilocks::sub(Element &result, const Element &in1, const Element &in2)
 {
-    __asm__("mov   %1, %0\n\t"
+    uint64_t in_1 = in1.fe;
+    uint64_t in_2 = in2.fe;
+    __asm__("xor   %%r10, %%r10\n\t"
+            "mov   %1, %0\n\t"
             "sub   %2, %0\n\t"
-            "jnc  1f\n\t"
-            "add   %3, %0\n\t"
-            "1: \n\t"
+            "cmovc %3, %%r10\n\t"
+            "sub   %%r10, %0\n\t"
+            "cmovnc %4, %%r10\n\t"
+            "sub   %%r10, %0\n\t"
             : "=&a"(result.fe)
-            : "r"(in1.fe), "r"(in2.fe), "m"(Q)
-            :);
+            : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
+            : "%r10");
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
