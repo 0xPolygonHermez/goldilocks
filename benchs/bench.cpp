@@ -11,7 +11,7 @@
 #define NUM_HASHES 10000
 
 #define FFT_SIZE (1 << 23)
-#define NUM_COLUMNS 500
+#define NUM_COLUMNS 100
 #define BLOWUP_FACTOR 1
 
 static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
