@@ -3,13 +3,18 @@
 
 #include "../src/goldilocks_base_field.hpp"
 #include "../src/poseidon_goldilocks.hpp"
+#include "../src/ntt_goldilocks.hpp"
 #include "omp.h"
 
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
 #define NUM_HASHES 10000
 
-static void POSEIDON_BENCH_FULL(benchmark::State &state)
+#define FFT_SIZE (1 << 23)
+#define NUM_COLUMNS 500
+#define BLOWUP_FACTOR 1
+
+static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
 
@@ -46,7 +51,7 @@ static void POSEIDON_BENCH_FULL(benchmark::State &state)
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
 
-static void POSEIDON_BENCH(benchmark::State &state)
+static void DISABLED_POSEIDON_BENCH(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
     uint64_t result_size = (uint64_t)NUM_HASHES * (uint64_t)CAPACITY;
@@ -84,7 +89,86 @@ static void POSEIDON_BENCH(benchmark::State &state)
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
 
-BENCHMARK(POSEIDON_BENCH_FULL)
+static void NTT_BENCH(benchmark::State &state)
+{
+    NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
+
+#pragma omp parallel for
+    for (uint64_t k = 0; k < NUM_COLUMNS; k++)
+    {
+        uint64_t offset = k * FFT_SIZE;
+        a[offset] = Goldilocks::one();
+        a[offset + 1] = Goldilocks::one();
+        for (uint64_t i = 2; i < FFT_SIZE; i++)
+        {
+            a[i] = a[i - 1] + a[i - 2];
+        }
+    }
+    for (auto _ : state)
+    {
+#pragma omp parallel for num_threads(state.range(0))
+        for (u_int64_t i = 0; i < NUM_COLUMNS; i++)
+        {
+            u_int64_t offset = i * FFT_SIZE;
+            gntt.NTT(a + offset, FFT_SIZE);
+            // gntt.INTT(a + offset, FFT_SIZE);
+        }
+    }
+}
+
+static void LDE_BENCH(benchmark::State &state)
+{
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
+    NTT_Goldilocks gntt(FFT_SIZE);
+    NTT_Goldilocks gntt_extension((FFT_SIZE << BLOWUP_FACTOR));
+
+    a[0] = Goldilocks::one();
+    a[1] = Goldilocks::one();
+    for (uint64_t i = 2; i < (uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS; i++)
+    {
+        a[i] = a[i - 1] + a[i - 2];
+    }
+
+    Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
+    gntt.INTT(a, FFT_SIZE);
+
+    // TODO: This can be pre-generated
+    Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
+    r[0] = Goldilocks::one();
+    for (int i = 1; i < FFT_SIZE; i++)
+    {
+        r[i] = r[i - 1] * shift;
+    }
+
+    Goldilocks::Element *zero_array = (Goldilocks::Element *)malloc((uint64_t)((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE) * sizeof(Goldilocks::Element));
+#pragma omp parallel for num_threads(state.range(0))
+    for (uint i = 0; i < ((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE); i++)
+    {
+        zero_array[i] = Goldilocks::zero();
+    }
+
+    for (auto _ : state)
+    {
+        Goldilocks::Element *res = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
+
+#pragma omp parallel for num_threads(state.range(0))
+        for (uint64_t k = 0; k < NUM_COLUMNS; k++)
+        {
+            for (int i = 0; i < FFT_SIZE; i++)
+            {
+                a[k * FFT_SIZE + i] = a[k * FFT_SIZE + i] * r[i];
+            }
+            std::memcpy(res, &a[k * FFT_SIZE], FFT_SIZE);
+            std::memcpy(&res[FFT_SIZE], zero_array, (FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE);
+
+            gntt_extension.NTT(res, (FFT_SIZE << BLOWUP_FACTOR));
+        }
+    }
+}
+
+BENCHMARK(DISABLED_POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
@@ -92,12 +176,30 @@ BENCHMARK(POSEIDON_BENCH_FULL)
     ->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->UseRealTime();
 
-BENCHMARK(POSEIDON_BENCH)
+BENCHMARK(DISABLED_POSEIDON_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
     ->Range(2, omp_get_max_threads())
     ->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
+    ->UseRealTime();
+
+BENCHMARK(NTT_BENCH)
+    ->Unit(benchmark::kSecond)
+    //->DenseRange(1, 1, 1)
+    //->RangeMultiplier(2)
+    //->Range(2, omp_get_max_threads())
+    //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
+    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
+    ->UseRealTime();
+
+BENCHMARK(LDE_BENCH)
+    ->Unit(benchmark::kSecond)
+    //->DenseRange(1, 1, 1)
+    //->RangeMultiplier(2)
+    //->Range(2, omp_get_max_threads())
+    //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
+    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
     ->UseRealTime();
 
 BENCHMARK_MAIN();

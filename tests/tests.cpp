@@ -3,8 +3,13 @@
 
 #include "../src/goldilocks_base_field.hpp"
 #include "../src/poseidon_goldilocks.hpp"
+#include "../src/ntt_goldilocks.hpp"
 
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
+
+#define FFT_SIZE (1 << 4)
+#define NUM_REPS 5
+#define BLOWUP_FACTOR 1
 
 typedef Goldilocks::Element Element;
 
@@ -99,8 +104,6 @@ TEST(GOLDILOCKS_TEST, div)
     int32_t in2 = 5;
     std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
     int32_t in4 = -12;
-    int32_t in5 = 3;
-    int32_t in6 = 2;
 
     Element inE1 = Goldilocks::fromU64(in1);
     Element inE2 = Goldilocks::fromS32(in2);
@@ -218,6 +221,106 @@ TEST(GOLDILOCKS_TEST, poseidon)
     ASSERT_EQ(Goldilocks::toU64(result0[2]), 0X7953DB0AB48808F4);
     ASSERT_EQ(Goldilocks::toU64(result0[3]), 0XC71603F33A1144CA);
 }
+
+TEST(GOLDILOCKS_TEST, ntt)
+{
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
+    Goldilocks::Element *initial = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
+    NTT_Goldilocks gntt(FFT_SIZE);
+
+    a[0] = Goldilocks::one();
+    a[1] = Goldilocks::one();
+    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    {
+        a[i] = a[i - 1] + a[i - 2];
+    }
+
+    std::memcpy(initial, a, FFT_SIZE * sizeof(Goldilocks::Element));
+
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        gntt.NTT(a, FFT_SIZE);
+        gntt.INTT(a, FFT_SIZE);
+    }
+
+    for (int i = 0; i < FFT_SIZE; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+}
+TEST(GOLDILOCKS_TEST, LDE)
+{
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((FFT_SIZE << BLOWUP_FACTOR) * sizeof(Goldilocks::Element));
+    NTT_Goldilocks gntt(FFT_SIZE);
+    NTT_Goldilocks gntt_extension((FFT_SIZE << BLOWUP_FACTOR));
+
+    Goldilocks::Element *zeros_array = (Goldilocks::Element *)malloc(((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE) * sizeof(Goldilocks::Element));
+#pragma omp parallel for
+    for (uint i = 0; i < ((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE); i++)
+    {
+        zeros_array[i] = Goldilocks::zero();
+    }
+
+    a[0] = Goldilocks::one();
+    a[1] = Goldilocks::one();
+    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    {
+        a[i] = a[i - 1] + a[i - 2];
+    }
+
+    Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
+    gntt.INTT(a, FFT_SIZE);
+
+    // TODO: This can be pre-generated
+    Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
+    r[0] = Goldilocks::one();
+    for (int i = 1; i < FFT_SIZE; i++)
+    {
+        r[i] = r[i - 1] * shift;
+    }
+
+#pragma omp parallel for
+    for (int i = 0; i < FFT_SIZE; i++)
+    {
+        a[i] = a[i] * r[i];
+    }
+    std::memcpy(&a[FFT_SIZE], zeros_array, (FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE);
+
+    gntt_extension.NTT(a, (FFT_SIZE << BLOWUP_FACTOR));
+
+    ASSERT_EQ(Goldilocks::toU64(a[0]), 0X5C7F9E08245DBA11);
+    ASSERT_EQ(Goldilocks::toU64(a[1]), 0X90D1DFB0589ABF6);
+    ASSERT_EQ(Goldilocks::toU64(a[2]), 0XF8B3928DED48A98F);
+    ASSERT_EQ(Goldilocks::toU64(a[3]), 0XC1918A78E4345E88);
+    ASSERT_EQ(Goldilocks::toU64(a[4]), 0XF6E69C9842AA2E22);
+    ASSERT_EQ(Goldilocks::toU64(a[5]), 0X5ADBBE450C79CDAD);
+    ASSERT_EQ(Goldilocks::toU64(a[6]), 0X60A2A349428A0DA);
+    ASSERT_EQ(Goldilocks::toU64(a[7]), 0X4A218E1A5E4B64C4);
+    ASSERT_EQ(Goldilocks::toU64(a[8]), 0XB8AA93BF9B77357D);
+    ASSERT_EQ(Goldilocks::toU64(a[9]), 0XC5E4FD1C23783A86);
+    ASSERT_EQ(Goldilocks::toU64(a[10]), 0X5059D5ACFEFD1C4E);
+    ASSERT_EQ(Goldilocks::toU64(a[11]), 0X84BFB1AF052262DC);
+    ASSERT_EQ(Goldilocks::toU64(a[12]), 0X267CA8D006A0D83B);
+    ASSERT_EQ(Goldilocks::toU64(a[13]), 0X85FFE94AD79AB9D8);
+    ASSERT_EQ(Goldilocks::toU64(a[14]), 0XC929E62672F3B564);
+    ASSERT_EQ(Goldilocks::toU64(a[15]), 0XF1F6FB9811E8B6D9);
+    ASSERT_EQ(Goldilocks::toU64(a[16]), 0X303E9B9EE7F5018C);
+    ASSERT_EQ(Goldilocks::toU64(a[17]), 0X85656D5B36F8B64A);
+    ASSERT_EQ(Goldilocks::toU64(a[18]), 0X4EED2DDC4ABB9788);
+    ASSERT_EQ(Goldilocks::toU64(a[19]), 0X9B19FA8666AFA997);
+    ASSERT_EQ(Goldilocks::toU64(a[20]), 0XA02461E0BCDDB962);
+    ASSERT_EQ(Goldilocks::toU64(a[21]), 0XEB1585E707FD372A);
+    ASSERT_EQ(Goldilocks::toU64(a[22]), 0XD1B3B074B5FDC807);
+    ASSERT_EQ(Goldilocks::toU64(a[23]), 0X8AEE07B925BE1179);
+    ASSERT_EQ(Goldilocks::toU64(a[24]), 0XBEE1035F312C4BC3);
+    ASSERT_EQ(Goldilocks::toU64(a[25]), 0X5C1FE1437308D938);
+    ASSERT_EQ(Goldilocks::toU64(a[26]), 0X75FCDA707D67FB90);
+    ASSERT_EQ(Goldilocks::toU64(a[27]), 0XE3BD3C32E5635D9F);
+    ASSERT_EQ(Goldilocks::toU64(a[28]), 0X3E0A945C57D94083);
+    ASSERT_EQ(Goldilocks::toU64(a[29]), 0X48161FC7B47B998E);
+    ASSERT_EQ(Goldilocks::toU64(a[30]), 0X5144C235578455C6);
+    ASSERT_EQ(Goldilocks::toU64(a[31]), 0XAF5244B5C1134635);
+}
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
@@ -225,4 +328,4 @@ int main(int argc, char **argv)
     return RUN_ALL_TESTS();
 }
 
-// Build command: g++ tests/tests.cpp src/goldilocks_base_field.cpp -lgtest -lgmp -o test && ./test
+// Build command: g++ tests/tests.cpp src/goldilocks_base_field.cpp -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -L/usr/lib/llvm-13/lib/
