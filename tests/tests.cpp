@@ -322,9 +322,11 @@ TEST(GOLDILOCKS_TEST, LDE)
     {
         a[i] = a[i] * r[i];
     }
-    std::memcpy(&a[FFT_SIZE], zeros_array, (FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE);
+
+    std::memcpy(&a[FFT_SIZE], zeros_array, ((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE) * sizeof(Goldilocks::Element));
 
     gntt_extension.NTT(a, (FFT_SIZE << BLOWUP_FACTOR));
+
 
     ASSERT_EQ(Goldilocks::toU64(a[0]), 0X5C7F9E08245DBA11);
     ASSERT_EQ(Goldilocks::toU64(a[1]), 0X90D1DFB0589ABF6);
