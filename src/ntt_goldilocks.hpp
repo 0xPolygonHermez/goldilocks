@@ -8,6 +8,7 @@
 
 #define CACHESIZE 1 << 18
 #define NUM_PHASES 4
+#define NUM_BLOCKS 1
 
 class NTT_Goldilocks
 {
@@ -122,10 +123,10 @@ public:
     void NTT(Goldilocks::Element *a, u_int64_t size);
     void INTT(Goldilocks::Element *a, u_int64_t size);
 
-    void NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase = NUM_PHASES);
-    void INTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase = NUM_PHASES);
+    void NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
+    void INTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
 
-    void reversePermutation_block(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols);
+    void reversePermutation_block(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nblock = NUM_BLOCKS);
 
     void reversePermutation(Goldilocks::Element *result, Goldilocks::Element *a, u_int64_t size);
     void shuffle(Goldilocks::Element *result, Goldilocks::Element *src, uint64_t size, uint64_t s);

@@ -169,7 +169,7 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *a, u_int64_t size)
 /*
     Blocks implementation
 */
-void NTT_Goldilocks::NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase)
+void NTT_Goldilocks::NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase, u_int64_t nblock)
 {
     Goldilocks::Element *aux_a = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols);
     Goldilocks::Element *a = src;
@@ -254,7 +254,7 @@ void NTT_Goldilocks::NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64
     free(aux_a);
 }
 
-void NTT_Goldilocks::reversePermutation_block(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols)
+void NTT_Goldilocks::reversePermutation_block(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nblock)
 {
     uint32_t domainSize = log2(size);
 #pragma omp parallel for schedule(static)
@@ -267,7 +267,7 @@ void NTT_Goldilocks::reversePermutation_block(Goldilocks::Element *dst, Goldiloc
     }
 }
 
-void NTT_Goldilocks::INTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase)
+void NTT_Goldilocks::INTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase, u_int64_t nblock)
 {
     NTT_Block(src, size, ncols, nphase);
     u_int64_t domainPow = log2(size);
