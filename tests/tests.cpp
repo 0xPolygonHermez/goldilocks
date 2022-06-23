@@ -10,6 +10,7 @@
 #define FFT_SIZE (1 << 4)
 #define NUM_REPS 5
 #define BLOWUP_FACTOR 1
+#define NUM_COLUMNS 2
 
 typedef Goldilocks::Element Element;
 
@@ -248,6 +249,43 @@ TEST(GOLDILOCKS_TEST, ntt)
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }
 }
+
+TEST(GOLDILOCKS_TEST, ntt_block)
+{
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    Goldilocks::Element *initial = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    NTT_Goldilocks gntt(FFT_SIZE);
+
+    for (uint i = 0; i < 2; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            Goldilocks::add(a[i * NUM_COLUMNS + j], Goldilocks::one(), Goldilocks::fromU64(j));
+        }
+    }
+
+    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * (i - 1) + j] + a[NUM_COLUMNS * (i - 2) + j];
+        }
+    }
+
+    std::memcpy(initial, a, FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
+
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS);
+        gntt.INTT_Block(a, FFT_SIZE, NUM_COLUMNS);
+    }
+
+    for (int i = 0; i < FFT_SIZE; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+}
+
 TEST(GOLDILOCKS_TEST, LDE)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((FFT_SIZE << BLOWUP_FACTOR) * sizeof(Goldilocks::Element));
@@ -321,6 +359,7 @@ TEST(GOLDILOCKS_TEST, LDE)
     ASSERT_EQ(Goldilocks::toU64(a[30]), 0X5144C235578455C6);
     ASSERT_EQ(Goldilocks::toU64(a[31]), 0XAF5244B5C1134635);
 }
+
 int main(int argc, char **argv)
 {
     ::testing::InitGoogleTest(&argc, argv);
@@ -328,4 +367,4 @@ int main(int argc, char **argv)
     return RUN_ALL_TESTS();
 }
 
-// Build command: g++ tests/tests.cpp src/goldilocks_base_field.cpp -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -L/usr/lib/llvm-13/lib/
+// Build command: g++ tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -L/usr/lib/llvm-13/lib/

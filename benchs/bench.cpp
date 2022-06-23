@@ -118,6 +118,33 @@ static void NTT_BENCH(benchmark::State &state)
     }
 }
 
+static void NTT_Block_BENCH(benchmark::State &state)
+{
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    NTT_Goldilocks gntt(FFT_SIZE);
+
+    for (uint i = 0; i < 2; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            Goldilocks::add(a[i * NUM_COLUMNS + j], Goldilocks::one(), Goldilocks::fromU64(j));
+        }
+    }
+
+    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * (i - 1) + j] + a[NUM_COLUMNS * (i - 2) + j];
+        }
+    }
+
+    for (auto _ : state)
+    {
+        gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS);
+    }
+}
+
 static void LDE_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
@@ -193,14 +220,23 @@ BENCHMARK(NTT_BENCH)
     ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
     ->UseRealTime();
 
+BENCHMARK(NTT_Block_BENCH)
+    ->Unit(benchmark::kSecond)
+    //->DenseRange(1, 1, 1)
+    //->RangeMultiplier(2)
+    //->Range(2, omp_get_max_threads())
+    //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->UseRealTime();
+
 BENCHMARK(LDE_BENCH)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
-    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
 
 BENCHMARK_MAIN();
-// Build command: g++ benchs/bench.cpp src/goldilocks_base_field.cpp -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -L/usr/lib/llvm-13/lib/ -O3 -o bench && ./bench
+// Build command: g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -L/usr/lib/llvm-13/lib/ -O3 -o bench && ./bench
