@@ -156,7 +156,7 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
 
         uint64_t n = (remaining < RATE) ? remaining : RATE;
 
-        memset(&state[n], 0, (n - RATE) * sizeof(Goldilocks::Element));
+        memset(&state[n], 0, (RATE - n) * sizeof(Goldilocks::Element));
 
         std::memcpy(state, input + (size - remaining), n * sizeof(Goldilocks::Element));
 
@@ -203,3 +203,4 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element (&state)[CAPACITY], Gold
     std::memcpy(state, tmp_state, CAPACITY * sizeof(uint64_t));
 }
 #endif
+
