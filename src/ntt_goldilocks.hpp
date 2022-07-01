@@ -32,7 +32,7 @@ private:
             return res;
         }
     }
-    void ntt_block_iters(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase);
+    void ntt_block_iters(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux);
 
 
 public:
@@ -128,7 +128,7 @@ public:
     void NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
     void INTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
 
-    void reversePermutation_block(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nblock = NUM_BLOCKS);
+    void reversePermutation_block(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all);
 
     void reversePermutation(Goldilocks::Element *result, Goldilocks::Element *a, u_int64_t size);
     void shuffle(Goldilocks::Element *result, Goldilocks::Element *src, uint64_t size, uint64_t s);
