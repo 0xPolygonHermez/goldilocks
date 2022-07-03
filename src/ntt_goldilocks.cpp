@@ -169,24 +169,27 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *a, u_int64_t size)
 /*
     Blocks implementation
 */
-void  NTT_Goldilocks::ntt_block_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all,u_int64_t nphase,Goldilocks::Element *aux)
+void NTT_Goldilocks::ntt_block_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux)
 {
-    
+
     Goldilocks::Element *a;
-    if(dst!=NULL){
-     a = dst;
-    }else{
-      a=src;  
+    if (dst != NULL)
+    {
+        a = dst;
+    }
+    else
+    {
+        a = src;
     }
     Goldilocks::Element *a2 = aux;
     Goldilocks::Element *tmp;
 
     reversePermutation_block(a2, src, size, offset_cols, ncols, ncols_all);
-    
+
     tmp = a2;
     a2 = a;
     a = tmp;
-    
+
     u_int64_t domainPow = log2(size);
     assert(((u_int64_t)1 << domainPow) == size);
     u_int64_t maxBatchPow = s / nphase;
@@ -253,15 +256,20 @@ void  NTT_Goldilocks::ntt_block_iters(Goldilocks::Element *dst, Goldilocks::Elem
     }
     if (dst == NULL)
     {
-        if(a != src){
-            #pragma omp parallel for schedule(static)
-            for(u_int64_t ie=0; ie<size; ++ie){
-                u_int64_t offset2 = ie*ncols;
+        if (a != src)
+        {
+#pragma omp parallel for schedule(static)
+            for (u_int64_t ie = 0; ie < size; ++ie)
+            {
+                u_int64_t offset2 = ie * ncols;
                 std::memcpy(&src[offset2], &a[offset2], ncols * sizeof(u_int64_t));
-            } 
+            }
         }
-    } else {
-        if(a != dst){
+    }
+    else
+    {
+        if (a != dst)
+        {
             tmp = dst;
             dst = aux;
             aux = tmp;
@@ -274,26 +282,33 @@ void NTT_Goldilocks::NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64
     u_int64_t ncols_block = ncols / nblock;
     u_int64_t ncols_res = ncols % nblock;
     u_int64_t ncols_alloc = ncols_block;
-    if(ncols_res>0) ncols_alloc += 1;
+    if (ncols_res > 0)
+        ncols_alloc += 1;
     Goldilocks::Element *dst = NULL;
     Goldilocks::Element *aux = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols_alloc);
-    if(nblock>1){
+    if (nblock > 1)
+    {
         dst = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols_alloc);
     }
-    for(u_int64_t ib=0; ib<nblock; ++ib){
+    for (u_int64_t ib = 0; ib < nblock; ++ib)
+    {
         uint64_t aux_ncols = ncols_block;
-        if(ib < ncols_res) aux_ncols += 1;
-        NTT_Goldilocks::ntt_block_iters(dst,src,size,offset_cols,aux_ncols,ncols,nphase,aux);
-        if(nblock > 1){
-            #pragma omp parallel for schedule(static)
-            for(u_int64_t ie=0; ie<size; ++ie){
-                u_int64_t offset2 = ie*ncols+offset_cols;
-                std::memcpy(&src[offset2], &dst[ie*aux_ncols], aux_ncols * sizeof(u_int64_t));
-            } 
+        if (ib < ncols_res)
+            aux_ncols += 1;
+        NTT_Goldilocks::ntt_block_iters(dst, src, size, offset_cols, aux_ncols, ncols, nphase, aux);
+        if (nblock > 1)
+        {
+#pragma omp parallel for schedule(static)
+            for (u_int64_t ie = 0; ie < size; ++ie)
+            {
+                u_int64_t offset2 = ie * ncols + offset_cols;
+                std::memcpy(&src[offset2], &dst[ie * aux_ncols], aux_ncols * sizeof(u_int64_t));
+            }
         }
         offset_cols += aux_ncols;
     }
-    if(nblock>1){
+    if (nblock > 1)
+    {
         free(dst);
     }
     free(aux);
@@ -306,9 +321,9 @@ void NTT_Goldilocks::reversePermutation_block(Goldilocks::Element *dst, Goldiloc
     for (u_int64_t i = 0; i < size; i++)
     {
         u_int64_t r = BR(i, domainSize);
-        u_int64_t offset_src = i * ncols_all + offset_cols;
-        u_int64_t offset_dst = r * ncols;
-        std::memcpy(&dst[offset_dst], &src[offset_src], ncols * sizeof(u_int64_t));
+        u_int64_t offset_r = r * ncols_all + offset_cols;
+        u_int64_t offset_i = i * ncols;
+        std::memcpy(&dst[offset_i], &src[offset_r], ncols * sizeof(u_int64_t));
     }
 }
 
