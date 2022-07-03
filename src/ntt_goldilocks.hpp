@@ -32,8 +32,7 @@ private:
             return res;
         }
     }
-    void ntt_block_iters(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux);
-
+    void  ntt_block_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all,u_int64_t nphase,Goldilocks::Element *aux);
 
 public:
     NTT_Goldilocks(u_int64_t maxDomainSize, u_int32_t _nThreads = 0)
