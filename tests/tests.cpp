@@ -419,7 +419,7 @@ TEST(GOLDILOCKS_TEST, LDE_block)
 
     Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
 
-    gntt.INTT_Block(NULL, a, FFT_SIZE, NUM_COLUMNS, NPHASES);
+    gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES);
 
     // TODO: This can be pre-generated
     Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
@@ -443,7 +443,7 @@ TEST(GOLDILOCKS_TEST, LDE_block)
         a[i] = Goldilocks::zero();
     }
 
-    gntt_extension.NTT_Block(NULL, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NUM_PHASES);
+    gntt_extension.NTT_Block(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NUM_PHASES);
 
     ASSERT_EQ(Goldilocks::toU64(a[0 * NUM_COLUMNS]), 0X5C7F9E08245DBA11);
     ASSERT_EQ(Goldilocks::toU64(a[1 * NUM_COLUMNS]), 0X90D1DFB0589ABF6);
