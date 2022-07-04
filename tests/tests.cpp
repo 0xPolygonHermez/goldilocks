@@ -280,10 +280,38 @@ TEST(GOLDILOCKS_TEST, ntt_block)
 
     std::memcpy(initial, a, FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
 
+    // Option 1: dst is a NULL pointer
     for (int i = 0; i < NUM_REPS; i++)
     {
-        gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS);
-        gntt.INTT_Block(a, FFT_SIZE, NUM_COLUMNS);
+        gntt.NTT_Block(NULL, a, FFT_SIZE, NUM_COLUMNS);
+        gntt.INTT_Block(NULL, a, FFT_SIZE, NUM_COLUMNS);
+    }
+
+    for (int i = 0; i < FFT_SIZE; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+
+    // Option 2: dst = src
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        gntt.NTT_Block(a, a, FFT_SIZE, NUM_COLUMNS);
+        gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS);
+    }
+
+    for (int i = 0; i < FFT_SIZE; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+
+    // Option 3: dst != src
+    Goldilocks::Element *dst = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        gntt.NTT_Block(dst, a, FFT_SIZE, NUM_COLUMNS);
+        for (uint64_t k = 0; k < FFT_SIZE * NUM_COLUMNS; ++k)
+            a[k] = Goldilocks::zero();
+        gntt.INTT_Block(a, dst, FFT_SIZE, NUM_COLUMNS);
     }
 
     for (int i = 0; i < FFT_SIZE; i++)
@@ -391,7 +419,7 @@ TEST(GOLDILOCKS_TEST, LDE_block)
 
     Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
 
-    gntt.INTT_Block(a, FFT_SIZE, NUM_COLUMNS, NPHASES);
+    gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES);
 
     // TODO: This can be pre-generated
     Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
@@ -415,7 +443,7 @@ TEST(GOLDILOCKS_TEST, LDE_block)
         a[i] = Goldilocks::zero();
     }
 
-    gntt_extension.NTT_Block(a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NUM_PHASES);
+    gntt_extension.NTT_Block(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NUM_PHASES);
 
     ASSERT_EQ(Goldilocks::toU64(a[0 * NUM_COLUMNS]), 0X5C7F9E08245DBA11);
     ASSERT_EQ(Goldilocks::toU64(a[1 * NUM_COLUMNS]), 0X90D1DFB0589ABF6);
