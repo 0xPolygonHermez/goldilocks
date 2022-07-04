@@ -143,7 +143,7 @@ static void NTT_Block_BENCH(benchmark::State &state)
 
     for (auto _ : state)
     {
-        gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT);
+        gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT, 1);
     }
 }
 
@@ -248,7 +248,8 @@ static void LDE_BENCH_Block(benchmark::State &state)
 
     for (auto _ : state)
     {
-        gntt_extension.NTT_Block(a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE);
+        // gntt_extension.NTT_Block(a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE, 2);
+        gntt_extension.NTT_Block(a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, 2, 8);
     }
 }
 
