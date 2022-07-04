@@ -302,4 +302,4 @@ BENCHMARK(LDE_BENCH_Block)
     ->UseRealTime();
 
 BENCHMARK_MAIN();
-// Build command: g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -L/usr/lib/llvm-13/lib/ -O3 -o bench && ./bench
+// Build command: g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -O3 -o bench && ./bench
