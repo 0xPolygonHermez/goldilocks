@@ -146,6 +146,7 @@ public:
     {
         return roots[idx << (s - domainPow)];
     }
+    void extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N, uint64_t N_Extended, uint64_t ncols);
 };
 
 #endif
