@@ -8,9 +8,9 @@
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
 #define FFT_SIZE (1 << 4)
-#define NUM_REPS 5
+#define NUM_REPS 1
 #define BLOWUP_FACTOR 1
-#define NUM_COLUMNS 3
+#define NUM_COLUMNS 8
 #define NPHASES 4
 
 typedef Goldilocks::Element Element;
@@ -256,6 +256,7 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     Goldilocks::Element *a = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
     Goldilocks::Element *initial = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
     NTT_Goldilocks gntt(FFT_SIZE);
+    printf("hola: %d\n", NUM_COLUMNS);
 
     for (uint i = 0; i < 2; i++)
     {
@@ -275,13 +276,28 @@ TEST(GOLDILOCKS_TEST, ntt_block)
 
     std::memcpy(initial, a, FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
 
+    // First try with default configuration
     for (int i = 0; i < NUM_REPS; i++)
     {
         gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS);
         gntt.INTT_Block(a, FFT_SIZE, NUM_COLUMNS);
     }
 
-    for (int i = 0; i < FFT_SIZE; i++)
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+
+    // Second try with different configuration
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        printf("comença test:\n");
+        gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS, 3, 4);
+        printf("acaba test.\n");
+        gntt.INTT_Block(a, FFT_SIZE, NUM_COLUMNS, 4, 4);
+    }
+
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
     {
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }

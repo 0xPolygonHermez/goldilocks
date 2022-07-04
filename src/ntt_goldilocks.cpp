@@ -172,15 +172,16 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *a, u_int64_t size)
 void NTT_Goldilocks::ntt_block_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux)
 {
 
-    Goldilocks::Element *a;
+    Goldilocks::Element *dst_;
     if (dst != NULL)
     {
-        a = dst;
+        dst_ = dst;
     }
     else
     {
-        a = src;
+        dst_ = src;
     }
+    Goldilocks::Element *a = dst_;
     Goldilocks::Element *a2 = aux;
     Goldilocks::Element *tmp;
 
@@ -254,28 +255,17 @@ void NTT_Goldilocks::ntt_block_iters(Goldilocks::Element *dst, Goldilocks::Eleme
         a2 = a;
         a = tmp;
     }
-    if (dst == NULL)
+    if (a != dst_)
     {
-        if (a != src)
-        {
 #pragma omp parallel for schedule(static)
-            for (u_int64_t ie = 0; ie < size; ++ie)
-            {
-                u_int64_t offset2 = ie * ncols;
-                std::memcpy(&src[offset2], &a[offset2], ncols * sizeof(u_int64_t));
-            }
-        }
-    }
-    else
-    {
-        if (a != dst)
+        for (u_int64_t ie = 0; ie < size; ++ie)
         {
-            tmp = dst;
-            dst = aux;
-            aux = tmp;
+            u_int64_t offset2 = ie * ncols;
+            std::memcpy(&dst_[offset2], &a[offset2], ncols * sizeof(u_int64_t));
         }
     }
 }
+
 void NTT_Goldilocks::NTT_Block(Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase, u_int64_t nblock)
 {
     u_int64_t offset_cols = 0;
