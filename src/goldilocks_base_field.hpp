@@ -19,6 +19,7 @@ public:
     {
         uint64_t fe;
     } Element;
+    static const Element SHIFT;
 
 private:
     static const Element ZR;
