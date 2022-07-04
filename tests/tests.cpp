@@ -2,6 +2,7 @@
 #include <iostream>
 
 #include "../src/goldilocks_base_field.hpp"
+#include "../src/goldilocks_cubic_extension.hpp"
 #include "../src/poseidon_goldilocks.hpp"
 #include "../src/ntt_goldilocks.hpp"
 
@@ -13,19 +14,17 @@
 #define NUM_COLUMNS 3
 #define NPHASES 4
 
-typedef Goldilocks::Element Element;
-
 TEST(GOLDILOCKS_TEST, one)
 {
     uint64_t a = 1;
     uint64_t b = 1 + GOLDILOCKS_PRIME;
     std::string c = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
 
-    Element ina1 = Goldilocks::fromU64(a);
-    Element ina2 = Goldilocks::fromS32(a);
-    Element ina3 = Goldilocks::fromString(std::to_string(a));
-    Element inb1 = Goldilocks::fromU64(b);
-    Element inc1 = Goldilocks::fromString(c);
+    Goldilocks::Element ina1 = Goldilocks::fromU64(a);
+    Goldilocks::Element ina2 = Goldilocks::fromS32(a);
+    Goldilocks::Element ina3 = Goldilocks::fromString(std::to_string(a));
+    Goldilocks::Element inb1 = Goldilocks::fromU64(b);
+    Goldilocks::Element inc1 = Goldilocks::fromString(c);
 
     ASSERT_EQ(Goldilocks::toU64(ina1), a);
     ASSERT_EQ(Goldilocks::toU64(ina2), a);
@@ -41,20 +40,26 @@ TEST(GOLDILOCKS_TEST, add)
     std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
     int32_t in4 = -12;
 
-    Element inE1 = Goldilocks::fromU64(in1);
-    Element inE2 = Goldilocks::fromS32(in2);
-    Element inE3 = Goldilocks::fromString(in3);
-    Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element p_1 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
+    ASSERT_EQ(Goldilocks::toU64(p_1 + p_1), 2);
+
+    Goldilocks::Element max = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFF);
+    ASSERT_EQ(Goldilocks::toU64(max + max), 0X1FFFFFFFC);
+
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
 
     ASSERT_EQ(Goldilocks::toU64(inE1 + inE2), in1 + in2);
     ASSERT_EQ(Goldilocks::toU64(inE1 + inE2 + inE3), in1 + in2 + 1);
     ASSERT_EQ(Goldilocks::toU64(inE1 + inE2 + inE3 + inE4), 1);
 
     // Edge case (double carry)
-    Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
-    Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF));
-    Element b1 = (a1 + a2);
-    Element b2 = (b1 + b1);
+    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+    Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF));
+    Goldilocks::Element b1 = (a1 + a2);
+    Goldilocks::Element b2 = (b1 + b1);
     ASSERT_EQ(Goldilocks::toU64(b2), 0x200000002);
 }
 
@@ -66,20 +71,20 @@ TEST(GOLDILOCKS_TEST, sub)
     std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
     int32_t in4 = -12;
 
-    Element inE1 = Goldilocks::fromU64(in1);
-    Element inE2 = Goldilocks::fromS32(in2);
-    Element inE3 = Goldilocks::fromString(in3);
-    Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
 
     ASSERT_EQ(Goldilocks::toU64(inE1 - inE2), GOLDILOCKS_PRIME + in1 - in2);
     ASSERT_EQ(Goldilocks::toU64(inE1 - inE2 - inE3), GOLDILOCKS_PRIME + in1 - in2 - 1);
     ASSERT_EQ(Goldilocks::toU64(inE1 - inE2 - inE3 - inE4), 5);
 
-    Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000LL));
-    Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFFLL));
+    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000LL));
+    Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFFLL));
 
-    Element a3 = (a1 + a2);
-    Element b2 = Goldilocks::zero() - a3;
+    Goldilocks::Element a3 = (a1 + a2);
+    Goldilocks::Element b2 = Goldilocks::zero() - a3;
     ASSERT_EQ(Goldilocks::toU64(b2), Goldilocks::from_montgomery(0XFFFFFFFE00000003LL));
 }
 
@@ -90,10 +95,10 @@ TEST(GOLDILOCKS_TEST, mul)
     std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
     int32_t in4 = -12;
 
-    Element inE1 = Goldilocks::fromU64(in1);
-    Element inE2 = Goldilocks::fromS32(in2);
-    Element inE3 = Goldilocks::fromString(in3);
-    Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
 
     ASSERT_EQ(Goldilocks::toU64(inE1 * inE2), in1 * in2);
     ASSERT_EQ(Goldilocks::toU64(inE1 * inE2 * inE3), in1 * in2);
@@ -107,12 +112,12 @@ TEST(GOLDILOCKS_TEST, div)
     std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
     int32_t in4 = -12;
 
-    Element inE1 = Goldilocks::fromU64(in1);
-    Element inE2 = Goldilocks::fromS32(in2);
-    Element inE3 = Goldilocks::fromString(in3);
-    Element inE4 = Goldilocks::fromS32(in4);
-    Element inE5 = Goldilocks::fromS32(in4);
-    Element inE6 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE5 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE6 = Goldilocks::fromS32(in4);
 
     ASSERT_EQ(Goldilocks::toU64(inE1 / inE2), in1 / in2);
     ASSERT_EQ(Goldilocks::toU64(inE1 / inE2 / inE3), in1 / in2); // 10 / 2 / ( 0 + 1 ) = 10 / 2
@@ -126,19 +131,19 @@ TEST(GOLDILOCKS_TEST, inv)
     uint64_t in1 = 5;
     std::string in2 = "18446744069414584326"; // 0xFFFFFFFF00000001n + 5n
 
-    Element input1 = Goldilocks::one();
-    Element inv1 = Goldilocks::inv(input1);
-    Element res1 = input1 * inv1;
+    Goldilocks::Element input1 = Goldilocks::one();
+    Goldilocks::Element inv1 = Goldilocks::inv(input1);
+    Goldilocks::Element res1 = input1 * inv1;
 
-    Element input5 = Goldilocks::fromU64(in1);
-    Element inv5 = Goldilocks::inv(input5);
-    Element res5 = input5 * inv5;
+    Goldilocks::Element input5 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inv5 = Goldilocks::inv(input5);
+    Goldilocks::Element res5 = input5 * inv5;
 
     ASSERT_EQ(res1, Goldilocks::one());
     ASSERT_EQ(res5, Goldilocks::one());
 
-    Element inE1 = Goldilocks::fromString(std::to_string(in1));
-    Element inE1_plus_p = Goldilocks::fromString(in2);
+    Goldilocks::Element inE1 = Goldilocks::fromString(std::to_string(in1));
+    Goldilocks::Element inE1_plus_p = Goldilocks::fromString(in2);
 
     ASSERT_EQ(Goldilocks::inv(inE1_plus_p) * inE1, Goldilocks::one());
     ASSERT_EQ(Goldilocks::inv(inE1), Goldilocks::inv(inE1_plus_p));
@@ -472,6 +477,58 @@ TEST(GOLDILOCKS_TEST, LDE_block)
     ASSERT_EQ(Goldilocks::toU64(a[29 * NUM_COLUMNS]), 0X48161FC7B47B998E);
     ASSERT_EQ(Goldilocks::toU64(a[30 * NUM_COLUMNS]), 0X5144C235578455C6);
     ASSERT_EQ(Goldilocks::toU64(a[31 * NUM_COLUMNS]), 0XAF5244B5C1134635);
+}
+
+TEST(GOLDILOCKS_CUBIC_TEST, one)
+{
+    uint64_t a[3] = {1, 1, 1};
+    int32_t b[3] = {1, 1, 1};
+    std::string c[3] = {"92233720347072921606", "92233720347072921606", "92233720347072921606"}; // GOLDILOCKS_PRIME * 5 + 1
+    uint64_t d[3] = {1 + GOLDILOCKS_PRIME, 1 + GOLDILOCKS_PRIME, 1 + GOLDILOCKS_PRIME};
+
+    Goldilocks3::Element ina1;
+    Goldilocks3::Element ina2;
+    Goldilocks3::Element ina3;
+    Goldilocks3::Element inb1;
+    Goldilocks3::Element inc1;
+
+    Goldilocks3::fromU64(ina1, a);
+    Goldilocks3::fromS32(ina2, b);
+    Goldilocks3::fromString(ina3, c);
+    Goldilocks3::fromU64(inb1, d);
+    Goldilocks3::fromString(inc1, c);
+
+    uint64_t ina1_res[3];
+    uint64_t ina2_res[3];
+    uint64_t ina3_res[3];
+    uint64_t inb1_res[3];
+    uint64_t inc1_res[3];
+
+    Goldilocks3::toU64(ina1_res, ina1);
+    Goldilocks3::toU64(ina2_res, ina2);
+    Goldilocks3::toU64(ina3_res, ina3);
+    Goldilocks3::toU64(inb1_res, inb1);
+    Goldilocks3::toU64(inc1_res, inc1);
+
+    ASSERT_EQ(ina1_res[0], a[0]);
+    ASSERT_EQ(ina1_res[1], a[1]);
+    ASSERT_EQ(ina1_res[2], a[2]);
+
+    ASSERT_EQ(ina2_res[0], a[0]);
+    ASSERT_EQ(ina2_res[1], a[1]);
+    ASSERT_EQ(ina2_res[2], a[2]);
+
+    ASSERT_EQ(ina3_res[0], a[0]);
+    ASSERT_EQ(ina3_res[1], a[1]);
+    ASSERT_EQ(ina3_res[2], a[2]);
+
+    ASSERT_EQ(inb1_res[0], a[0]);
+    ASSERT_EQ(inb1_res[1], a[1]);
+    ASSERT_EQ(inb1_res[2], a[2]);
+
+    ASSERT_EQ(inc1_res[0], a[0]);
+    ASSERT_EQ(inc1_res[1], a[1]);
+    ASSERT_EQ(inc1_res[2], a[2]);
 }
 
 int main(int argc, char **argv)

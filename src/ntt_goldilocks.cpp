@@ -247,7 +247,7 @@ void NTT_Goldilocks::NTT_Block(Goldilocks::Element *dst, Goldilocks::Element *sr
                 {
                     u_int64_t offset_dstY = (x * (nBatches * niters) + (b * niters + kk)) * ncols;
                     u_int64_t offset_src = ((b * niters + kk) * srcWidth + x) * ncols;
-                    std::memcpy(&a2[offset_dstY], &a[offset_src], ncols * sizeof(u_int64_t));
+                    std::memcpy(&a2[offset_dstY], &a[offset_src], ncols * sizeof(Goldilocks::Element));
                 }
             }
         }
@@ -257,7 +257,7 @@ void NTT_Goldilocks::NTT_Block(Goldilocks::Element *dst, Goldilocks::Element *sr
     }
     if (a != dst_)
     {
-        std::memcpy(dst_, a, size * ncols * sizeof(u_int64_t));
+        std::memcpy(dst_, a, size * ncols * sizeof(Goldilocks::Element));
     }
     free(aux_a);
 }
@@ -313,4 +313,46 @@ void NTT_Goldilocks::INTT_Block(Goldilocks::Element *dst, Goldilocks::Element *s
         Goldilocks::mul(dst_[k], dst_[k], powTwoInv[domainPow]);
         Goldilocks::mul(dst_[offset_n + k], dst_[offset_n + k], powTwoInv[domainPow]);
     }
+}
+
+void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols)
+{
+    NTT_Goldilocks ntt_extension(N_Extended);
+
+    Goldilocks::Element *tmp = (Goldilocks::Element *)malloc(N_Extended * ncols * sizeof(Goldilocks::Element));
+
+    // Maybe we can save this copy
+    std::memcpy(tmp, input, N * ncols * sizeof(Goldilocks::Element));
+
+    // TODO: Pre-compute r
+    Goldilocks::Element *r;
+    r = (Goldilocks::Element *)malloc(N * sizeof(Goldilocks::Element));
+    r[0] = Goldilocks::one();
+
+    for (uint64_t i = 1; i < N; i++)
+    {
+        Goldilocks::mul(r[i], r[i - 1], Goldilocks::SHIFT);
+    }
+
+    INTT_Block(tmp, tmp, N, ncols);
+
+    //
+    for (uint64_t j = 0; j < ncols; j++)
+    {
+#pragma omp parallel for
+        for (uint64_t i = 0; i < N; i++)
+        {
+
+            Goldilocks::mul(output[i * ncols + j], tmp[ncols * i + j], r[i]);
+        }
+    }
+#pragma omp parallel for schedule(static)
+    for (uint64_t i = N * ncols; i < N_Extended * ncols; i++)
+    {
+        output[i] = Goldilocks::zero();
+    }
+    ntt_extension.NTT_Block(output, output, N_Extended, ncols);
+
+    free(r);
+    free(tmp);
 }
