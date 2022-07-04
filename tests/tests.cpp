@@ -261,7 +261,6 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     Goldilocks::Element *a = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
     Goldilocks::Element *initial = (Goldilocks::Element *)malloc(FFT_SIZE * NUM_COLUMNS * sizeof(Goldilocks::Element));
     NTT_Goldilocks gntt(FFT_SIZE);
-    printf("hola: %d\n", NUM_COLUMNS);
 
     for (uint i = 0; i < 2; i++)
     {
@@ -296,9 +295,7 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     // Second try with different configuration
     for (int i = 0; i < NUM_REPS; i++)
     {
-        printf("comença test:\n");
         gntt.NTT_Block(a, FFT_SIZE, NUM_COLUMNS, 3, 4);
-        printf("acaba test.\n");
         gntt.INTT_Block(a, FFT_SIZE, NUM_COLUMNS, 4, 4);
     }
 
