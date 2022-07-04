@@ -321,9 +321,6 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
 
     Goldilocks::Element *tmp = (Goldilocks::Element *)malloc(N_Extended * ncols * sizeof(Goldilocks::Element));
 
-    // Maybe we can save this copy
-    std::memcpy(tmp, input, N * ncols * sizeof(Goldilocks::Element));
-
     // TODO: Pre-compute r
     Goldilocks::Element *r;
     r = (Goldilocks::Element *)malloc(N * sizeof(Goldilocks::Element));
@@ -334,7 +331,7 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
         Goldilocks::mul(r[i], r[i - 1], Goldilocks::SHIFT);
     }
 
-    INTT_Block(tmp, tmp, N, ncols);
+    INTT_Block(tmp, input, N, ncols);
 
     //
     for (uint64_t j = 0; j < ncols; j++)
@@ -343,15 +340,15 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
         for (uint64_t i = 0; i < N; i++)
         {
 
-            Goldilocks::mul(output[i * ncols + j], tmp[ncols * i + j], r[i]);
+            Goldilocks::mul(tmp[i * ncols + j], tmp[ncols * i + j], r[i]);
         }
     }
 #pragma omp parallel for schedule(static)
     for (uint64_t i = N * ncols; i < N_Extended * ncols; i++)
     {
-        output[i] = Goldilocks::zero();
+        tmp[i] = Goldilocks::zero();
     }
-    ntt_extension.NTT_Block(output, output, N_Extended, ncols);
+    ntt_extension.NTT_Block(output, tmp, N_Extended, ncols);
 
     free(r);
     free(tmp);
