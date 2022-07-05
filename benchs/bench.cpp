@@ -15,6 +15,7 @@
 #define BLOWUP_FACTOR 1
 #define NPHASES_NTT 2
 #define NPHASES_LDE 3
+#define NBLOCKS 1
 
 static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
 {
@@ -142,7 +143,7 @@ static void NTT_Block_BENCH(benchmark::State &state)
     }
     for (auto _ : state)
     {
-        gntt.NTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT);
+        gntt.NTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT, NBLOCKS);
     }
 }
 
@@ -221,7 +222,7 @@ static void LDE_BENCH_Block(benchmark::State &state)
 
     Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
 
-    gntt.INTT_Block(NULL, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT);
+    gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT);
 
     // TODO: This can be pre-generated
     Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
@@ -246,7 +247,7 @@ static void LDE_BENCH_Block(benchmark::State &state)
     }
     for (auto _ : state)
     {
-        gntt_extension.NTT_Block(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE);
+        gntt_extension.NTT_Block(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE, NBLOCKS);
     }
 }
 

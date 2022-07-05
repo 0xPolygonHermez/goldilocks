@@ -11,7 +11,7 @@
 #define FFT_SIZE (1 << 4)
 #define NUM_REPS 5
 #define BLOWUP_FACTOR 1
-#define NUM_COLUMNS 3
+#define NUM_COLUMNS 8
 #define NPHASES 4
 
 TEST(GOLDILOCKS_TEST, one)
@@ -287,7 +287,7 @@ TEST(GOLDILOCKS_TEST, ntt_block)
         gntt.INTT_Block(NULL, a, FFT_SIZE, NUM_COLUMNS);
     }
 
-    for (int i = 0; i < FFT_SIZE; i++)
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
     {
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }
@@ -299,7 +299,7 @@ TEST(GOLDILOCKS_TEST, ntt_block)
         gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS);
     }
 
-    for (int i = 0; i < FFT_SIZE; i++)
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
     {
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }
@@ -314,7 +314,31 @@ TEST(GOLDILOCKS_TEST, ntt_block)
         gntt.INTT_Block(a, dst, FFT_SIZE, NUM_COLUMNS);
     }
 
-    for (int i = 0; i < FFT_SIZE; i++)
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+
+    // Option 4: different configurations of phases and blocks
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        gntt.NTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, 3, 5);
+        gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, 4, 3);
+    }
+
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+
+    // Option 5: out of range parameters
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        gntt.NTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, 3, 3000);
+        gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, 4, -1);
+    }
+
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
     {
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }
