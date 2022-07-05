@@ -201,23 +201,61 @@ TEST(GOLDILOCKS_TEST, poseidon_full)
 TEST(GOLDILOCKS_TEST, poseidon_block)
 {
 
-    Goldilocks::Element fibonacci[SPONGE_WIDTH];
-    Goldilocks::Element result[SPONGE_WIDTH];
+    Goldilocks::Element fibonacci[SPONGE_WIDTH * NCOLS_POS];
+    Goldilocks::Element result[SPONGE_WIDTH * NCOLS_POS];
+    for (uint j = 0; j < NCOLS_POS; j++)
+    {
+        for (uint i = 0; i < 2; i++)
+        {
+            Goldilocks::add(fibonacci[j * SPONGE_WIDTH + i], Goldilocks::fromU64(i), Goldilocks::fromU64(j));
+            result[j * SPONGE_WIDTH + i] = Goldilocks::zero();
+        }
+        for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+        {
 
-    fibonacci[0] = Goldilocks::zero();
-    fibonacci[1] = Goldilocks::one();
+            fibonacci[j * SPONGE_WIDTH + i] = fibonacci[j * SPONGE_WIDTH + i - 1] + fibonacci[j * SPONGE_WIDTH + i - 2];
+            result[j * SPONGE_WIDTH + i] = Goldilocks::zero();
+        }
+    }
+    for (u_int64_t i = 0; i < NCOLS_POS; ++i)
+    {
+        PoseidonGoldilocks::hash_full_result((Goldilocks::Element(&)[SPONGE_WIDTH])result[i * SPONGE_WIDTH], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
+    }
+
+    Goldilocks::Element fibonacci_block[SPONGE_WIDTH * NCOLS_POS];
+    Goldilocks::Element result_block[SPONGE_WIDTH * NCOLS_POS];
+
+    for (uint i = 0; i < 2; i++)
+    {
+        for (uint j = 0; j < NCOLS_POS; j++)
+        {
+            Goldilocks::add(fibonacci_block[i * NCOLS_POS + j], Goldilocks::fromU64(i), Goldilocks::fromU64(j));
+            result_block[i * NCOLS_POS + j] = Goldilocks::zero();
+        }
+    }
 
     for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
     {
-        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+        for (uint j = 0; j < NCOLS_POS; j++)
+        {
+            fibonacci_block[i * NCOLS_POS + j] = fibonacci_block[NCOLS_POS * (i - 1) + j] + fibonacci_block[NCOLS_POS * (i - 2) + j];
+            result_block[i * NCOLS_POS + j] = Goldilocks::zero();
+        }
     }
 
-    PoseidonGoldilocks::hash_full_result(result, fibonacci);
+    PoseidonGoldilocks::hash_full_result_block(result_block, fibonacci_block, NCOLS_POS);
 
-    Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
-    Goldilocks::Element result0[SPONGE_WIDTH];
-
-    PoseidonGoldilocks::hash_full_result(result0, zero);
+    // Check results
+    for (uint j = 0; j < NCOLS_POS; j++)
+    {
+        for (uint i = 0; i < SPONGE_WIDTH; i++)
+        {
+            uint64_t offset = j * SPONGE_WIDTH + i;
+            u_int64_t offset_block = i * NCOLS_POS + j;
+            ASSERT_EQ(Goldilocks::toU64(fibonacci[offset]), Goldilocks::toU64(fibonacci_block[offset_block]));
+            ASSERT_EQ(Goldilocks::toU64(result[offset]), Goldilocks::toU64(result_block[offset_block]));
+        }
+    }
 }
 
 TEST(GOLDILOCKS_TEST, poseidon)

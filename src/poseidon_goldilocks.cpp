@@ -8,6 +8,7 @@ void PoseidonGoldilocks::hash(Goldilocks::Element (&state)[CAPACITY], Goldilocks
 }
 void PoseidonGoldilocks::hash_full_result(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH])
 {
+
     std::memcpy(state, input, SPONGE_WIDTH * sizeof(Goldilocks::Element));
     for (int i = 0; i < SPONGE_WIDTH; i++)
     {
@@ -59,7 +60,6 @@ void PoseidonGoldilocks::hash_full_result(Goldilocks::Element (&state)[SPONGE_WI
     {
         pow7(state[0]);
         state[0] = state[0] + PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
-
         Goldilocks::Element s0 = state[0] * PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r];
 
         for (int j = 1; j < SPONGE_WIDTH; j++)
@@ -69,6 +69,7 @@ void PoseidonGoldilocks::hash_full_result(Goldilocks::Element (&state)[SPONGE_WI
         }
         state[0] = s0;
     }
+
     for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
     {
         for (int j = 0; j < SPONGE_WIDTH; j++)
@@ -103,6 +104,180 @@ void PoseidonGoldilocks::hash_full_result(Goldilocks::Element (&state)[SPONGE_WI
         for (int j = 0; j < SPONGE_WIDTH; j++)
         {
             state[i] = state[i] + (old_state[j] * PoseidonGoldilocksConstants::M[j][i]);
+        }
+    }
+}
+
+void PoseidonGoldilocks::hash_full_result_block(Goldilocks::Element *state, const Goldilocks::Element *input, int ncols)
+{
+
+    const int length = SPONGE_WIDTH * ncols * sizeof(Goldilocks::Element);
+    std::memcpy(state, input, length);
+    for (int i = 0; i < SPONGE_WIDTH; i++)
+    {
+        int offset = i * ncols;
+        const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[i];
+        for (int k = 0; k < ncols; ++k)
+        {
+            state[offset + k] = state[offset + k] + C_;
+        }
+    }
+
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
+    {
+        for (int i = 0; i < SPONGE_WIDTH; i++)
+        {
+            int offset = i * ncols;
+            const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH + i];
+            for (int k = 0; k < ncols; ++k)
+            {
+                pow7(state[offset + k]);
+                state[offset + k] = state[offset + k] + C_;
+            }
+        }
+        Goldilocks::Element old_state[SPONGE_WIDTH * ncols];
+        std::memcpy(old_state, state, length);
+
+        for (int i = 0; i < SPONGE_WIDTH; i++)
+        {
+            int offseti = i * ncols;
+            for (int k = 0; k < ncols; ++k)
+            {
+                state[offseti + k] = Goldilocks::zero();
+            }
+            for (int j = 0; j < SPONGE_WIDTH; j++)
+            {
+                const Goldilocks::Element mji = PoseidonGoldilocksConstants::M[j][i];
+                int offsetj = j * ncols;
+                for (int k = 0; k < ncols; ++k)
+                {
+                    state[offseti + k] = state[offseti + k] + mji * old_state[offsetj + k];
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < SPONGE_WIDTH; i++)
+    {
+        int offset = i * ncols;
+        const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[i + (HALF_N_FULL_ROUNDS * SPONGE_WIDTH)];
+        for (int k = 0; k < ncols; ++k)
+        {
+            pow7(state[offset + k]);
+            state[offset + k] = state[offset + k] + C_;
+        }
+    }
+
+    Goldilocks::Element old_state[SPONGE_WIDTH * ncols];
+    std::memcpy(old_state, state, length);
+
+    for (int i = 0; i < SPONGE_WIDTH; i++)
+    {
+        int offseti = i * ncols;
+        for (int k = 0; k < ncols; ++k)
+        {
+            state[offseti + k] = Goldilocks::zero();
+        }
+        for (int j = 0; j < SPONGE_WIDTH; j++)
+        {
+            int offsetj = j * ncols;
+            Goldilocks::Element pji = PoseidonGoldilocksConstants::P[j][i];
+            for (int k = 0; k < ncols; ++k)
+            {
+                state[offseti + k] = state[offseti + k] + (pji * old_state[offsetj + k]);
+            }
+        }
+    }
+
+    for (int r = 0; r < N_PARTIAL_ROUNDS; r++)
+    {
+        Goldilocks::Element s0[ncols];
+        const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
+        const Goldilocks::Element S_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r];
+        for (int k = 0; k < ncols; ++k)
+        {
+            pow7(state[k]);
+            state[k] = state[k] + C_;
+            s0[k] = state[k] * S_;
+        }
+
+        for (int j = 1; j < SPONGE_WIDTH; j++)
+        {
+            int offsetj = j * ncols;
+            const Goldilocks::Element S1_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + j];
+            const Goldilocks::Element S2_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH + j - 1];
+            for (int k = 0; k < ncols; ++k)
+            {
+                s0[k] = s0[k] + state[offsetj + k] * S1_;
+                state[offsetj + k] = state[offsetj + k] + state[k] * S2_;
+            }
+        }
+        for (int k = 0; k < ncols; ++k)
+        {
+            state[k] = s0[k];
+        }
+    }
+
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
+    {
+        for (int j = 0; j < SPONGE_WIDTH; j++)
+        {
+            int offsetj = j * ncols;
+            const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[j + (HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH];
+            for (int k = 0; k < ncols; ++k)
+            {
+                pow7(state[offsetj + k]);
+                state[offsetj + k] = state[offsetj + k] + C_;
+            }
+        }
+
+        Goldilocks::Element old_state[SPONGE_WIDTH * ncols];
+        std::memcpy(old_state, state, length);
+
+        for (int i = 0; i < SPONGE_WIDTH; i++)
+        {
+            int offseti = i * ncols;
+            for (int k = 0; k < ncols; ++k)
+            {
+                state[offseti + k] = Goldilocks::zero();
+            }
+            for (int j = 0; j < SPONGE_WIDTH; j++)
+            {
+                int offsetj = j * ncols;
+                Goldilocks::Element mji = PoseidonGoldilocksConstants::M[j][i];
+                for (int k = 0; k < ncols; ++k)
+                {
+                    state[offseti + k] = state[offseti + k] + (mji * old_state[offsetj + k]);
+                }
+            }
+        }
+    }
+
+    for (int j = 0; j < SPONGE_WIDTH; j++)
+    {
+        int offsetj = j * ncols;
+        for (int k = 0; k < ncols; ++k)
+        {
+            pow7(state[offsetj + k]);
+        }
+    }
+    std::memcpy(old_state, state, length);
+
+    for (int i = 0; i < SPONGE_WIDTH; i++)
+    {
+        int offseti = i * ncols;
+        for (int k = 0; k < ncols; ++k)
+        {
+            state[offseti + k] = Goldilocks::zero();
+        }
+        for (int j = 0; j < SPONGE_WIDTH; j++)
+        {
+            int offsetj = j * ncols;
+            Goldilocks::Element mji = PoseidonGoldilocksConstants::M[j][i];
+            for (int k = 0; k < ncols; ++k)
+            {
+                state[offseti + k] = state[offseti + k] + (mji * old_state[offsetj + k]);
+            }
         }
     }
 }
