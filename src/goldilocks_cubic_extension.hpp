@@ -46,8 +46,13 @@ public:
         result[2] = Goldilocks::one();
     };
 
-    // static inline const Element &negone() { return NEGONE; };
-    // static inline void negone(Element &result) { result.fe = NEGONE.fe; };
+    static void copy(Element &dst, const Element &src)
+    {
+        for (uint i = 0; i < FIELD_EXTENSION; i++)
+        {
+            Goldilocks::copy(dst[i], src[i]);
+        }
+    };
 
     static inline void fromU64(Element &result, uint64_t in1[FIELD_EXTENSION])
     {
@@ -119,6 +124,10 @@ public:
         result[1] = a[1];
         result[2] = a[2];
     }
+    static inline void add(Element &result, Goldilocks::Element &a, Element &b)
+    {
+        add(result, b, a);
+    }
 
     static inline void add(Element &result, Element &a, Element &b)
     {
@@ -129,14 +138,21 @@ public:
     }
 
     // ======== SUB ========
-    static inline void sub(uint64_t &result, uint64_t &a, uint64_t &b)
-    {
-        result = a - b;
-    }
-
     static inline void sub(Element &result, Element &a, uint64_t &b)
     {
         result[0] = a[0] - Goldilocks::fromU64(b);
+        result[1] = a[1];
+        result[2] = a[2];
+    }
+
+    static inline void sub(Element &result, Goldilocks::Element &a, Element &b)
+    {
+        sub(result, b, a);
+    }
+
+    static inline void sub(Element &result, Element &a, Goldilocks::Element &b)
+    {
+        result[0] = a[0] - b;
         result[1] = a[1];
         result[2] = a[2];
     }
@@ -170,6 +186,18 @@ public:
         result[1] = ((((A + C) - E) - E) - D);
         result[2] = B - G;
     };
+
+    static inline void mul(Element &result, Element &a, Goldilocks::Element &b)
+    {
+        result[0] = a[0] * b;
+        result[1] = a[1] * b;
+        result[2] = a[2] * b;
+    }
+
+    static inline void mul(Element &result, Goldilocks::Element &a, Element &b)
+    {
+        mul(result, b, a);
+    }
 
     static inline void mul(Element &result, Element &a, uint64_t &b)
     {
