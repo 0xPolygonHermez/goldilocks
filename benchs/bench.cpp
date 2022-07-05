@@ -115,8 +115,7 @@ static void NTT_BENCH(benchmark::State &state)
         for (u_int64_t i = 0; i < NUM_COLUMNS; i++)
         {
             u_int64_t offset = i * FFT_SIZE;
-            gntt.NTT(a + offset, FFT_SIZE);
-            // gntt.INTT(a + offset, FFT_SIZE);
+            gntt.NTT(a + offset, a + offset, FFT_SIZE);
         }
     }
 }
@@ -143,7 +142,7 @@ static void NTT_Block_BENCH(benchmark::State &state)
     }
     for (auto _ : state)
     {
-        gntt.NTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT, NBLOCKS);
+        gntt.NTT(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT, NBLOCKS);
     }
 }
 
@@ -161,7 +160,7 @@ static void LDE_BENCH(benchmark::State &state)
     }
 
     Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
-    gntt.INTT(a, FFT_SIZE);
+    gntt.INTT(a, a, FFT_SIZE);
 
     // TODO: This can be pre-generated
     Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
@@ -192,7 +191,7 @@ static void LDE_BENCH(benchmark::State &state)
             std::memcpy(res, &a[k * FFT_SIZE], FFT_SIZE);
             std::memcpy(&res[FFT_SIZE], zero_array, (FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE);
 
-            gntt_extension.NTT(res, (FFT_SIZE << BLOWUP_FACTOR));
+            gntt_extension.NTT(res, res, (FFT_SIZE << BLOWUP_FACTOR));
         }
     }
     free(zero_array);
@@ -222,7 +221,7 @@ static void LDE_BENCH_Block(benchmark::State &state)
 
     Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
 
-    gntt.INTT_Block(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT);
+    gntt.INTT(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT);
 
     // TODO: This can be pre-generated
     Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
@@ -247,7 +246,7 @@ static void LDE_BENCH_Block(benchmark::State &state)
     }
     for (auto _ : state)
     {
-        gntt_extension.NTT_Block(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE, NBLOCKS);
+        gntt_extension.NTT(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE, NBLOCKS);
     }
 }
 
