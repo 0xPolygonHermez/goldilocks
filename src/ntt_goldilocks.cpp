@@ -232,7 +232,7 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
 
     for (uint64_t i = 1; i < N; i++)
     {
-        Goldilocks::mul(r[i], r[i - 1], Goldilocks::SHIFT);
+        Goldilocks::mul(r[i], r[i - 1], Goldilocks::shift());
     }
 
     INTT(tmp, input, N, ncols);
