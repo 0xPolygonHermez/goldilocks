@@ -14,6 +14,7 @@
 #define NCOLS_NTT 8
 #define NCOLS_POS 32
 #define NPHASES 4
+#define NHASHES 32
 
 TEST(GOLDILOCKS_TEST, one)
 {
@@ -201,13 +202,14 @@ TEST(GOLDILOCKS_TEST, poseidon_full)
 TEST(GOLDILOCKS_TEST, poseidon_block)
 {
 
-    Goldilocks::Element fibonacci[SPONGE_WIDTH * NCOLS_POS];
-    Goldilocks::Element result[SPONGE_WIDTH * NCOLS_POS];
-    for (uint j = 0; j < NCOLS_POS; j++)
+    Goldilocks::Element fibonacci[SPONGE_WIDTH * NCOLS_POS * NHASHES];
+    Goldilocks::Element result[SPONGE_WIDTH * NCOLS_POS * NHASHES];
+    for (uint j = 0; j < NCOLS_POS * NHASHES; j++)
     {
         for (uint i = 0; i < 2; i++)
         {
-            Goldilocks::add(fibonacci[j * SPONGE_WIDTH + i], Goldilocks::fromU64(i), Goldilocks::fromU64(j));
+            uint64_t inc = j % NCOLS_POS;
+            Goldilocks::add(fibonacci[j * SPONGE_WIDTH + i], Goldilocks::fromU64(i), Goldilocks::fromU64(inc));
             result[j * SPONGE_WIDTH + i] = Goldilocks::zero();
         }
         for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
@@ -217,43 +219,54 @@ TEST(GOLDILOCKS_TEST, poseidon_block)
             result[j * SPONGE_WIDTH + i] = Goldilocks::zero();
         }
     }
-    for (u_int64_t i = 0; i < NCOLS_POS; ++i)
+    for (u_int64_t i = 0; i < NCOLS_POS * NHASHES; ++i)
     {
         PoseidonGoldilocks::hash_full_result((Goldilocks::Element(&)[SPONGE_WIDTH])result[i * SPONGE_WIDTH], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
     }
 
-    Goldilocks::Element fibonacci_block[SPONGE_WIDTH * NCOLS_POS];
-    Goldilocks::Element result_block[SPONGE_WIDTH * NCOLS_POS];
+    Goldilocks::Element fibonacci_block[SPONGE_WIDTH * NCOLS_POS * NHASHES];
+    Goldilocks::Element result_block[SPONGE_WIDTH * NCOLS_POS * NHASHES];
 
-    for (uint i = 0; i < 2; i++)
+    for (int k = 0; k < NHASHES; ++k)
     {
-        for (uint j = 0; j < NCOLS_POS; j++)
+        uint64_t offset = k * NCOLS_POS * SPONGE_WIDTH;
+        for (uint i = 0; i < 2; i++)
         {
-            Goldilocks::add(fibonacci_block[i * NCOLS_POS + j], Goldilocks::fromU64(i), Goldilocks::fromU64(j));
-            result_block[i * NCOLS_POS + j] = Goldilocks::zero();
+            for (uint j = 0; j < NCOLS_POS; j++)
+            {
+                Goldilocks::add(fibonacci_block[offset + i * NCOLS_POS + j], Goldilocks::fromU64(i), Goldilocks::fromU64(j));
+                result_block[offset + i * NCOLS_POS + j] = Goldilocks::zero();
+            }
+        }
+
+        for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+        {
+            for (uint j = 0; j < NCOLS_POS; j++)
+            {
+                fibonacci_block[offset + i * NCOLS_POS + j] = fibonacci_block[offset + NCOLS_POS * (i - 1) + j] + fibonacci_block[offset + NCOLS_POS * (i - 2) + j];
+                result_block[offset + i * NCOLS_POS + j] = Goldilocks::zero();
+            }
         }
     }
 
-    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+    for (uint k = 0; k < NHASHES; ++k)
     {
-        for (uint j = 0; j < NCOLS_POS; j++)
-        {
-            fibonacci_block[i * NCOLS_POS + j] = fibonacci_block[NCOLS_POS * (i - 1) + j] + fibonacci_block[NCOLS_POS * (i - 2) + j];
-            result_block[i * NCOLS_POS + j] = Goldilocks::zero();
-        }
+        uint64_t offsetk = k * NCOLS_POS * SPONGE_WIDTH;
+        PoseidonGoldilocks::hash_full_result_block(result_block + offsetk, fibonacci_block + offsetk, NCOLS_POS);
     }
-
-    PoseidonGoldilocks::hash_full_result_block(result_block, fibonacci_block, NCOLS_POS);
-
     // Check results
-    for (uint j = 0; j < NCOLS_POS; j++)
+    for (uint k = 0; k < NHASHES; ++k)
     {
-        for (uint i = 0; i < SPONGE_WIDTH; i++)
+        uint64_t offsetk = k * NCOLS_POS * SPONGE_WIDTH;
+        for (uint j = 0; j < NCOLS_POS; j++)
         {
-            uint64_t offset = j * SPONGE_WIDTH + i;
-            u_int64_t offset_block = i * NCOLS_POS + j;
-            ASSERT_EQ(Goldilocks::toU64(fibonacci[offset]), Goldilocks::toU64(fibonacci_block[offset_block]));
-            ASSERT_EQ(Goldilocks::toU64(result[offset]), Goldilocks::toU64(result_block[offset_block]));
+            for (uint i = 0; i < SPONGE_WIDTH; i++)
+            {
+                uint64_t offset = offsetk + j * SPONGE_WIDTH + i;
+                u_int64_t offset_block = offsetk + i * NCOLS_POS + j;
+                ASSERT_EQ(Goldilocks::toU64(fibonacci[offset]), Goldilocks::toU64(fibonacci_block[offset_block]));
+                ASSERT_EQ(Goldilocks::toU64(result[offset]), Goldilocks::toU64(result_block[offset_block]));
+            }
         }
     }
 }
