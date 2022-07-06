@@ -16,7 +16,7 @@
 #define NPHASES_NTT 2
 #define NPHASES_LDE 3
 #define NBLOCKS 1
-#define NCOLS_POS 32
+#define NCOLS_POS 8
 
 static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
 {
