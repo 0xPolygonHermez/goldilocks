@@ -73,7 +73,7 @@ public:
 
     static std::string toString(const Element &in1, int radix = 10);
     static void toString(std::string &result, const Element &in1, int radix = 10);
-    static std::string toString(const Element *in1, const int size, int radix = 10);
+    static std::string toString(const Element *in1, const uint64_t size, int radix = 10);
 
     static Element fromString(const std::string &in1, int radix = 10);
     static void fromString(Element &result, const std::string &in1, int radix = 10);
@@ -142,10 +142,10 @@ inline void Goldilocks::toString(std::string &result, const Element &in1, int ra
     result = aux.get_str(radix);
 }
 
-inline std::string Goldilocks::toString(const Element *in1, const int size, int radix)
+inline std::string Goldilocks::toString(const Element *in1, const uint64_t size, int radix)
 {
     std::string result = "";
-    for (int i = 0; i < size; i++)
+    for (uint64_t i = 0; i < size; i++)
     {
         mpz_class aux = Goldilocks::toU64(in1[i]);
         result += std::to_string(i) + ": " + aux.get_str(radix) + "\n";

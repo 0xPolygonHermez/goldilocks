@@ -118,8 +118,8 @@ public:
     };
     ~NTT_Goldilocks()
     {
-        delete roots;
-        delete powTwoInv;
+        free(roots);
+        free(powTwoInv);
     }
 
     void NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
