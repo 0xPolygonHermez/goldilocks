@@ -16,7 +16,11 @@
 #define NPHASES_NTT 2
 #define NPHASES_LDE 3
 #define NBLOCKS 1
-#define NCOLS_POS 8
+#define NCOLS_POS 128
+
+#ifdef LIKWID_PERFMON
+#include <likwid-marker.h>
+#endif
 
 static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
 {
@@ -95,6 +99,12 @@ static void DISABLED_POSEIDON_BENCH(benchmark::State &state)
 
 static void POSEIDON_BLOCK_BENCH(benchmark::State &state)
 {
+#ifdef LIKWID_PERFMON
+    LIKWID_MARKER_INIT;
+    LIKWID_MARKER_THREADINIT;
+    LIKWID_MARKER_REGISTER("BLOCK_POSEIDON");
+#endif
+
     Goldilocks::Element *fibonacci = (Goldilocks::Element *)malloc(SPONGE_WIDTH * NCOLS_POS * NUM_HASHES * sizeof(Goldilocks::Element));
     Goldilocks::Element *result = (Goldilocks::Element *)malloc(SPONGE_WIDTH * NCOLS_POS * NUM_HASHES * sizeof(Goldilocks::Element));
     for (uint j = 0; j < NCOLS_POS * NUM_HASHES; j++)
@@ -112,19 +122,30 @@ static void POSEIDON_BLOCK_BENCH(benchmark::State &state)
             result[j * SPONGE_WIDTH + i] = Goldilocks::zero();
         }
     }
+
     for (auto _ : state)
     {
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_START("BLOCK_POSEIDON");
+#endif
         for (u_int64_t i = 0; i < NCOLS_POS * NUM_HASHES; ++i)
         {
             PoseidonGoldilocks::hash_full_result((Goldilocks::Element(&)[SPONGE_WIDTH])result[i * SPONGE_WIDTH], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
         }
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_STOP("BLOCK_POSEIDON");
+#endif
     }
+
     free(fibonacci);
     free(result);
 }
 
 static void POSEIDON_BLOCK_OPT_BENCH(benchmark::State &state)
 {
+#ifdef LIKWID_PERFMON
+    LIKWID_MARKER_REGISTER("BLOCK_POSEIDON_OPT");
+#endif
     Goldilocks::Element *fibonacci_block = (Goldilocks::Element *)malloc(SPONGE_WIDTH * NCOLS_POS * NUM_HASHES * sizeof(Goldilocks::Element));
     Goldilocks::Element *result_block = (Goldilocks::Element *)malloc(SPONGE_WIDTH * NCOLS_POS * NUM_HASHES * sizeof(Goldilocks::Element));
 
@@ -151,14 +172,73 @@ static void POSEIDON_BLOCK_OPT_BENCH(benchmark::State &state)
     }
     for (auto _ : state)
     {
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_START("BLOCK_POSEIDON_OPT");
+#endif
         for (uint k = 0; k < NUM_HASHES; ++k)
         {
             uint64_t offsetk = k * NCOLS_POS * SPONGE_WIDTH;
             PoseidonGoldilocks::hash_full_result_block(result_block + offsetk, fibonacci_block + offsetk, NCOLS_POS);
         }
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_STOP("BLOCK_POSEIDON_OPT");
+#endif
     }
     free(fibonacci_block);
     free(result_block);
+#ifdef LIKWID_PERFMON
+    LIKWID_MARKER_CLOSE;
+#endif
+}
+
+static void POSEIDON_BLOCK_OPT2_BENCH(benchmark::State &state)
+{
+#ifdef LIKWID_PERFMON
+    LIKWID_MARKER_REGISTER("BLOCK_POSEIDON_OPT");
+#endif
+    Goldilocks::Element *fibonacci_block = (Goldilocks::Element *)malloc(SPONGE_WIDTH * NCOLS_POS * NUM_HASHES * sizeof(Goldilocks::Element));
+    Goldilocks::Element *result_block = (Goldilocks::Element *)malloc(SPONGE_WIDTH * NCOLS_POS * NUM_HASHES * sizeof(Goldilocks::Element));
+
+    for (int k = 0; k < NUM_HASHES; ++k)
+    {
+        uint64_t offset = k * NCOLS_POS * SPONGE_WIDTH;
+        for (uint i = 0; i < 2; i++)
+        {
+            for (uint j = 0; j < NCOLS_POS; j++)
+            {
+                Goldilocks::add(fibonacci_block[offset + i * NCOLS_POS + j], Goldilocks::fromU64(i), Goldilocks::fromU64(j));
+                result_block[offset + i * NCOLS_POS + j] = Goldilocks::zero();
+            }
+        }
+
+        for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+        {
+            for (uint j = 0; j < NCOLS_POS; j++)
+            {
+                fibonacci_block[offset + i * NCOLS_POS + j] = fibonacci_block[offset + NCOLS_POS * (i - 1) + j] + fibonacci_block[offset + NCOLS_POS * (i - 2) + j];
+                result_block[offset + i * NCOLS_POS + j] = Goldilocks::zero();
+            }
+        }
+    }
+    for (auto _ : state)
+    {
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_START("BLOCK_POSEIDON_OPT");
+#endif
+        for (uint k = 0; k < NUM_HASHES; ++k)
+        {
+            uint64_t offsetk = k * NCOLS_POS * SPONGE_WIDTH;
+            PoseidonGoldilocks::hash_full_result_block2<NCOLS_POS>(result_block + offsetk, fibonacci_block + offsetk);
+        }
+#ifdef LIKWID_PERFMON
+        LIKWID_MARKER_STOP("BLOCK_POSEIDON_OPT");
+#endif
+    }
+    free(fibonacci_block);
+    free(result_block);
+#ifdef LIKWID_PERFMON
+    LIKWID_MARKER_CLOSE;
+#endif
 }
 
 static void DISABLED_NTT_BENCH(benchmark::State &state)
@@ -345,6 +425,15 @@ BENCHMARK(POSEIDON_BLOCK_BENCH)
     ->UseRealTime();
 
 BENCHMARK(POSEIDON_BLOCK_OPT_BENCH)
+    //->Unit(benchmark::kMicrosecond)
+    //->DenseRange(1, 1, 1)
+    //->RangeMultiplier(2)
+    //->Range(2, omp_get_max_threads())
+    //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
+    ->DenseRange(1, 1, 1)
+    ->UseRealTime();
+
+BENCHMARK(POSEIDON_BLOCK_OPT2_BENCH)
     //->Unit(benchmark::kMicrosecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)

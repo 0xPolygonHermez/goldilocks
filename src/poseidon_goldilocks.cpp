@@ -7,6 +7,7 @@ void PoseidonGoldilocks::hash(Goldilocks::Element (&state)[CAPACITY], Goldilocks
     hash_full_result(aux, input);
     std::memcpy(state, aux, CAPACITY * sizeof(Goldilocks::Element));
 }
+
 void PoseidonGoldilocks::hash_full_result(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH])
 {
 
