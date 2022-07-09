@@ -32,11 +32,11 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
 
     u_int64_t domainPow = log2(size);
     assert(((u_int64_t)1 << domainPow) == size);
-    if (nphase < 1)
+    if (nphase < 1 || domainPow == 0)
     {
         nphase = 1;
     }
-    if (nphase > domainPow)
+    else if (nphase > domainPow)
     {
         nphase = domainPow;
     }
