@@ -13,7 +13,7 @@
 #define FFT_SIZE (1 << 23)
 #define NUM_COLUMNS 100
 #define BLOWUP_FACTOR 1
-#define NPHASES_NTT 2
+#define NPHASES_NTT 3
 #define NPHASES_LDE 3
 #define NBLOCKS 1
 
@@ -123,7 +123,7 @@ static void NTT_BENCH(benchmark::State &state)
 static void NTT_Block_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
-    NTT_Goldilocks gntt(FFT_SIZE);
+    NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
 
     for (uint i = 0; i < 2; i++)
     {
@@ -149,7 +149,7 @@ static void NTT_Block_BENCH(benchmark::State &state)
 static void LDE_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
-    NTT_Goldilocks gntt(FFT_SIZE);
+    NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
     NTT_Goldilocks gntt_extension((FFT_SIZE << BLOWUP_FACTOR));
 
     a[0] = Goldilocks::one();
@@ -200,7 +200,7 @@ static void LDE_BENCH(benchmark::State &state)
 static void LDE_BENCH_Block(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
-    NTT_Goldilocks gntt(FFT_SIZE);
+    NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
     NTT_Goldilocks gntt_extension((FFT_SIZE << BLOWUP_FACTOR));
 
     for (uint i = 0; i < 2; i++)
@@ -281,7 +281,7 @@ BENCHMARK(NTT_Block_BENCH)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
-    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
     ->UseRealTime();
 
 BENCHMARK(LDE_BENCH)
@@ -290,7 +290,7 @@ BENCHMARK(LDE_BENCH)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
-    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
     ->UseRealTime();
 BENCHMARK(LDE_BENCH_Block)
     ->Unit(benchmark::kSecond)
@@ -298,7 +298,7 @@ BENCHMARK(LDE_BENCH_Block)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
-    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
     ->UseRealTime();
 
 BENCHMARK_MAIN();
