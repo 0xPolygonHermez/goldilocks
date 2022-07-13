@@ -41,6 +41,11 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
         nphase = domainPow;
     }
     u_int64_t maxBatchPow = s / nphase;
+    u_int64_t res = s % nphase;
+    if (res > 0)
+    {
+        maxBatchPow += 1;
+    }
     u_int64_t batchSize = 1 << maxBatchPow;
     u_int64_t nBatches = size / batchSize;
 
@@ -48,7 +53,10 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
     omp_set_num_threads(nThreads);
     for (u_int64_t s = 1; s <= domainPow; s += maxBatchPow)
     {
-
+        if (s == res + 1 && maxBatchPow > 1)
+        {
+            maxBatchPow -= 1;
+        }
         u_int64_t sInc = s + maxBatchPow <= domainPow ? maxBatchPow : domainPow - s + 1;
 #pragma omp parallel for
         for (u_int64_t b = 0; b < nBatches; b++)
