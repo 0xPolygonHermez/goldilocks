@@ -108,7 +108,7 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
         for (u_int64_t ie = 0; ie < size; ++ie)
         {
             u_int64_t offset2 = ie * ncols;
-            std::memcpy(&dst_[offset2], &a[offset2], ncols * sizeof(u_int64_t));
+            std::memcpy(&dst_[offset2], &a[offset2], ncols * sizeof(Goldilocks::Element));
         }
     }
 }
@@ -154,7 +154,7 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
             for (u_int64_t ie = 0; ie < size; ++ie)
             {
                 u_int64_t offset2 = ie * ncols + offset_cols;
-                std::memcpy(&dst[offset2], &dst_[ie * aux_ncols], aux_ncols * sizeof(u_int64_t));
+                std::memcpy(&dst[offset2], &dst_[ie * aux_ncols], aux_ncols * sizeof(Goldilocks::Element));
             }
         }
         offset_cols += aux_ncols;
@@ -175,7 +175,7 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
         u_int64_t r = BR(i, domainSize);
         u_int64_t offset_r = r * ncols_all + offset_cols;
         u_int64_t offset_i = i * ncols;
-        std::memcpy(&dst[offset_i], &src[offset_r], ncols * sizeof(u_int64_t));
+        std::memcpy(&dst[offset_i], &src[offset_r], ncols * sizeof(Goldilocks::Element));
     }
 }
 
@@ -190,7 +190,7 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_
     {
         dst_ = dst;
     }
-    NTT(dst_, src, size, ncols, nphase);
+    NTT(dst_, src, size, ncols, nphase, nblock);
     u_int64_t domainPow = log2(size);
     u_int64_t nDiv2 = size >> 1;
 
