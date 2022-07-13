@@ -53,7 +53,7 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
     omp_set_num_threads(nThreads);
     for (u_int64_t s = 1; s <= domainPow; s += maxBatchPow)
     {
-        if (s == res + 1 && maxBatchPow > 1)
+        if (res > 0 && s == res + 1 && maxBatchPow > 1)
         {
             maxBatchPow -= 1;
         }
