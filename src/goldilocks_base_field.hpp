@@ -5,6 +5,7 @@
 #include <string>   // string
 #include <gmpxx.h>
 #include <iostream> // string
+#include <omp.h>
 
 #define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0

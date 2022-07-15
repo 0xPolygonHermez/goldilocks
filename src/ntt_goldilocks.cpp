@@ -245,14 +245,14 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
 
     INTT(tmp, input, N, ncols);
 #pragma omp parallel for
-    for (uint64_t j = 0; j < ncols; j++)
-    {
-        for (uint64_t i = 0; i < N; i++)
+    for (uint64_t i = 0; i < N; i++)
+        for (uint64_t j = 0; j < ncols; j++)
         {
+            {
 
-            Goldilocks::mul(tmp[i * ncols + j], tmp[ncols * i + j], r[i]);
+                Goldilocks::mul(tmp[i * ncols + j], tmp[ncols * i + j], r[i]);
+            }
         }
-    }
 #pragma omp parallel for schedule(static)
     for (uint64_t i = N * ncols; i < N_Extended * ncols; i++)
     {
