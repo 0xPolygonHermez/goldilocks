@@ -17,7 +17,7 @@
 #define NPHASES_LDE 3
 #define NBLOCKS 1
 
-static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
+static void POSEIDON_BENCH_FULL(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
 
@@ -54,7 +54,7 @@ static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
 
-static void DISABLED_POSEIDON_BENCH(benchmark::State &state)
+static void POSEIDON_BENCH(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
     uint64_t result_size = (uint64_t)NUM_HASHES * (uint64_t)CAPACITY;
@@ -118,6 +118,7 @@ static void NTT_BENCH(benchmark::State &state)
             gntt.NTT(a + offset, a + offset, FFT_SIZE);
         }
     }
+    free(a);
 }
 
 static void NTT_Block_BENCH(benchmark::State &state)
@@ -144,6 +145,7 @@ static void NTT_Block_BENCH(benchmark::State &state)
     {
         gntt.NTT(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT, NBLOCKS);
     }
+    free(a);
 }
 
 static void LDE_BENCH(benchmark::State &state)
@@ -193,8 +195,11 @@ static void LDE_BENCH(benchmark::State &state)
 
             gntt_extension.NTT(res, res, (FFT_SIZE << BLOWUP_FACTOR));
         }
+        free(res);
     }
     free(zero_array);
+    free(a);
+    free(r);
 }
 
 static void LDE_BENCH_Block(benchmark::State &state)
@@ -248,9 +253,11 @@ static void LDE_BENCH_Block(benchmark::State &state)
     {
         gntt_extension.NTT(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE, NBLOCKS);
     }
+    free(a);
+    free(r);
 }
 
-BENCHMARK(DISABLED_POSEIDON_BENCH_FULL)
+BENCHMARK(POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
@@ -258,7 +265,7 @@ BENCHMARK(DISABLED_POSEIDON_BENCH_FULL)
     ->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->UseRealTime();
 
-BENCHMARK(DISABLED_POSEIDON_BENCH)
+BENCHMARK(POSEIDON_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
