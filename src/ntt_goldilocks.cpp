@@ -121,6 +121,7 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
     }
     if (a != dst_)
     {
+        assert(0);
 #pragma omp parallel for schedule(static)
         for (u_int64_t ie = 0; ie < size; ++ie)
         {
@@ -203,16 +204,7 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
             u_int64_t r = BR(i, domainSize);
             u_int64_t offset_r1 = r * ncols_all + offset_cols;
             u_int64_t offset_i1 = i * ncols;
-            u_int64_t offset_i2 = i * ncols_all + offset_cols;
-            u_int64_t offset_r2 = r * ncols;
-            if (r <= i)
-            {
-                std::memcpy(&dst[offset_i1], &src[offset_r1], ncols * sizeof(Goldilocks::Element));
-                if (r != i)
-                {
-                    std::memcpy(&dst[offset_r2], &src[offset_i2], ncols * sizeof(Goldilocks::Element));
-                }
-            }
+            std::memcpy(&dst[offset_i1], &src[offset_r1], ncols * sizeof(Goldilocks::Element));
         }
     }
     else
