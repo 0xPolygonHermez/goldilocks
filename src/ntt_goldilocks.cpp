@@ -173,17 +173,54 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
     }
     free(aux);
 }
-
+/**
+ * @brief permutation of components of an array in bit-reversal order. If dst==src the permutation is performed on-site.
+ *
+ * @param dst destination pointer (may be equal to src)
+ * @param src source pointer
+ * @param size field size
+ * @param offset_cols columns offset (for NTT wifh nblock>1)
+ * @param ncols number of columns of destination array
+ * @param ncols_all number of columns of source array (ncols = nocols_all if nblock == 1)
+ */
 void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all)
 {
     uint32_t domainSize = log2(size);
-#pragma omp parallel for schedule(static)
-    for (u_int64_t i = 0; i < size; i++)
+    if (dst != src)
     {
-        u_int64_t r = BR(i, domainSize);
-        u_int64_t offset_r = r * ncols_all + offset_cols;
-        u_int64_t offset_i = i * ncols;
-        std::memcpy(&dst[offset_i], &src[offset_r], ncols * sizeof(Goldilocks::Element));
+#pragma omp parallel for schedule(static)
+        for (u_int64_t i = 0; i < size; i++)
+        {
+            u_int64_t r = BR(i, domainSize);
+            u_int64_t offset_r1 = r * ncols_all + offset_cols;
+            u_int64_t offset_i1 = i * ncols;
+            u_int64_t offset_i2 = i * ncols_all + offset_cols;
+            u_int64_t offset_r2 = r * ncols;
+            if (r <= i)
+            {
+                std::memcpy(&dst[offset_i1], &src[offset_r1], ncols * sizeof(Goldilocks::Element));
+                if (r != i)
+                {
+                    std::memcpy(&dst[offset_r2], &src[offset_i2], ncols * sizeof(Goldilocks::Element));
+                }
+            }
+        }
+    }
+    else
+    {
+        assert(offset_cols == 0 && ncols == ncols_all); // single block
+#pragma omp parallel for schedule(static)
+        for (u_int64_t i = 0; i < size; i++)
+        {
+            u_int64_t r = BR(i, domainSize);
+            u_int64_t offset_r = r * ncols;
+            u_int64_t offset_i = i * ncols;
+            if (r < i)
+            {
+                std::memcpy(&dst[offset_i], &src[offset_r], ncols * sizeof(Goldilocks::Element));
+                std::memcpy(&dst[offset_r], &src[offset_i], ncols * sizeof(Goldilocks::Element));
+            }
+        }
     }
 }
 
