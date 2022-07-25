@@ -9,6 +9,7 @@
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
 #define FFT_SIZE (1 << 4)
+#define FFT_SIZE_LDE (1 << 4)
 #define NUM_REPS 5
 #define BLOWUP_FACTOR 1
 #define NUM_COLUMNS 8
@@ -350,44 +351,44 @@ TEST(GOLDILOCKS_TEST, ntt_block)
 
 TEST(GOLDILOCKS_TEST, LDE)
 {
-    Goldilocks::Element *a = (Goldilocks::Element *)malloc((FFT_SIZE << BLOWUP_FACTOR) * sizeof(Goldilocks::Element));
-    NTT_Goldilocks gntt(FFT_SIZE);
-    NTT_Goldilocks gntt_extension((FFT_SIZE << BLOWUP_FACTOR));
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((FFT_SIZE_LDE << BLOWUP_FACTOR) * sizeof(Goldilocks::Element));
+    NTT_Goldilocks gntt(FFT_SIZE_LDE);
+    NTT_Goldilocks gntt_extension((FFT_SIZE_LDE << BLOWUP_FACTOR));
 
-    Goldilocks::Element *zeros_array = (Goldilocks::Element *)malloc(((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE) * sizeof(Goldilocks::Element));
+    Goldilocks::Element *zeros_array = (Goldilocks::Element *)malloc(((FFT_SIZE_LDE << BLOWUP_FACTOR) - FFT_SIZE_LDE) * sizeof(Goldilocks::Element));
 #pragma omp parallel for
-    for (uint i = 0; i < ((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE); i++)
+    for (uint i = 0; i < ((FFT_SIZE_LDE << BLOWUP_FACTOR) - FFT_SIZE_LDE); i++)
     {
         zeros_array[i] = Goldilocks::zero();
     }
 
     a[0] = Goldilocks::one();
     a[1] = Goldilocks::one();
-    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    for (uint64_t i = 2; i < FFT_SIZE_LDE; i++)
     {
         a[i] = a[i - 1] + a[i - 2];
     }
 
     Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
-    gntt.INTT(a, a, FFT_SIZE);
+    gntt.INTT(a, a, FFT_SIZE_LDE);
 
     // TODO: This can be pre-generated
-    Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
+    Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE_LDE * sizeof(Goldilocks::Element));
     r[0] = Goldilocks::one();
-    for (int i = 1; i < FFT_SIZE; i++)
+    for (int i = 1; i < FFT_SIZE_LDE; i++)
     {
         r[i] = r[i - 1] * shift;
     }
 
 #pragma omp parallel for
-    for (int i = 0; i < FFT_SIZE; i++)
+    for (int i = 0; i < FFT_SIZE_LDE; i++)
     {
         a[i] = a[i] * r[i];
     }
 
-    std::memcpy(&a[FFT_SIZE], zeros_array, ((FFT_SIZE << BLOWUP_FACTOR) - FFT_SIZE) * sizeof(Goldilocks::Element));
+    std::memcpy(&a[FFT_SIZE_LDE], zeros_array, ((FFT_SIZE_LDE << BLOWUP_FACTOR) - FFT_SIZE_LDE) * sizeof(Goldilocks::Element));
 
-    gntt_extension.NTT(a, a, (FFT_SIZE << BLOWUP_FACTOR));
+    gntt_extension.NTT(a, a, (FFT_SIZE_LDE << BLOWUP_FACTOR));
 
     ASSERT_EQ(Goldilocks::toU64(a[0]), 0X5C7F9E08245DBA11);
     ASSERT_EQ(Goldilocks::toU64(a[1]), 0X90D1DFB0589ABF6);
@@ -429,9 +430,9 @@ TEST(GOLDILOCKS_TEST, LDE)
 
 TEST(GOLDILOCKS_TEST, LDE_block)
 {
-    Goldilocks::Element *a = (Goldilocks::Element *)malloc((FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
-    NTT_Goldilocks gntt(FFT_SIZE);
-    NTT_Goldilocks gntt_extension((FFT_SIZE << BLOWUP_FACTOR));
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((FFT_SIZE_LDE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    NTT_Goldilocks gntt(FFT_SIZE_LDE);
+    NTT_Goldilocks gntt_extension((FFT_SIZE_LDE << BLOWUP_FACTOR));
 
     for (uint i = 0; i < 2; i++)
     {
@@ -441,7 +442,7 @@ TEST(GOLDILOCKS_TEST, LDE_block)
         }
     }
 
-    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    for (uint64_t i = 2; i < FFT_SIZE_LDE; i++)
     {
         for (uint j = 0; j < NUM_COLUMNS; j++)
         {
@@ -451,18 +452,18 @@ TEST(GOLDILOCKS_TEST, LDE_block)
 
     Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
 
-    gntt.INTT(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES);
+    gntt.INTT(a, a, FFT_SIZE_LDE, NUM_COLUMNS, NPHASES);
 
     // TODO: This can be pre-generated
-    Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
+    Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE_LDE * sizeof(Goldilocks::Element));
     r[0] = Goldilocks::one();
-    for (int i = 1; i < FFT_SIZE; i++)
+    for (int i = 1; i < FFT_SIZE_LDE; i++)
     {
         r[i] = r[i - 1] * shift;
     }
 
 #pragma omp parallel for
-    for (uint64_t i = 0; i < FFT_SIZE; i++)
+    for (uint64_t i = 0; i < FFT_SIZE_LDE; i++)
     {
         for (uint j = 0; j < NUM_COLUMNS; j++)
         {
@@ -470,12 +471,12 @@ TEST(GOLDILOCKS_TEST, LDE_block)
         }
     }
 #pragma omp parallel for schedule(static)
-    for (uint i = FFT_SIZE * NUM_COLUMNS; i < (FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS; i++)
+    for (uint i = FFT_SIZE_LDE * NUM_COLUMNS; i < (FFT_SIZE_LDE << BLOWUP_FACTOR) * NUM_COLUMNS; i++)
     {
         a[i] = Goldilocks::zero();
     }
 
-    gntt_extension.NTT(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NUM_PHASES);
+    gntt_extension.NTT(a, a, (FFT_SIZE_LDE << BLOWUP_FACTOR), NUM_COLUMNS, NUM_PHASES);
 
     ASSERT_EQ(Goldilocks::toU64(a[0 * NUM_COLUMNS]), 0X5C7F9E08245DBA11);
     ASSERT_EQ(Goldilocks::toU64(a[1 * NUM_COLUMNS]), 0X90D1DFB0589ABF6);
