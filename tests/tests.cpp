@@ -254,6 +254,8 @@ TEST(GOLDILOCKS_TEST, ntt)
     {
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }
+    free(a);
+    free(initial);
 }
 
 TEST(GOLDILOCKS_TEST, ntt_block)
@@ -342,6 +344,8 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     {
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }
+    free(a);
+    free(initial);
 }
 
 TEST(GOLDILOCKS_TEST, LDE)
@@ -417,6 +421,10 @@ TEST(GOLDILOCKS_TEST, LDE)
     ASSERT_EQ(Goldilocks::toU64(a[29]), 0X48161FC7B47B998E);
     ASSERT_EQ(Goldilocks::toU64(a[30]), 0X5144C235578455C6);
     ASSERT_EQ(Goldilocks::toU64(a[31]), 0XAF5244B5C1134635);
+
+    free(a);
+    free(zeros_array);
+    free(r);
 }
 
 TEST(GOLDILOCKS_TEST, LDE_block)
@@ -501,6 +509,9 @@ TEST(GOLDILOCKS_TEST, LDE_block)
     ASSERT_EQ(Goldilocks::toU64(a[29 * NUM_COLUMNS]), 0X48161FC7B47B998E);
     ASSERT_EQ(Goldilocks::toU64(a[30 * NUM_COLUMNS]), 0X5144C235578455C6);
     ASSERT_EQ(Goldilocks::toU64(a[31 * NUM_COLUMNS]), 0XAF5244B5C1134635);
+
+    free(a);
+    free(r);
 }
 
 TEST(GOLDILOCKS_CUBIC_TEST, one)
