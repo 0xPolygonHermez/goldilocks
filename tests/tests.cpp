@@ -8,7 +8,7 @@
 
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
-#define FFT_SIZE (1 << 4)
+#define FFT_SIZE (1 << 7)
 #define FFT_SIZE_LDE (1 << 4)
 #define NUM_REPS 5
 #define BLOWUP_FACTOR 1
