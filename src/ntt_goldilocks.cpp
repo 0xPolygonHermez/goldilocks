@@ -62,15 +62,16 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
         u_int64_t rm = (1 << (re - rs)) - 1;
         u_int64_t batchSize = 1 << sInc;
         u_int64_t nBatches = size / batchSize;
+        Goldilocks::Element *aux_ = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * batchSize * ncols * nThreads);
 
 #pragma omp parallel for
         for (u_int64_t b = 0; b < nBatches; b++)
         {
-            Goldilocks::Element *aux_ = NULL;
+            // Goldilocks::Element *aux_ = NULL;
 #if 1
             Goldilocks::Element *a_ = &a[b * batchSize * ncols];
-            aux_ = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * batchSize * ncols);
-            Goldilocks::Element *a2_ = aux_;
+            // aux_ = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * batchSize * ncols);
+            Goldilocks::Element *a2_ = &aux_[omp_get_thread_num() * batchSize * ncols];
             Goldilocks::Element *tmp_;
 
             u_int64_t domainPow_ = sInc;
@@ -85,7 +86,7 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
             u_int64_t res_ = domainPow_ % nphase_;
             if (res_ > 0)
             {
-                maxBatchPow_ += 2;
+                maxBatchPow_ += 1;
             }
             u_int64_t count_ = 1;
             for (uint64_t s_ = 1; s_ <= domainPow_; s_ += maxBatchPow_, ++count_)
@@ -191,12 +192,11 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
                 u_int64_t offset_src = (b * batchSize + x) * ncols;
                 std::memcpy(&a2[offset_dstY], &a[offset_src], ncols * sizeof(Goldilocks::Element));
             }
-            if (aux_)
-                free(aux_);
         }
         tmp = a2;
         a2 = a;
         a = tmp;
+        free(aux_);
     }
     if (a != dst_)
     {
