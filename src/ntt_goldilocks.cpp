@@ -66,6 +66,95 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
 #pragma omp parallel for
         for (u_int64_t b = 0; b < nBatches; b++)
         {
+            Goldilocks::Element *aux_ = NULL;
+#if 1
+            Goldilocks::Element *a_ = &a[b * batchSize * ncols];
+            aux_ = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * batchSize * ncols);
+            Goldilocks::Element *a2_ = aux_;
+            Goldilocks::Element *tmp_;
+
+            u_int64_t domainPow_ = sInc;
+            u_int64_t nphase_ = 2;
+            if (s > 1)
+                nphase_ = 1;
+            if (nphase_ > domainPow_)
+            {
+                nphase_ = domainPow_;
+            }
+            u_int64_t maxBatchPow_ = domainPow_ / nphase_;
+            u_int64_t res_ = domainPow_ % nphase_;
+            if (res_ > 0)
+            {
+                maxBatchPow_ += 2;
+            }
+            u_int64_t count_ = 1;
+            for (uint64_t s_ = 1; s_ <= domainPow_; s_ += maxBatchPow_, ++count_)
+            {
+                if (res_ > 0 && count_ == res_ + 1 && maxBatchPow_ > 1)
+                {
+                    maxBatchPow_ -= 1;
+                }
+                u_int64_t sInc_ = s_ + maxBatchPow_ <= domainPow_ ? maxBatchPow_ : domainPow_ - s_ + 1;
+                u_int64_t rs_ = s_ - 1;
+                u_int64_t re_ = domainPow_ - 1;
+                u_int64_t rb_ = 1 << rs_;
+                u_int64_t rm_ = (1 << (re_ - rs_)) - 1;
+                u_int64_t batchSize_ = 1 << sInc_;
+                u_int64_t nBatches_ = batchSize / batchSize_;
+
+                for (u_int64_t b_ = 0; b_ < nBatches_; b_++)
+                {
+                    for (u_int64_t si_ = 0; si_ < sInc_; si_++)
+                    {
+                        u_int64_t m = 1 << (s + s_ + si_ - 1);
+                        u_int64_t mdiv2 = m >> 1;
+                        u_int64_t mdiv2i_ = 1 << si_;
+                        u_int64_t mi_ = mdiv2i_ * 2;
+                        for (u_int64_t i = 0; i < batchSize_ >> 1; i++)
+                        {
+                            u_int64_t ki_ = b_ * batchSize_ + (i / mdiv2i_) * mi_;
+                            u_int64_t ji_ = i % mdiv2i_;
+
+                            u_int64_t offset1_ = (ki_ + ji_ + mdiv2i_) * ncols;
+                            u_int64_t offset2_ = (ki_ + ji_) * ncols;
+
+                            u_int64_t j_ = (b_ * batchSize_ / 2 + i);
+                            j_ = (j_ & rm_) * rb_ + (j_ >> (re_ - rs_));
+
+                            u_int64_t j = (b * batchSize / 2 + j_);
+                            j = (j & rm) * rb + (j >> (re - rs));
+                            j = j % mdiv2;
+
+                            Goldilocks::Element w = root(s + s_ + si_ - 1, j);
+
+                            for (u_int64_t k = 0; k < ncols; ++k)
+                            {
+                                Goldilocks::Element t = w * a_[offset1_ + k];
+                                Goldilocks::Element u = a_[offset2_ + k];
+
+                                Goldilocks::add(a_[offset2_ + k], t, u);
+                                Goldilocks::sub(a_[offset1_ + k], u, t);
+                            }
+                        }
+                    }
+                    if (nphase_ > 1)
+                    {
+                        for (u_int64_t x = 0; x < batchSize_; x++)
+                        {
+                            u_int64_t offset_dstY_ = (x * nBatches_ + b_) * ncols;
+                            u_int64_t offset_src_ = (b_ * batchSize_ + x) * ncols;
+                            std::memcpy(&a2_[offset_dstY_], &a_[offset_src_], ncols * sizeof(Goldilocks::Element));
+                        }
+                    }
+                }
+                if (nphase_ > 1)
+                {
+                    tmp_ = a2_;
+                    a2_ = a_;
+                    a_ = tmp_;
+                }
+            }
+#else
             for (u_int64_t si = 0; si < sInc; si++)
             {
                 u_int64_t m = 1 << (s + si);
@@ -95,13 +184,15 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
                     }
                 }
             }
-
+#endif
             for (u_int64_t x = 0; x < batchSize; x++)
             {
                 u_int64_t offset_dstY = (x * nBatches + b) * ncols;
                 u_int64_t offset_src = (b * batchSize + x) * ncols;
                 std::memcpy(&a2[offset_dstY], &a[offset_src], ncols * sizeof(Goldilocks::Element));
             }
+            if (aux_)
+                free(aux_);
         }
         tmp = a2;
         a2 = a;
