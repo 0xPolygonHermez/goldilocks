@@ -76,8 +76,6 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
 
             u_int64_t domainPow_ = sInc;
             u_int64_t nphase_ = 2;
-            if (s > 1)
-                nphase_ = 1;
             if (nphase_ > domainPow_)
             {
                 nphase_ = domainPow_;
