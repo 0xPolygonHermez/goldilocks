@@ -1,5 +1,6 @@
 #include "poseidon_goldilocks.hpp"
 #include <math.h> /* floor */
+#include "merklehash_goldilocks.hpp"
 
 void PoseidonGoldilocks::hash(Goldilocks::Element (&state)[CAPACITY], Goldilocks::Element const (&input)[SPONGE_WIDTH])
 {
@@ -193,15 +194,26 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
     std::memcpy(output, state, CAPACITY * sizeof(uint64_t));
 }
 
-void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows)
+void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
+    tree[0] = Goldilocks::fromU64(num_cols * dim);
+    tree[1] = Goldilocks::fromU64(num_rows);
+
+    std::cout << "Starting copy" << std::endl;
+    double st_copy_start = omp_get_wtime();
+
+    Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, 64);
+    double st_copy_end = omp_get_wtime();
+    std::cout << "Copy finished! " << st_copy_end - st_copy_start << " bytes: " << dim * num_cols * num_rows * sizeof(Goldilocks::Element) << std::endl;
+
+    Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
 
 #pragma omp parallel for
     for (uint64_t i = 0; i < num_rows; i++)
     {
-        Goldilocks::Element intermediate[num_cols];
-        std::memcpy(&intermediate[0], &input[i * num_cols], num_cols * sizeof(Goldilocks::Element));
-        linear_hash(&tree[i * CAPACITY], intermediate, num_cols);
+        Goldilocks::Element intermediate[num_cols * dim];
+        std::memcpy(&intermediate[0], &input[i * num_cols * dim], dim * num_cols * sizeof(Goldilocks::Element));
+        linear_hash(&cursor[i * CAPACITY], intermediate, num_cols * dim);
     }
 
     // Build the merkle tree
@@ -209,7 +221,6 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Eleme
     uint64_t nextN = floor((pending - 1) / 2) + 1;
     uint64_t nextIndex = 0;
 
-    Goldilocks::Element *cursor = tree;
     while (pending > 1)
     {
 #pragma omp parallel for
