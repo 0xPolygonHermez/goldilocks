@@ -6,6 +6,7 @@
 
 #define RATE 8
 #define CAPACITY 4
+#define HASH_SIZE 4
 #define SPONGE_WIDTH (RATE + CAPACITY)
 #define HALF_N_FULL_ROUNDS 4
 #define N_FULL_ROUNDS_TOTAL (2 * HALF_N_FULL_ROUNDS)
