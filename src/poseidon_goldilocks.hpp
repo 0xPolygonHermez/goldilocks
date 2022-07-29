@@ -25,6 +25,81 @@ private:
         x = x3 * x4;
     };
 
+    inline void static pow7(Goldilocks::Element *x, int ncols)
+    {
+        Goldilocks::Element x2[SPONGE_WIDTH * ncols], x3[SPONGE_WIDTH * ncols], x4[SPONGE_WIDTH * ncols];
+        for (int k = 0; k < SPONGE_WIDTH * ncols; ++k)
+        {
+            x2[k] = x[k] * x[k];
+        }
+        for (int k = 0; k < SPONGE_WIDTH * ncols; ++k)
+        {
+            x3[k] = x[k] * x2[k];
+            x4[k] = x2[k] * x2[k];
+            x[k] = x3[k] * x4[k];
+        }
+    };
+
+    inline void static add(Goldilocks::Element *x, int ncols, const Goldilocks::Element *C)
+    {
+        for (int i = 0; i < SPONGE_WIDTH; ++i)
+        {
+            int offset = i * ncols;
+            for (int k = 0; k < ncols; ++k)
+            {
+                x[offset + k] = x[offset + k] + C[i];
+            }
+        }
+    };
+
+    inline void static pow7add(Goldilocks::Element *x, int ncols, const Goldilocks::Element *C)
+    {
+        Goldilocks::Element x2[SPONGE_WIDTH * ncols], x3[SPONGE_WIDTH * ncols], x4[SPONGE_WIDTH * ncols];
+        for (int k = 0; k < SPONGE_WIDTH * ncols; ++k)
+        {
+            x2[k] = x[k] * x[k];
+        }
+        for (int k = 0; k < SPONGE_WIDTH * ncols; ++k)
+        {
+            x3[k] = x[k] * x2[k];
+            x4[k] = x2[k] * x2[k];
+            x[k] = x3[k] * x4[k];
+        }
+        for (int i = 0; i < SPONGE_WIDTH; ++i)
+        {
+            int offset = i * ncols;
+            for (int k = 0; k < ncols; ++k)
+            {
+                x[offset + k] = x[offset + k] + C[i];
+            }
+        }
+    };
+
+    // rick: check transpose access to matrix
+    inline void static mvp(Goldilocks::Element *state, const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH], int ncols)
+    {
+        Goldilocks::Element old_state[SPONGE_WIDTH * ncols];
+        const int length = SPONGE_WIDTH * ncols * sizeof(Goldilocks::Element);
+
+        std::memcpy(old_state, state, length);
+        for (int i = 0; i < SPONGE_WIDTH; i++)
+        {
+            int offseti = i * ncols;
+            for (int k = 0; k < ncols; ++k)
+            {
+                state[offseti + k] = mat[0][i] * old_state[k];
+            }
+            for (int j = 1; j < SPONGE_WIDTH; j++)
+            {
+                int offsetj = j * ncols;
+                for (int k = 0; k < ncols; ++k)
+                {
+                    state[offseti + k] = state[offseti + k] + (mat[j][i] * old_state[offsetj + k]);
+                }
+            }
+        }
+    };
+
 public:
     void static hash_full_result(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH]);
     void static hash_full_result_block(Goldilocks::Element *, const Goldilocks::Element *, int ncols);

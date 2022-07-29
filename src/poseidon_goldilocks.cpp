@@ -116,95 +116,21 @@ void PoseidonGoldilocks::hash_full_result_block(Goldilocks::Element *state, cons
     const int length = SPONGE_WIDTH * ncols * sizeof(Goldilocks::Element);
     std::memcpy(state, input, length);
 
-    for (int i = 0; i < SPONGE_WIDTH; i++)
-    {
-        int offset = i * ncols;
-        const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[i];
-#pragma omp simd
-        for (int k = 0; k < ncols; ++k)
-        {
-            state[offset + k] = state[offset + k] + C_;
-        }
-    }
+    add(state, ncols, &(PoseidonGoldilocksConstants::C[0]));
 
     for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
     {
-        for (int i = 0; i < SPONGE_WIDTH; i++)
-        {
-            int offset = i * ncols;
-            const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH + i];
-#pragma omp simd
-            for (int k = 0; k < ncols; ++k)
-            {
-                pow7(state[offset + k]);
-                state[offset + k] = state[offset + k] + C_;
-            }
-        }
-        Goldilocks::Element old_state[SPONGE_WIDTH * ncols];
-        std::memcpy(old_state, state, length);
-
-        for (int i = 0; i < SPONGE_WIDTH; i++)
-        {
-            int offseti = i * ncols;
-#pragma omp simd
-            for (int k = 0; k < ncols; ++k)
-            {
-                state[offseti + k] = Goldilocks::zero();
-            }
-            for (int j = 0; j < SPONGE_WIDTH; j++)
-            {
-                const Goldilocks::Element mji = PoseidonGoldilocksConstants::M[j][i];
-                int offsetj = j * ncols;
-#pragma omp simd
-                for (int k = 0; k < ncols; ++k)
-                {
-                    state[offseti + k] = state[offseti + k] + mji * old_state[offsetj + k];
-                }
-            }
-        }
+        pow7add(state, ncols, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
+        mvp(state, PoseidonGoldilocksConstants::M, ncols);
     }
-
-    for (int i = 0; i < SPONGE_WIDTH; i++)
-    {
-        int offset = i * ncols;
-        const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[i + (HALF_N_FULL_ROUNDS * SPONGE_WIDTH)];
-#pragma omp simd
-        for (int k = 0; k < ncols; ++k)
-        {
-            pow7(state[offset + k]);
-            state[offset + k] = state[offset + k] + C_;
-        }
-    }
-
-    Goldilocks::Element old_state[SPONGE_WIDTH * ncols];
-    std::memcpy(old_state, state, length);
-
-    for (int i = 0; i < SPONGE_WIDTH; i++)
-    {
-        int offseti = i * ncols;
-#pragma omp simd
-        for (int k = 0; k < ncols; ++k)
-        {
-            state[offseti + k] = Goldilocks::zero();
-        }
-        for (int j = 0; j < SPONGE_WIDTH; j++)
-        {
-            int offsetj = j * ncols;
-            Goldilocks::Element pji = PoseidonGoldilocksConstants::P[j][i];
-#pragma omp simd
-            for (int k = 0; k < ncols; ++k)
-            {
-                state[offseti + k] = state[offseti + k] + (pji * old_state[offsetj + k]);
-            }
-        }
-    }
+    pow7add(state, ncols, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS * SPONGE_WIDTH)]));
+    mvp(state, PoseidonGoldilocksConstants::P, ncols);
 
     for (int r = 0; r < N_PARTIAL_ROUNDS; r++)
     {
         Goldilocks::Element s0[ncols];
         const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
         const Goldilocks::Element S_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r];
-#pragma omp simd
         for (int k = 0; k < ncols; ++k)
         {
             pow7(state[k]);
@@ -217,14 +143,12 @@ void PoseidonGoldilocks::hash_full_result_block(Goldilocks::Element *state, cons
             int offsetj = j * ncols;
             const Goldilocks::Element S1_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + j];
             const Goldilocks::Element S2_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH + j - 1];
-#pragma omp simd
             for (int k = 0; k < ncols; ++k)
             {
                 s0[k] = s0[k] + state[offsetj + k] * S1_;
                 state[offsetj + k] = state[offsetj + k] + state[k] * S2_;
             }
         }
-#pragma omp simd
         for (int k = 0; k < ncols; ++k)
         {
             state[k] = s0[k];
@@ -233,72 +157,11 @@ void PoseidonGoldilocks::hash_full_result_block(Goldilocks::Element *state, cons
 
     for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
     {
-        for (int j = 0; j < SPONGE_WIDTH; j++)
-        {
-            int offsetj = j * ncols;
-            const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[j + (HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH];
-#pragma omp simd
-            for (int k = 0; k < ncols; ++k)
-            {
-                pow7(state[offsetj + k]);
-                state[offsetj + k] = state[offsetj + k] + C_;
-            }
-        }
-
-        Goldilocks::Element old_state[SPONGE_WIDTH * ncols];
-        std::memcpy(old_state, state, length);
-
-        for (int i = 0; i < SPONGE_WIDTH; i++)
-        {
-            int offseti = i * ncols;
-#pragma omp simd
-            for (int k = 0; k < ncols; ++k)
-            {
-                state[offseti + k] = Goldilocks::zero();
-            }
-            for (int j = 0; j < SPONGE_WIDTH; j++)
-            {
-                int offsetj = j * ncols;
-                Goldilocks::Element mji = PoseidonGoldilocksConstants::M[j][i];
-#pragma omp simd
-                for (int k = 0; k < ncols; ++k)
-                {
-                    state[offseti + k] = state[offseti + k] + (mji * old_state[offsetj + k]);
-                }
-            }
-        }
+        pow7add(state, ncols, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
+        mvp(state, PoseidonGoldilocksConstants::M, ncols);
     }
-
-    for (int j = 0; j < SPONGE_WIDTH; j++)
-    {
-        int offsetj = j * ncols;
-#pragma omp simd
-        for (int k = 0; k < ncols; ++k)
-        {
-            pow7(state[offsetj + k]);
-        }
-    }
-    std::memcpy(old_state, state, length);
-
-    for (int i = 0; i < SPONGE_WIDTH; i++)
-    {
-        int offseti = i * ncols;
-#pragma omp simd
-        for (int k = 0; k < ncols; ++k)
-        {
-            state[offseti + k] = Goldilocks::zero();
-        }
-        for (int j = 0; j < SPONGE_WIDTH; j++)
-        {
-            int offsetj = j * ncols;
-            Goldilocks::Element mji = PoseidonGoldilocksConstants::M[j][i];
-#pragma omp simd
-            for (int k = 0; k < ncols; ++k)
-            {
-                state[offseti + k] = state[offseti + k] + (mji * old_state[offsetj + k]);
-            }
-        }
-    }
+    pow7(&(state[0]), ncols);
+    mvp(state, PoseidonGoldilocksConstants::M, ncols);
 }
 
 void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)

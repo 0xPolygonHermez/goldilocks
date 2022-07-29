@@ -22,7 +22,7 @@
 #include <likwid-marker.h>
 #endif
 
-static void POSEIDON_BENCH_FULL(benchmark::State &state)
+static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
 
@@ -59,7 +59,7 @@ static void POSEIDON_BENCH_FULL(benchmark::State &state)
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
 
-static void POSEIDON_BENCH(benchmark::State &state)
+static void DISABLED_POSEIDON_BENCH(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
     uint64_t result_size = (uint64_t)NUM_HASHES * (uint64_t)CAPACITY;
@@ -191,7 +191,7 @@ static void POSEIDON_BLOCK_OPT_BENCH(benchmark::State &state)
 #endif
 }
 
-static void POSEIDON_BLOCK_OPT2_BENCH(benchmark::State &state)
+static void DISABLED_POSEIDON_BLOCK_OPT2_BENCH(benchmark::State &state)
 {
 #ifdef LIKWID_PERFMON
     LIKWID_MARKER_REGISTER("BLOCK_POSEIDON_OPT");
@@ -406,7 +406,7 @@ static void DISABLED_LDE_BENCH_Block(benchmark::State &state)
     free(r);
 }
 
-BENCHMARK(POSEIDON_BENCH_FULL)
+BENCHMARK(DISABLED_POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
@@ -414,7 +414,7 @@ BENCHMARK(POSEIDON_BENCH_FULL)
     ->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->UseRealTime();
 
-BENCHMARK(POSEIDON_BENCH)
+BENCHMARK(DISABLED_POSEIDON_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
@@ -423,7 +423,7 @@ BENCHMARK(POSEIDON_BENCH)
     ->UseRealTime();
 
 BENCHMARK(POSEIDON_BLOCK_BENCH)
-    //->Unit(benchmark::kMicrosecond)
+    ->Unit(benchmark::kMillisecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
@@ -432,7 +432,7 @@ BENCHMARK(POSEIDON_BLOCK_BENCH)
     ->UseRealTime();
 
 BENCHMARK(POSEIDON_BLOCK_OPT_BENCH)
-    //->Unit(benchmark::kMicrosecond)
+    ->Unit(benchmark::kMillisecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
@@ -440,8 +440,8 @@ BENCHMARK(POSEIDON_BLOCK_OPT_BENCH)
     ->DenseRange(1, 1, 1)
     ->UseRealTime();
 
-BENCHMARK(POSEIDON_BLOCK_OPT2_BENCH)
-    //->Unit(benchmark::kMicrosecond)
+BENCHMARK(DISABLED_POSEIDON_BLOCK_OPT2_BENCH)
+    ->Unit(benchmark::kMillisecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
