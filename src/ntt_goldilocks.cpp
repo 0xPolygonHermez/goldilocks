@@ -24,39 +24,63 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
     Goldilocks::Element *a2 = aux;
     Goldilocks::Element *tmp;
 
-    reversePermutation(a2, src, size, offset_cols, ncols, ncols_all);
-
-    tmp = a2;
-    a2 = a;
-    a = tmp;
-
     u_int64_t domainPow = log2(size);
     assert(((u_int64_t)1 << domainPow) == size);
-    if (nphase < 1)
+    if (nphase < 1 || domainPow == 0)
     {
         nphase = 1;
     }
-    if (nphase > domainPow)
+    else if (nphase > domainPow)
     {
         nphase = domainPow;
     }
     u_int64_t maxBatchPow = s / nphase;
-    u_int64_t batchSize = 1 << maxBatchPow;
-    u_int64_t nBatches = size / batchSize;
+    u_int64_t res = s % nphase;
+    if (res > 0)
+    {
+        maxBatchPow += 1;
+    }
+    bool iseven = true;
+    tmp = a;
+    if (nphase % 2 == 1)
+    {
+        iseven = false;
+        tmp = a2;
+    }
+    reversePermutation(tmp, src, size, offset_cols, ncols, ncols_all);
+    if (iseven == false)
+    {
+        tmp = a2;
+        a2 = a;
+        a = tmp;
+    }
 
     omp_set_dynamic(0);
     omp_set_num_threads(nThreads);
-    for (u_int64_t s = 1; s <= domainPow; s += maxBatchPow)
+    uint64_t count = 1;
+    for (u_int64_t s = 1; s <= domainPow; s += maxBatchPow, ++count)
     {
-
+        if (res > 0 && count == res + 1 && maxBatchPow > 1)
+        {
+            maxBatchPow -= 1;
+        }
         u_int64_t sInc = s + maxBatchPow <= domainPow ? maxBatchPow : domainPow - s + 1;
-#pragma omp parallel for
+        u_int64_t rs = s - 1;
+        u_int64_t re = domainPow - 1;
+        u_int64_t rb = 1 << rs;
+        u_int64_t rm = (1 << (re - rs)) - 1;
+        u_int64_t batchSize = 1 << sInc;
+        u_int64_t nBatches = size / batchSize;
+
+        int chunk1 = nBatches / nThreads;
+        if (chunk1 == 0)
+        {
+            chunk1 = 1;
+        }
+
+#pragma omp parallel for schedule(static, chunk1)
         for (u_int64_t b = 0; b < nBatches; b++)
         {
-            u_int64_t rs = s - 1;
-            u_int64_t re = domainPow - 1;
-            u_int64_t rb = 1 << rs;
-            u_int64_t rm = (1 << (re - rs)) - 1;
             for (u_int64_t si = 0; si < sInc; si++)
             {
                 u_int64_t m = 1 << (s + si);
@@ -86,16 +110,12 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
                     }
                 }
             }
-            u_int64_t srcWidth = 1 << sInc;
-            u_int64_t niters = batchSize / srcWidth;
-            for (u_int64_t kk = 0; kk < niters; ++kk)
+
+            for (u_int64_t x = 0; x < batchSize; x++)
             {
-                for (u_int64_t x = 0; x < srcWidth; x++)
-                {
-                    u_int64_t offset_dstY = (x * (nBatches * niters) + (b * niters + kk)) * ncols;
-                    u_int64_t offset_src = ((b * niters + kk) * srcWidth + x) * ncols;
-                    std::memcpy(&a2[offset_dstY], &a[offset_src], ncols * sizeof(Goldilocks::Element));
-                }
+                u_int64_t offset_dstY = (x * nBatches + b) * ncols;
+                u_int64_t offset_src = (b * batchSize + x) * ncols;
+                std::memcpy(&a2[offset_dstY], &a[offset_src], ncols * sizeof(Goldilocks::Element));
             }
         }
         tmp = a2;
@@ -104,12 +124,9 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
     }
     if (a != dst_)
     {
-#pragma omp parallel for schedule(static)
-        for (u_int64_t ie = 0; ie < size; ++ie)
-        {
-            u_int64_t offset2 = ie * ncols;
-            std::memcpy(&dst_[offset2], &a[offset2], ncols * sizeof(u_int64_t));
-        }
+        assert(0);
+
+        Goldilocks::parcpy(dst_, a, size * ncols, nThreads);
     }
 }
 
@@ -154,7 +171,7 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
             for (u_int64_t ie = 0; ie < size; ++ie)
             {
                 u_int64_t offset2 = ie * ncols + offset_cols;
-                std::memcpy(&dst[offset2], &dst_[ie * aux_ncols], aux_ncols * sizeof(u_int64_t));
+                std::memcpy(&dst[offset2], &dst_[ie * aux_ncols], aux_ncols * sizeof(Goldilocks::Element));
             }
         }
         offset_cols += aux_ncols;
@@ -165,17 +182,47 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
     }
     free(aux);
 }
-
+/**
+ * @brief permutation of components of an array in bit-reversal order. If dst==src the permutation is performed on-site.
+ *
+ * @param dst destination pointer (may be equal to src)
+ * @param src source pointer
+ * @param size field size
+ * @param offset_cols columns offset (for NTT wifh nblock>1)
+ * @param ncols number of columns of destination array
+ * @param ncols_all number of columns of source array (ncols = nocols_all if nblock == 1)
+ */
 void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all)
 {
     uint32_t domainSize = log2(size);
-#pragma omp parallel for schedule(static)
-    for (u_int64_t i = 0; i < size; i++)
+    if (dst != src)
     {
-        u_int64_t r = BR(i, domainSize);
-        u_int64_t offset_r = r * ncols_all + offset_cols;
-        u_int64_t offset_i = i * ncols;
-        std::memcpy(&dst[offset_i], &src[offset_r], ncols * sizeof(u_int64_t));
+#pragma omp parallel for schedule(static)
+        for (u_int64_t i = 0; i < size; i++)
+        {
+            u_int64_t r = BR(i, domainSize);
+            u_int64_t offset_r1 = r * ncols_all + offset_cols;
+            u_int64_t offset_i1 = i * ncols;
+            std::memcpy(&dst[offset_i1], &src[offset_r1], ncols * sizeof(Goldilocks::Element));
+        }
+    }
+    else
+    {
+        assert(offset_cols == 0 && ncols == ncols_all); // single block
+        Goldilocks::Element tmp[ncols];
+#pragma omp parallel for schedule(static) private(tmp)
+        for (u_int64_t i = 0; i < size; i++)
+        {
+            u_int64_t r = BR(i, domainSize);
+            u_int64_t offset_r = r * ncols;
+            u_int64_t offset_i = i * ncols;
+            if (r < i)
+            {
+                std::memcpy(&tmp[0], &src[offset_r], ncols * sizeof(Goldilocks::Element));
+                std::memcpy(&dst[offset_r], &src[offset_i], ncols * sizeof(Goldilocks::Element));
+                std::memcpy(&dst[offset_i], &tmp[0], ncols * sizeof(Goldilocks::Element));
+            }
+        }
     }
 }
 
@@ -190,7 +237,7 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_
     {
         dst_ = dst;
     }
-    NTT(dst_, src, size, ncols, nphase);
+    NTT(dst_, src, size, ncols, nphase, nblock);
     u_int64_t domainPow = log2(size);
     u_int64_t nDiv2 = size >> 1;
 
@@ -237,14 +284,14 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
 
     INTT(tmp, input, N, ncols);
 #pragma omp parallel for
-    for (uint64_t j = 0; j < ncols; j++)
-    {
-        for (uint64_t i = 0; i < N; i++)
+    for (uint64_t i = 0; i < N; i++)
+        for (uint64_t j = 0; j < ncols; j++)
         {
+            {
 
-            Goldilocks::mul(tmp[i * ncols + j], tmp[ncols * i + j], r[i]);
+                Goldilocks::mul(tmp[i * ncols + j], tmp[ncols * i + j], r[i]);
+            }
         }
-    }
 #pragma omp parallel for schedule(static)
     for (uint64_t i = N * ncols; i < N_Extended * ncols; i++)
     {

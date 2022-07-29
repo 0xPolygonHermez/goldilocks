@@ -7,13 +7,13 @@
 #include <omp.h>
 
 #define CACHESIZE 1 << 18
-#define NUM_PHASES 4
+#define NUM_PHASES 3
 #define NUM_BLOCKS 1
 
 class NTT_Goldilocks
 {
 private:
-    u_int32_t s;
+    u_int32_t s = 0;
     u_int32_t nThreads;
     uint64_t nqr;
     Goldilocks::Element *roots;
@@ -37,6 +37,8 @@ private:
 public:
     NTT_Goldilocks(u_int64_t maxDomainSize, u_int32_t _nThreads = 0)
     {
+        if (maxDomainSize == 0)
+            return;
         nThreads = _nThreads == 0 ? omp_get_max_threads() : _nThreads;
 
         u_int32_t domainPow = NTT_Goldilocks::log2(maxDomainSize);
@@ -118,8 +120,11 @@ public:
     };
     ~NTT_Goldilocks()
     {
-        free(roots);
-        free(powTwoInv);
+        if (s != 0)
+        {
+            free(roots);
+            free(powTwoInv);
+        }
     }
 
     void NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
