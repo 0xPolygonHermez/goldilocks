@@ -91,13 +91,6 @@ public:
         }
     }
 
-    static inline void toS32(int32_t (&result)[FIELD_EXTENSION], const Element &in1)
-    {
-        for (uint i = 0; i < FIELD_EXTENSION; i++)
-        {
-            result[i] = Goldilocks::toS32(in1[i]);
-        }
-    }
     static inline std::vector<Goldilocks::Element> toVector(const Element &in1)
     {
         std::vector<Goldilocks::Element> result;

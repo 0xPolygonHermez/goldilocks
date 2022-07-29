@@ -1,5 +1,6 @@
 #include "poseidon_goldilocks.hpp"
 #include <math.h> /* floor */
+#include "merklehash_goldilocks.hpp"
 
 void PoseidonGoldilocks::hash(Goldilocks::Element (&state)[CAPACITY], Goldilocks::Element const (&input)[SPONGE_WIDTH])
 {
