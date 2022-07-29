@@ -11,6 +11,7 @@
 #define GOLDILOCKS_DEBUG 0
 #define GOLDILOCKS_NUM_ROOTS 33
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
+#define u_int128_t __uint128_t
 
 // TODO: ROOTS of UNITY: https://github.com/hermeznetwork/starkpil/blob/e990d99d0936ec3de751ed927af98fe816d72ede/circuitsGL/fft.circom#L17
 class Goldilocks

@@ -45,9 +45,13 @@ private:
         for (int i = 0; i < SPONGE_WIDTH; ++i)
         {
             int offset = i * ncols;
+            //#pragma omp simd
             for (int k = 0; k < ncols; ++k)
             {
-                x[offset + k] = x[offset + k] + C[i];
+                // u_int128_t tmp = (u_int128_t)(x[offset + k].fe) + (u_int128_t)(C[i].fe);
+                u_int128_t tmp = (x[offset + k].fe) + (C[i].fe);
+                tmp = tmp % GOLDILOCKS_PRIME;
+                x[offset + k].fe = (u_int64_t)tmp;
             }
         }
     };
