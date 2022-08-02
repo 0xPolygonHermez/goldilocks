@@ -3,6 +3,7 @@
 
 #include "poseidon_goldilocks_constants.hpp"
 #include "goldilocks_base_field.hpp"
+#include <immintrin.h>
 
 #define RATE 8
 #define CAPACITY 4
@@ -40,7 +41,7 @@ private:
         }
     };
 
-    inline void static add(Goldilocks::Element *x, int ncols, const Goldilocks::Element *C)
+    inline void static add(Goldilocks::Element *x, int ncols, const Goldilocks::Element C[SPONGE_WIDTH])
     {
         for (int i = 0; i < SPONGE_WIDTH; ++i)
         {
@@ -48,15 +49,27 @@ private:
             //#pragma omp simd
             for (int k = 0; k < ncols; ++k)
             {
-                // u_int128_t tmp = (u_int128_t)(x[offset + k].fe) + (u_int128_t)(C[i].fe);
-                u_int128_t tmp = (x[offset + k].fe) + (C[i].fe);
-                tmp = tmp % GOLDILOCKS_PRIME;
-                x[offset + k].fe = (u_int64_t)tmp;
+                x[offset + k] = x[offset + k] + C[i];
+            }
+        }
+    };
+    // Rick: I assume ncols is multiple of 4
+    inline void static add_(Goldilocks::Element *x, int ncols, const Goldilocks::Element C[SPONGE_WIDTH])
+    {
+
+        for (int i = 0; i < SPONGE_WIDTH; ++i)
+        {
+            int offset = i * ncols;
+            __m256i c_ = _mm256_set_epi64x(C[i].fe, C[i].fe, C[i].fe, C[i].fe);
+            for (int k = 0; k < ncols; k += 4)
+            {
+                __m256i x_ = _mm256_loadu_si256((__m256i *)&(x[offset + k]));
+                x_ = _mm256_add_epi64(x_, c_);
             }
         }
     };
 
-    inline void static pow7add(Goldilocks::Element *x, int ncols, const Goldilocks::Element *C)
+    inline void static pow7add(Goldilocks::Element *x, int ncols, const Goldilocks::Element C[SPONGE_WIDTH])
     {
         Goldilocks::Element x2[SPONGE_WIDTH * ncols], x3[SPONGE_WIDTH * ncols], x4[SPONGE_WIDTH * ncols];
         for (int k = 0; k < SPONGE_WIDTH * ncols; ++k)
