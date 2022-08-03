@@ -22,7 +22,7 @@
 #include <likwid-marker.h>
 #endif
 
-static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
+static void POSEIDON_BENCH_FULL(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
 
@@ -59,7 +59,7 @@ static void DISABLED_POSEIDON_BENCH_FULL(benchmark::State &state)
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
 
-static void DISABLED_POSEIDON_BENCH(benchmark::State &state)
+static void POSEIDON_BENCH(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
     uint64_t result_size = (uint64_t)NUM_HASHES * (uint64_t)CAPACITY;
@@ -191,7 +191,7 @@ static void POSEIDON_BLOCK_OPT_BENCH(benchmark::State &state)
 #endif
 }
 
-static void DISABLED_POSEIDON_BLOCK_OPT2_BENCH(benchmark::State &state)
+static void POSEIDON_BLOCK_OPT2_BENCH(benchmark::State &state)
 {
 #ifdef LIKWID_PERFMON
     LIKWID_MARKER_REGISTER("BLOCK_POSEIDON_OPT");
@@ -241,7 +241,7 @@ static void DISABLED_POSEIDON_BLOCK_OPT2_BENCH(benchmark::State &state)
 #endif
 }
 
-static void DISABLED_NTT_BENCH(benchmark::State &state)
+static void NTT_BENCH(benchmark::State &state)
 {
     NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
 
@@ -270,7 +270,7 @@ static void DISABLED_NTT_BENCH(benchmark::State &state)
     free(a);
 }
 
-static void DISABLED_NTT_Block_BENCH(benchmark::State &state)
+static void NTT_Block_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
     NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
@@ -297,7 +297,7 @@ static void DISABLED_NTT_Block_BENCH(benchmark::State &state)
     free(a);
 }
 
-static void DISABLED_LDE_BENCH(benchmark::State &state)
+static void LDE_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
     NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
@@ -351,7 +351,7 @@ static void DISABLED_LDE_BENCH(benchmark::State &state)
     free(r);
 }
 
-static void DISABLED_LDE_BENCH_Block(benchmark::State &state)
+static void LDE_BENCH_Block(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
     NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
@@ -406,7 +406,7 @@ static void DISABLED_LDE_BENCH_Block(benchmark::State &state)
     free(r);
 }
 
-BENCHMARK(DISABLED_POSEIDON_BENCH_FULL)
+BENCHMARK(POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
@@ -414,7 +414,7 @@ BENCHMARK(DISABLED_POSEIDON_BENCH_FULL)
     ->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->UseRealTime();
 
-BENCHMARK(DISABLED_POSEIDON_BENCH)
+BENCHMARK(POSEIDON_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(1, 1, 1)
     ->RangeMultiplier(2)
@@ -440,7 +440,7 @@ BENCHMARK(POSEIDON_BLOCK_OPT_BENCH)
     ->DenseRange(1, 1, 1)
     ->UseRealTime();
 
-BENCHMARK(DISABLED_POSEIDON_BLOCK_OPT2_BENCH)
+BENCHMARK(POSEIDON_BLOCK_OPT2_BENCH)
     ->Unit(benchmark::kMillisecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
@@ -449,7 +449,7 @@ BENCHMARK(DISABLED_POSEIDON_BLOCK_OPT2_BENCH)
     ->DenseRange(1, 1, 1)
     ->UseRealTime();
 
-BENCHMARK(DISABLED_NTT_BENCH)
+BENCHMARK(NTT_BENCH)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
@@ -458,7 +458,7 @@ BENCHMARK(DISABLED_NTT_BENCH)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
 
-BENCHMARK(DISABLED_NTT_Block_BENCH)
+BENCHMARK(NTT_Block_BENCH)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
@@ -467,7 +467,7 @@ BENCHMARK(DISABLED_NTT_Block_BENCH)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
 
-BENCHMARK(DISABLED_LDE_BENCH)
+BENCHMARK(LDE_BENCH)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
@@ -475,7 +475,7 @@ BENCHMARK(DISABLED_LDE_BENCH)
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
-BENCHMARK(DISABLED_LDE_BENCH_Block)
+BENCHMARK(LDE_BENCH_Block)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)

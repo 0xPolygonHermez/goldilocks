@@ -124,8 +124,10 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
     }
     if (a != dst_)
     {
-        assert(0);
-
+        if (size > 1)
+        {
+            assert(0); // should never need this copy...
+        }
         Goldilocks::parcpy(dst_, a, size * ncols, nThreads);
     }
 }

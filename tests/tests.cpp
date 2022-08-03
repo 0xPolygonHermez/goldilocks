@@ -420,6 +420,39 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     }
     free(a);
     free(initial);
+
+    // Edge case:Try to call ntt with FFT_SIZE = 1 ncols=3
+    uint64_t fft_size = 1;
+    uint64_t ncols = 3;
+    Goldilocks::Element a1[3] = {1, 2, 3};
+    Goldilocks::Element b1[3];
+
+    gntt.NTT(b1, a1, fft_size, ncols);
+    ASSERT_EQ(Goldilocks::toU64(b1[0]), 1);
+    ASSERT_EQ(Goldilocks::toU64(b1[1]), 2);
+    ASSERT_EQ(Goldilocks::toU64(b1[2]), 3);
+
+    gntt.INTT(a1, b1, fft_size, ncols);
+
+    ASSERT_EQ(Goldilocks::toU64(a1[0]), 1);
+    ASSERT_EQ(Goldilocks::toU64(a1[1]), 2);
+    ASSERT_EQ(Goldilocks::toU64(a1[2]), 3);
+
+    // Edge case:Try to call ntt with FFT_SIZE = 2 ncols=3
+    fft_size = 2;
+    ncols = 3;
+    Goldilocks::Element a2[6] = {1, 2, 3, 4, 5, 6};
+    Goldilocks::Element b2[6];
+
+    gntt.NTT(b2, a2, fft_size, ncols);
+    gntt.INTT(a2, b2, fft_size, ncols);
+
+    ASSERT_EQ(Goldilocks::toU64(a2[0]), 1);
+    ASSERT_EQ(Goldilocks::toU64(a2[1]), 2);
+    ASSERT_EQ(Goldilocks::toU64(a2[2]), 3);
+    ASSERT_EQ(Goldilocks::toU64(a2[3]), 4);
+    ASSERT_EQ(Goldilocks::toU64(a2[4]), 5);
+    ASSERT_EQ(Goldilocks::toU64(a2[5]), 6);
 }
 
 TEST(GOLDILOCKS_TEST, LDE)
