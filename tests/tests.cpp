@@ -379,6 +379,16 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     ASSERT_EQ(Goldilocks::toU64(a2[3]), 4);
     ASSERT_EQ(Goldilocks::toU64(a2[4]), 5);
     ASSERT_EQ(Goldilocks::toU64(a2[5]), 6);
+
+    // Edge case: It does not crash with size==0 or ncols==0
+    fft_size = 0;
+    ncols = 3;
+    gntt.NTT(b2, a2, fft_size, ncols);
+    gntt.INTT(a2, b2, fft_size, ncols);
+    fft_size = 1;
+    ncols = 0;
+    gntt.NTT(b2, a2, fft_size, ncols);
+    gntt.INTT(a2, b2, fft_size, ncols);
 }
 
 TEST(GOLDILOCKS_TEST, LDE)

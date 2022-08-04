@@ -134,6 +134,10 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
 
 void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase, u_int64_t nblock)
 {
+    if (ncols == 0 || size == 0)
+    {
+        return;
+    }
     if (nblock < 1)
     {
         nblock = 1;
@@ -230,6 +234,11 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
 
 void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase, u_int64_t nblock)
 {
+
+    if (ncols == 0 || size == 0)
+    {
+        return;
+    }
     Goldilocks::Element *dst_;
     if (dst == NULL)
     {
