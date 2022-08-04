@@ -108,7 +108,6 @@ void PoseidonGoldilocks::hash_full_result(Goldilocks::Element (&state)[SPONGE_WI
         }
     }
 }
-
 void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)
 {
     uint64_t remaining = size;
@@ -135,20 +134,19 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
 
         remaining -= n;
     }
-    std::memcpy(output, state, CAPACITY * sizeof(uint64_t));
+    std::memcpy(output, state, CAPACITY * sizeof(Goldilocks::Element));
 }
-
 void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
     tree[0] = Goldilocks::fromU64(num_cols * dim);
     tree[1] = Goldilocks::fromU64(num_rows);
 
-    std::cout << "Starting copy" << std::endl;
-    double st_copy_start = omp_get_wtime();
+    // std::cout << "Starting copy" << std::endl;
+    // double st_copy_start = omp_get_wtime();
 
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, 64);
-    double st_copy_end = omp_get_wtime();
-    std::cout << "Copy finished! " << st_copy_end - st_copy_start << " bytes: " << dim * num_cols * num_rows * sizeof(Goldilocks::Element) << std::endl;
+    // double st_copy_end = omp_get_wtime();
+    // std::cout << "Copy finished! " << st_copy_end - st_copy_start << " bytes: " << dim * num_cols * num_rows * sizeof(Goldilocks::Element) << std::endl;
 
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
 
