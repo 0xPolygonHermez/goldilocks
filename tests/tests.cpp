@@ -5,6 +5,7 @@
 #include "../src/goldilocks_cubic_extension.hpp"
 #include "../src/poseidon_goldilocks.hpp"
 #include "../src/ntt_goldilocks.hpp"
+#include "../src/merklehash_goldilocks.hpp"
 
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
 
@@ -13,7 +14,8 @@
 #define BLOWUP_FACTOR 1
 #define NUM_COLUMNS 8
 #define NPHASES 4
-#define NUM_COLUMNS_HASH 128
+#define NCOLS_HASH 128
+#define NROWS_HASH (1 << 12)
 
 TEST(GOLDILOCKS_TEST, one)
 {
@@ -233,22 +235,63 @@ TEST(GOLDILOCKS_TEST, poseidon_full)
 TEST(GOLDILOCKS_TEST, linear_hash)
 {
 
-    Goldilocks::Element fibonacci[NUM_COLUMNS_HASH];
+    Goldilocks::Element fibonacci[NCOLS_HASH];
     Goldilocks::Element result[CAPACITY];
 
     fibonacci[0] = Goldilocks::zero();
     fibonacci[1] = Goldilocks::one();
-    for (uint64_t i = 2; i < NUM_COLUMNS_HASH; i++)
+    for (uint64_t i = 2; i < NCOLS_HASH; i++)
     {
         fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
     }
 
-    PoseidonGoldilocks::linear_hash(result, fibonacci, NUM_COLUMNS_HASH);
+    PoseidonGoldilocks::linear_hash(result, fibonacci, NCOLS_HASH);
 
     ASSERT_EQ(Goldilocks::toU64(result[0]), 0XB214FEA22C79AE3C);
     ASSERT_EQ(Goldilocks::toU64(result[1]), 0X49DA61DEED54466A);
     ASSERT_EQ(Goldilocks::toU64(result[2]), 0X7338CC9DBA8256FD);
     ASSERT_EQ(Goldilocks::toU64(result[3]), 0XC1043293021620CE);
+}
+
+TEST(GOLDILOCKS_TEST, merkle_tree)
+{
+    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH * sizeof(Goldilocks::Element));
+    uint64_t ncols_hast = 128;
+    uint64_t nrows_hast = (1 << 12);
+#pragma omp parallel for
+    for (uint64_t i = 0; i < ncols_hast; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + ncols_hast] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+#pragma omp parallel for collapse(2)
+    for (uint64_t j = 2; j < nrows_hast; j++)
+    {
+        for (uint64_t i = 0; i < ncols_hast; i++)
+        {
+            cols[j * ncols_hast + i] = cols[(j - 2) * ncols_hast + i] + cols[(j - 1) * ncols_hast + i];
+        }
+    }
+
+    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(ncols_hast, nrows_hast);
+    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+
+    PoseidonGoldilocks::merkletree(tree, cols, ncols_hast, nrows_hast);
+    Goldilocks::Element root[4];
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X9DBA41ABD9274BE4);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0XBD9A9DDEBC5FDB20);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0XE6D0B9FE330E4B99);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAAA801257D627EFA);
+
+    free(cols);
+    free(tree);
+
+    // Edge case, nrows_hast =0
+    ncols_hast = (1 << 19);
+    nrows_hast = 0;
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(NCOLS_HASH, nrows_hast);
 }
 
 TEST(GOLDILOCKS_TEST, ntt)
