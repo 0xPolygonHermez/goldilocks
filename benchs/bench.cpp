@@ -108,7 +108,6 @@ static void LINEAR_HASH_BENCH(benchmark::State &state)
     // 2 4 6 8  10 12 ... NUM_COLS + NUM_COLS
     // 3 6 9 12 15 18 ... NUM_COLS + NUM_COLS + NUM_COLS
 
-#pragma omp parallel for
     for (uint64_t i = 0; i < NCOLS_HASH; i++)
     {
         cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
@@ -116,7 +115,6 @@ static void LINEAR_HASH_BENCH(benchmark::State &state)
     }
     for (uint64_t j = 2; j < NROWS_HASH; j++)
     {
-#pragma omp parallel for
         for (uint64_t i = 0; i < NCOLS_HASH; i++)
         {
             cols[j * NCOLS_HASH + i] = cols[(j - 2) * NCOLS_HASH + i] + cols[(j - 1) * NCOLS_HASH + i];
@@ -152,7 +150,6 @@ static void MERKLE_TREE_BENCH(benchmark::State &state)
     // 1 2 3 4  5  6  ... NUM_COLS
     // 2 4 6 8  10 12 ... NUM_COLS + NUM_COLS
     // 3 6 9 12 15 18 ... NUM_COLS + NUM_COLS + NUM_COLS
-#pragma omp parallel for
     for (uint64_t i = 0; i < NCOLS_HASH; i++)
     {
         cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
@@ -160,7 +157,6 @@ static void MERKLE_TREE_BENCH(benchmark::State &state)
     }
     for (uint64_t j = 2; j < NROWS_HASH; j++)
     {
-#pragma omp parallel for
         for (uint64_t i = 0; i < NCOLS_HASH; i++)
         {
             cols[j * NCOLS_HASH + i] = cols[(j - 2) * NCOLS_HASH + i] + cols[(j - 1) * NCOLS_HASH + i];
