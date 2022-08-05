@@ -199,13 +199,7 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Eleme
     tree[0] = Goldilocks::fromU64(num_cols * dim);
     tree[1] = Goldilocks::fromU64(num_rows);
 
-    std::cout << "Starting copy" << std::endl;
-    double st_copy_start = omp_get_wtime();
-
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, 64);
-    double st_copy_end = omp_get_wtime();
-    std::cout << "Copy finished! " << st_copy_end - st_copy_start << " bytes: " << dim * num_cols * num_rows * sizeof(Goldilocks::Element) << std::endl;
-
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
 
 #pragma omp parallel for
