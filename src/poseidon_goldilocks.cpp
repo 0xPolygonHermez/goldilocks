@@ -134,7 +134,14 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
 
         remaining -= n;
     }
-    std::memcpy(output, state, CAPACITY * sizeof(Goldilocks::Element));
+    if (size > 0)
+    {
+        std::memcpy(output, state, CAPACITY * sizeof(Goldilocks::Element));
+    }
+    else
+    {
+        memset(output, 0, CAPACITY * sizeof(Goldilocks::Element));
+    }
 }
 void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
