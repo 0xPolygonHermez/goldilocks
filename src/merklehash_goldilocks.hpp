@@ -37,10 +37,9 @@ public:
         uint64_t elementsInLinear = Goldilocks::toU64(tree[0]);
         uint64_t nLinears = Goldilocks::toU64(tree[1]);
 
-//#pragma omp parallel for
+#pragma omp parallel for
         for (uint64_t i = 0; i < elementsInLinear; i++)
         {
-
             getElement(proof[i], tree, idx, i);
         }
 
