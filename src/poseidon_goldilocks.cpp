@@ -109,6 +109,48 @@ void PoseidonGoldilocks::hash_full_result(Goldilocks::Element (&state)[SPONGE_WI
     }
 }
 
+void PoseidonGoldilocks::hash_full_result_(Goldilocks::Element *state, const Goldilocks::Element *input)
+{
+
+    const int length = SPONGE_WIDTH * sizeof(Goldilocks::Element);
+    std::memcpy(state, input, length);
+
+    add_(state, &(PoseidonGoldilocksConstants::C[0]));
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
+    {
+        pow7add_(state, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
+        mvp_(state, PoseidonGoldilocksConstants::M);
+    }
+    pow7add_(state, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS * SPONGE_WIDTH)]));
+    mvp_(state, PoseidonGoldilocksConstants::P);
+
+    for (int r = 0; r < N_PARTIAL_ROUNDS; r++)
+    {
+        const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
+        const Goldilocks::Element S_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r];
+        pow7(state[0]);
+        state[0] = state[0] + C_;
+        Goldilocks::Element s0 = state[0] * S_;
+
+        for (int j = 1; j < SPONGE_WIDTH; j++)
+        {
+            const Goldilocks::Element S1_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + j];
+            const Goldilocks::Element S2_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH + j - 1];
+            s0 = s0 + state[j] * S1_;
+            state[j] = state[j] + state[0] * S2_;
+        }
+        state[0] = s0;
+    }
+
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
+    {
+        pow7add_(state, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
+        mvp_(state, PoseidonGoldilocksConstants::M);
+    }
+    pow7_(&(state[0]));
+    mvp_(state, PoseidonGoldilocksConstants::M);
+}
+
 void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)
 {
     uint64_t remaining = size;

@@ -3,6 +3,7 @@
 
 #include "poseidon_goldilocks_constants.hpp"
 #include "goldilocks_base_field.hpp"
+#include <immintrin.h>
 
 #define RATE 8
 #define CAPACITY 4
@@ -17,19 +18,19 @@ class PoseidonGoldilocks
 {
 
 private:
-    inline void static pow7(Goldilocks::Element &x)
-    {
-        Goldilocks::Element x2 = x * x;
-        Goldilocks::Element x3 = x * x2;
-        Goldilocks::Element x4 = x2 * x2;
-        x = x3 * x4;
-    };
+    inline void static pow7(Goldilocks::Element &x);
+    inline void static pow7_(Goldilocks::Element *x);
+    inline void static add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static pow7add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static mvp_(Goldilocks::Element *state, const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH]);
 
 public:
     void static hash_full_result(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH]);
+    void static hash_full_result_(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
     void static merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim = 1);
 };
 
+#include "poseidon_goldilocks_avx.hpp"
 #endif

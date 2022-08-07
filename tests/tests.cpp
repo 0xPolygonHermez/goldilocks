@@ -197,6 +197,54 @@ TEST(GOLDILOCKS_TEST, poseidon_full)
     ASSERT_EQ(Goldilocks::toU64(result0[11]), 0X1792B1C4342109D7);
 }
 
+TEST(GOLDILOCKS_TEST, poseidon_full_)
+{
+
+    Goldilocks::Element fibonacci[SPONGE_WIDTH];
+    Goldilocks::Element result[SPONGE_WIDTH];
+
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+
+    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+
+    PoseidonGoldilocks::hash_full_result_(result, fibonacci);
+
+    ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
+    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
+    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X8129DB5EC75C3226);
+    ASSERT_EQ(Goldilocks::toU64(result[3]), 0X8EC2B67AFB6B87ED);
+    ASSERT_EQ(Goldilocks::toU64(result[4]), 0XFC591F17D0FAB161);
+    ASSERT_EQ(Goldilocks::toU64(result[5]), 0X1D2B045CC2FEA1AD);
+    ASSERT_EQ(Goldilocks::toU64(result[6]), 0X8A4E3B0CB12D4527);
+    ASSERT_EQ(Goldilocks::toU64(result[7]), 0XFF217A756AE2211);
+    ASSERT_EQ(Goldilocks::toU64(result[8]), 0X78F6E79CFC407293);
+    ASSERT_EQ(Goldilocks::toU64(result[9]), 0X3DE827E086AE61C9);
+    ASSERT_EQ(Goldilocks::toU64(result[10]), 0X921456F6D2D11E27);
+    ASSERT_EQ(Goldilocks::toU64(result[11]), 0XF58A41D4028C66A5);
+
+    Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
+    Goldilocks::Element result0[SPONGE_WIDTH];
+
+    PoseidonGoldilocks::hash_full_result_(result0, zero);
+
+    ASSERT_EQ(Goldilocks::toU64(result0[0]), 0X3C18A9786CB0B359);
+    ASSERT_EQ(Goldilocks::toU64(result0[1]), 0XC4055E3364A246C3);
+    ASSERT_EQ(Goldilocks::toU64(result0[2]), 0X7953DB0AB48808F4);
+    ASSERT_EQ(Goldilocks::toU64(result0[3]), 0XC71603F33A1144CA);
+    ASSERT_EQ(Goldilocks::toU64(result0[4]), 0XD7709673896996DC);
+    ASSERT_EQ(Goldilocks::toU64(result0[5]), 0X46A84E87642F44ED);
+    ASSERT_EQ(Goldilocks::toU64(result0[6]), 0XD032648251EE0B3C);
+    ASSERT_EQ(Goldilocks::toU64(result0[7]), 0X1C687363B207DF62);
+    ASSERT_EQ(Goldilocks::toU64(result0[8]), 0XDF8565563E8045FE);
+    ASSERT_EQ(Goldilocks::toU64(result0[9]), 0X40F5B37FF4254DAE);
+    ASSERT_EQ(Goldilocks::toU64(result0[10]), 0XD070F637B431067C);
+    ASSERT_EQ(Goldilocks::toU64(result0[11]), 0X1792B1C4342109D7);
+}
+
 TEST(GOLDILOCKS_TEST, poseidon)
 {
 
