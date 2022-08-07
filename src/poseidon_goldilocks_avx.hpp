@@ -31,7 +31,14 @@ inline void PoseidonGoldilocks::add_(Goldilocks::Element *x, const Goldilocks::E
     {
         x[i] = x[i] + C[i];
     }
-};
+}
+inline void PoseidonGoldilocks::prod_(Goldilocks::Element *x, const Goldilocks::Element alpha, const Goldilocks::Element C[SPONGE_WIDTH])
+{
+    for (int i = 0; i < SPONGE_WIDTH; ++i)
+    {
+        x[i] = alpha * C[i];
+    }
+}
 
 inline void PoseidonGoldilocks::pow7add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH])
 {
@@ -44,6 +51,16 @@ inline void PoseidonGoldilocks::pow7add_(Goldilocks::Element *x, const Goldilock
         x[i] = x3[i] * x4[i];
         x[i] = x[i] + C[i];
     }
+};
+
+inline Goldilocks::Element PoseidonGoldilocks::dot_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH])
+{
+    Goldilocks::Element s0 = x[0] * C[0];
+    for (int i = 1; i < SPONGE_WIDTH; i++)
+    {
+        s0 = s0 + x[i] * C[i];
+    }
+    return s0;
 };
 
 // rick: check transpose access to matrix

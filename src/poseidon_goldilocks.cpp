@@ -126,19 +126,12 @@ void PoseidonGoldilocks::hash_full_result_(Goldilocks::Element *state, const Gol
 
     for (int r = 0; r < N_PARTIAL_ROUNDS; r++)
     {
-        const Goldilocks::Element C_ = PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
-        const Goldilocks::Element S_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r];
         pow7(state[0]);
-        state[0] = state[0] + C_;
-        Goldilocks::Element s0 = state[0] * S_;
-
-        for (int j = 1; j < SPONGE_WIDTH; j++)
-        {
-            const Goldilocks::Element S1_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + j];
-            const Goldilocks::Element S2_ = PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH + j - 1];
-            s0 = s0 + state[j] * S1_;
-            state[j] = state[j] + state[0] * S2_;
-        }
+        state[0] = state[0] + PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
+        Goldilocks::Element s0 = dot_(state, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r]));
+        Goldilocks::Element W_[SPONGE_WIDTH];
+        prod_(W_, state[0], &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1]));
+        add_(state, W_);
         state[0] = s0;
     }
 
