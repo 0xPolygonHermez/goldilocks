@@ -6,6 +6,7 @@
 #include <gmpxx.h>
 #include <iostream> // string
 #include <omp.h>
+#include <immintrin.h>
 
 #define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0
@@ -120,6 +121,16 @@ public:
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
 
     static void batchInverse(Goldilocks::Element *res, Element *src, uint64_t size);
+
+    // AVX:
+    static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
+    static inline void load(__m256i &a, const Goldilocks::Element *a4);
+    static inline void store(Goldilocks::Element *a4, const __m256i &a);
+    static inline void shift(__m256i &a_s, const __m256i &a);
+    static inline void toCanonical(__m256i &a_c, const __m256i &a);
+    static inline void toCanonical_s(__m256i &a_sc, const __m256i &a_s);
+    static inline void add_avx(__m256i &c, const __m256i &a, const __m256i &b);
+    static inline void add_avx_a_sc(__m256i &c, const __m256i &a_c, const __m256i &b);
 };
 
 /*
