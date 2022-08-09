@@ -19,7 +19,6 @@ const __m256i P_s = _mm256_xor_si256(P, MSB_);
 //
 inline void Goldilocks::set(__m256i &a, const Goldilocks::Element &a0, const Goldilocks::Element &a1, const Goldilocks::Element &a2, const Goldilocks::Element &a3)
 {
-
     a = _mm256_set_epi64x(a3.fe, a2.fe, a1.fe, a0.fe);
 }
 inline void Goldilocks::load(__m256i &a, const Goldilocks::Element *a4)
@@ -30,7 +29,6 @@ inline void Goldilocks::store(Goldilocks::Element *a4, const __m256i &a)
 {
     _mm256_storeu_si256((__m256i *)a4, a);
 }
-
 //
 // Shift, to_canonical
 //
@@ -51,12 +49,12 @@ inline void Goldilocks::toCanonical_s(__m256i &a_sc, const __m256i &a_s)
 inline void Goldilocks::toCanonical(__m256i &a_c, const __m256i &a)
 {
     __m256i a_s, a_sc;
-    Goldilocks::shift(a_s, a);
-    Goldilocks::toCanonical_s(a_sc, a_s);
-    Goldilocks::shift(a_c, a_sc);
+    shift(a_s, a);
+    toCanonical_s(a_sc, a_s);
+    shift(a_c, a_sc);
 }
 //
-// Add... rick: afegir add_avx de goldilocs fields
+// Add
 //
 inline void Goldilocks::add_avx_a_sc(__m256i &c, const __m256i &a_sc, const __m256i &b)
 {
@@ -74,9 +72,24 @@ inline void Goldilocks::add_avx_a_sc(__m256i &c, const __m256i &a_sc, const __m2
 inline void Goldilocks::add_avx(__m256i &c, const __m256i &a, const __m256i &b)
 {
     __m256i a_s, a_sc;
-    Goldilocks::shift(a_s, a);
-    Goldilocks::toCanonical_s(a_sc, a_s);
-    Goldilocks::add_avx_a_sc(c, a_sc, b);
+    shift(a_s, a);
+    toCanonical_s(a_sc, a_s);
+    add_avx_a_sc(c, a_sc, b);
+}
+//
+// Sub: rick?? a-b = (a+1^63)-(b+1^63)=a_s-b_s
+//
+inline void Goldilocks::sub_avx(__m256i &c, const __m256i &a, const __m256i &b)
+{
+    __m256i b_s, b_sc, a_s;
+    shift(b_s, b);
+    shift(a_s, a);
+    toCanonical_s(b_sc, b_s);
+    const __m256i mask_ = _mm256_cmpgt_epi64(b_s, a_s); // when b > a so underflow
+    // P > b > a =>  (a-b) < 0 and a < (P-b)+a < P
+    const __m256i corr_ = _mm256_and_si256(mask_, P); // zero used amother thing here
+    const __m256i c_aux = _mm256_sub_epi64(a_s, b_s);
+    c = _mm256_add_epi64(c_aux, corr_);
 }
 
 //
