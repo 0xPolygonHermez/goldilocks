@@ -95,6 +95,68 @@ inline void Goldilocks::sub_avx(__m256i &c, const __m256i &a, const __m256i &b)
 //
 // Mult, reduce
 //
+inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b)
+{
+
+    // 1. cast to 32 bits blocks
+    // 2. duplicate the high parts into the lows
+    // 3. cast back to 64 bits blocks
+    __m256i a_h = _mm256_castps_si256(_mm256_movehdup_ps(_mm256_castsi256_ps(a))); // why not use _mm256_srli_epi64?
+    __m256i b_h = _mm256_castps_si256(_mm256_movehdup_ps(_mm256_castsi256_ps(b)));
+
+    // c = (a_h+a_l)*(b_h*b_l)=a_h*b_h+a_h*b_l+a_l*b_h+a_l*b_l=c_hh+c_hl+c_l_h+c_ll
+    // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l
+    __m256i c_hh = _mm256_mul_epu32(a_h, b_h);
+    __m256i c_hl = _mm256_mul_epu32(a_h, b);
+    __m256i c_lh = _mm256_mul_epu32(a, b_h);
+    __m256i c_ll = _mm256_mul_epu32(a, b);
+
+    // Bignum addition
+    // Ranges: c_hh[127:64], c_hl[95:32], c_lh[95:32], c_ll[64:0]
+    // parts that intersect must be added
+
+    // LOW PART:
+    // 1: r0 = c_lh + c_ll_h //does not overflow (rick: double check why)
+    __m256i c_ll_h = _mm256_srli_epi64(c_ll, 32);
+    __m256i r0 = _mm256_add_epi64(c_hl, c_ll_h);
+
+    // 2: r1 = r0_l + c_hl //does not overflow
+    __m256i r0_l = _mm256_and_si256(r0, P_n);
+    __m256i r1 = _mm256_add_epi64(c_lh, r0_l);
+
+    // 3: c_l = r1_l | c_ll_l
+    __m256i r1_l = _mm256_castps_si256(_mm256_moveldup_ps(_mm256_castsi256_ps(r1))); // why not us _mm256_slli_epi64?
+    c_l = _mm256_blend_epi32(c_ll, r1_l, 0xaa);
+
+    // HIGH PART:
+    // 1: r2 = r0_h + c_hh //does not overflow
+    __m256i r0_h = _mm256_srli_epi64(r0, 32);
+    __m256i r2 = _mm256_add_epi64(c_hh, r0_h);
+
+    // 2: c_h = r3 + r1_h
+    __m256i r1_h = _mm256_srli_epi64(r1, 32);
+    c_h = _mm256_add_epi64(r2, r1_h);
+}
+// A % B == (((AH % B) * (2^64 % B)) + (AL % B)) % B
+//      == (((AH % B) * ((2^64 - B) % B)) + (AL % B)) % B rick:try with this
+inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
+{
+    __m256i c0_s;
+    shift(c0_s, c_l);
+    __m256i c_hh = _mm256_srli_epi64(c_h, 32);
+    __m256i c1_s;
+    sub_avx(c1_s, c0_s, c_hh); // rick: this can be optimized with sum32bits
+    __m256i corr_l = _mm256_mul_epu32(c_h, P_n);
+    __m256i c_s;
+    add_avx(c_s, c1_s, corr_l);
+    shift(c, c_s);
+}
+inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
+{
+    __m256i c_h, c_l;
+    mult_avx_128(c_h, c_l, a, b);
+    reduce_128_64(c, c_h, c_l);
+}
 
 //
 // Square
