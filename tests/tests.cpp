@@ -298,6 +298,46 @@ TEST(GOLDILOCKS_TEST, mul_avx)
     free(b);
     free(c);
 }
+TEST(GOLDILOCKS_TEST, square_avx)
+{
+    uint64_t in1 = 3;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+
+    a[0] = inE1;
+    a[1] = inE3;
+    a[2] = Goldilocks::zero();
+    a[3] = a1;
+
+    __m256i a_;
+    __m256i c_;
+
+    Goldilocks::load(a_, a);
+    Goldilocks::square_avx(c_, a_);
+    Goldilocks::store(c, c_);
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] * a[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * a[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * a[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * a[3]), Goldilocks::toU64(c[3]));
+
+    Goldilocks::square_avx(a_, c_);
+    Goldilocks::store(a, a_);
+
+    ASSERT_EQ(Goldilocks::toU64(c[0] * c[0]), Goldilocks::toU64(a[0]));
+    ASSERT_EQ(Goldilocks::toU64(c[1] * c[1]), Goldilocks::toU64(a[1]));
+    ASSERT_EQ(Goldilocks::toU64(c[2] * c[2]), Goldilocks::toU64(a[2]));
+    ASSERT_EQ(Goldilocks::toU64(c[3] * c[3]), Goldilocks::toU64(a[3]));
+
+    free(a);
+    free(c);
+}
 
 TEST(GOLDILOCKS_TEST, div)
 {
