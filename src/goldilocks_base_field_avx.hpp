@@ -3,10 +3,9 @@
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
 
-// Pending:
-// * optimized sub for b < 2^32
-// * optimized add for b < 2^32
-// * optimized mult for b < 2^32
+// PENDING:
+// * optimized mult for b small?
+// * aligment
 
 // NOTATION:
 // _c value is in canonical form
@@ -17,8 +16,9 @@
 
 // OBSERVATIONS:
 // 1.  a + b overflows iff (a + b) < a (AVX does not suport carry)
-// 2. (unsigned) a < (unsigned) b iff (signed) a_s < (singed) b_s (AVX2 does not support unsingend 64-bit comparisons)
-// 3. a_s + b = (a+b)_s. Dem: a+(1<<63)+b = a+b+(1<<63)
+// 2.  a - b underflows iff (a - b) > a (AVX does not suport carry)
+// 3. (unsigned) a < (unsigned) b iff (signed) a_s < (singed) b_s (AVX2 does not support unsingend 64-bit comparisons)
+// 4. a_s + b = (a+b)_s. Dem: a+(1<<63)+b = a+b+(1<<63)
 
 #define GOLDILOCKS_PRIME_NEG 0xFFFFFFFF
 #define MSB 0x8000000000000000
@@ -27,9 +27,6 @@ const __m256i P = _mm256_set_epi64x(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOC
 const __m256i P_n = _mm256_set_epi64x(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);
 const __m256i P_s = _mm256_xor_si256(P, MSB_);
 const __m256i sqmask = _mm256_set_epi64x(0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF);
-
-// Rick: fer load aligned
-// Explicar que les comparacions han de se shifted
 
 inline void Goldilocks::set(__m256i &a, const Goldilocks::Element &a0, const Goldilocks::Element &a1, const Goldilocks::Element &a2, const Goldilocks::Element &a3)
 {
@@ -90,6 +87,23 @@ inline void Goldilocks::add_avx(__m256i &c, const __m256i &a, const __m256i &b)
     toCanonical_s(a_sc, a_s);
     add_avx_a_sc(c, a_sc, b);
 }
+
+// Assume a shifted (a_s) and b<=0xFFFFFFFF00000000 (b_small), the result is shifted (c_s)
+inline void Goldilocks::add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b)
+{
+    const __m256i c0_s = _mm256_add_epi64(a_s, b);
+    // We can use 32-bit comparison that is faster
+    // 1) a_s > c0_s => a_sh >= c0_sh
+    // 2) If a_sh = c0_sh => there is no overlow
+    // 3) Therefore: overflow iff a_sh > c0_sh
+    // Dem 1: c0_sh=a_sh+b_h+carry=a_sh
+    //        carry = 0 or 1 is optional, but b_h+carry=0
+    //        if carry==0 => b_h = 0 and as there is no carry => no overflow
+    //        if carry==1 => b_h = 0xFFFFFFFF => b_l=0 (b <=0xFFFFFFFF00000000) => carry=0!!!!
+    const __m256i mask_ = _mm256_cmpgt_epi32(a_s, c0_s);
+    const __m256i corr_ = _mm256_srli_epi64(mask_, 32); // corr=P_n when a_s > c0_s
+    c_s = _mm256_add_epi64(c0_s, corr_);
+}
 //
 // Sub: a-b = (a+1^63)-(b+1^63)=a_s-b_s
 //
@@ -100,37 +114,33 @@ inline void Goldilocks::sub_avx(__m256i &c, const __m256i &a, const __m256i &b)
     shift(a_s, a);
     toCanonical_s(b_sc, b_s);
     const __m256i c_aux = _mm256_sub_epi64(a_s, b_s);
-
-    // When b_s > a_s there has been underflow in the substraction
+    //
     const __m256i mask_ = _mm256_cmpgt_epi64(b_s, a_s);
     // P > b > a =>  (a-b) < 0 and  P+(a-b)< P => 0 < (P-b)+a < P
     const __m256i corr_ = _mm256_and_si256(mask_, P);
     c = _mm256_add_epi64(c_aux, corr_);
 }
 
-// assume a pre-shifted and b <2^32, the result is shifted
-// a_s-b=(a+1_63)-b = 1^63+(a-b)=(a-b)_s
-inline void Goldilocks::sub_avx_a_s_b_32(__m256i &c, const __m256i &a, const __m256i &b)
+// Assume a pre-shifted and b <0xFFFFFFFF00000000, the result is shifted
+// a_s-b=(a+2^63)-b = 2^63+(a-b)=(a-b)_s
+// b<2^32 => b=b_c
+inline void Goldilocks::sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b)
 {
-    /*
-        Rick: Pending
-    */
-    __m256i b_s, b_sc, a_s;
-    shift(b_s, b);
-    shift(a_s, a);
-    toCanonical_s(b_sc, b_s);
-    const __m256i c_aux = _mm256_sub_epi64(a_s, b_s);
 
-    // When b_s > a_s there has been underflow in the substraction
-    const __m256i mask_ = _mm256_cmpgt_epi64(b_s, a_s);
-    // P > b > a =>  (a-b) < 0 and  P+(a-b)< P => 0 < (P-b)+a < P
-    const __m256i corr_ = _mm256_and_si256(mask_, P);
-    c = _mm256_add_epi64(c_aux, corr_);
+    const __m256i c0_s = _mm256_sub_epi64(a_s, b);
+    // We can use 32-bit comparison that is faster
+    // 1) c0_s > a_s => c0_s >= a_s
+    // 2) If c0_s = a_s => there is no underflow
+    // 3) Therefore: underflow iff c0_sh > a_sh
+    // Dem 1: c0_sh=a_sh-b_h+borrow=a_sh
+    //        borrow = 0 or 1 is optional, but b_h+borrow=0
+    //        if borrow==0 => b_h = 0 and as there is no borrow => no underflow
+    //        if borrow==1 => b_h = 0xFFFFFFFF => b_l=0 (b <=0xFFFFFFFF00000000) => borrow=0!!!!
+    const __m256i mask_ = _mm256_cmpgt_epi32(c0_s, a_s);
+    const __m256i corr_ = _mm256_srli_epi64(mask_, 32); // corr=P_n when a_s > c0_s
+    c_s = _mm256_sub_epi64(c0_s, corr_);
 }
 
-//
-// Mult, reduce
-//
 inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b)
 {
     // Obtain a_h and b_h
@@ -183,10 +193,10 @@ inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m2
     shift(c_ls, c_l);
     __m256i c_hh = _mm256_srli_epi64(c_h, 32);
     __m256i c1_s;
-    sub_avx_a_s_b_32(c1_s, c_ls, c_hh);          // rick: this can be optimized with sum32bits
+    sub_avx_s_b_small(c1_s, c_ls, c_hh);         // pxc_hl < 0xFFFFFFFF00000000
     __m256i pxc_hl = _mm256_mul_epu32(c_h, P_n); // c_hl*P_n (only 32bits of c_h useds)
     __m256i c_s;
-    add_avx(c_s, c1_s, pxc_hl);
+    add_avx_s_b_small(c_s, c1_s, pxc_hl); // pxc_hl < 0xFFFFFFFF00000000
     shift(c, c_s);
 }
 inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
@@ -196,9 +206,6 @@ inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
     reduce_128_64(c, c_h, c_l);
 }
 
-//
-// Square
-//
 inline void Goldilocks::square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a)
 {
 

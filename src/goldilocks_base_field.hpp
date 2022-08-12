@@ -131,8 +131,9 @@ public:
     static inline void toCanonical_s(__m256i &a_sc, const __m256i &a_s);
     static inline void add_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void add_avx_a_sc(__m256i &c, const __m256i &a_c, const __m256i &b);
+    static inline void add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
     static inline void sub_avx(__m256i &c, const __m256i &a, const __m256i &b);
-    static inline void sub_avx_a_s_b_32(__m256i &c, const __m256i &a_s, const __m256i &b);
+    static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b);
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
     static inline void reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
