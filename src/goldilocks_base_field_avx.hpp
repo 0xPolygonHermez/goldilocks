@@ -266,7 +266,8 @@ inline void Goldilocks::square_avx(__m256i &c, __m256i &a)
     reduce_128_64(c, c_h, c_l);
 }
 // We assume b_a is aligned
-inline Goldilocks::Element Goldilocks::dot_avx(__m256i a0, __m256i a1, __m256i a2, const Element b_a[12])
+// c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
+inline void Goldilocks::mmult_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b_a[12])
 {
 
     // load b into avx registers, latter
@@ -279,17 +280,21 @@ inline Goldilocks::Element Goldilocks::dot_avx(__m256i a0, __m256i a1, __m256i a
     mult_avx(c0, a0, b0);
     mult_avx(c1, a1, b1);
     mult_avx(c2, a2, b2);
-    __m256i sum1, sum2;
 
-    add_avx(sum1, c0, c1);
-    add_avx(sum2, sum1, c2);
-
+    __m256i c_;
+    add_avx(c_, c0, c1);
+    add_avx(c, c_, c2);
+}
+inline Goldilocks::Element Goldilocks::dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12])
+{
+    __m256i c_;
+    mmult_4x12_avx(c_, a0, a1, a2, b_a);
     alignas(32) Goldilocks::Element c[4];
-    store_a(c, sum2);
+    store_a(c, c_);
     return (c[0] + c[1]) + (c[2] + c[3]);
 }
 
-inline void Goldilocks::spmv_avx(__m256i st0, __m256i st1, __m256i st2, Element[144])
+inline void Goldilocks::mmult_avx(__m256i st0, __m256i st1, __m256i st2, Element[144])
 {
 }
 
