@@ -259,12 +259,12 @@ TEST(GOLDILOCKS_TEST, mul_avx)
     a[0] = inE1;
     a[1] = inE2;
     a[2] = Goldilocks::zero();
-    a[3] = a1;
+    a[3] = max;
 
-    b[0] = inE1;
+    b[0] = a1;
     b[1] = inE3;
     b[2] = inE4;
-    b[3] = max;
+    b[3] = p_1;
 
     __m256i a_;
     __m256i b_;
@@ -338,7 +338,71 @@ TEST(GOLDILOCKS_TEST, square_avx)
     free(a);
     free(c);
 }
+TEST(GOLDILOCKS_TEST, dot_avx)
+{
+    uint64_t in1 = 3;
+    int32_t in2 = 9;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+    int32_t in4 = -12;
 
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element p_1 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
+    Goldilocks::Element max = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFFULL);
+    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+    Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF));
+
+    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(32, 12 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b = (Goldilocks::Element *)aligned_alloc(32, 12 * sizeof(Goldilocks::Element));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE4;
+    a[5] = max;
+    a[6] = a1;
+    a[7] = a2;
+    a[8] = max * max;
+    a[9] = p_1;
+    a[10] = a1 * a1;
+    a[11] = inE4 * p_1;
+
+    b[0] = max;
+    b[1] = a1;
+    b[2] = inE4;
+    b[3] = p_1;
+    b[4] = Goldilocks::zero();
+    b[5] = inE3;
+    b[6] = inE1;
+    b[7] = a1 * inE1;
+    b[8] = max;
+    b[9] = inE4;
+    b[10] = p_1;
+    b[11] = Goldilocks::one();
+
+    Goldilocks::Element dotp1 = Goldilocks::zero();
+    for (int i = 0; i < 12; ++i)
+    {
+        dotp1 = dotp1 + a[i] * b[i];
+    }
+
+    __m256i a0_;
+    __m256i a1_;
+    __m256i a2_;
+
+    Goldilocks::load_a(a0_, &(a[0]));
+    Goldilocks::load_a(a1_, &(a[4]));
+    Goldilocks::load_a(a2_, &(a[8]));
+
+    Goldilocks::Element dotp2 = Goldilocks::dot_avx(a0_, a1_, a2_, b);
+
+    ASSERT_EQ(Goldilocks::toU64(dotp1), Goldilocks::toU64(dotp2));
+    free(a);
+    free(b);
+}
 TEST(GOLDILOCKS_TEST, div)
 {
     uint64_t in1 = 10;

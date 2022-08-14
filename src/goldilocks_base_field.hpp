@@ -126,6 +126,8 @@ public:
     static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
     static inline void load(__m256i &a, const Goldilocks::Element *a4);
     static inline void store(Goldilocks::Element *a4, const __m256i &a);
+    static inline void load_a(__m256i &a, const Goldilocks::Element *a4_a);
+    static inline void store_a(Goldilocks::Element *a4_a, const __m256i &a);
     static inline void shift(__m256i &a_s, const __m256i &a);
     static inline void toCanonical(__m256i &a_c, const __m256i &a);
     static inline void toCanonical_s(__m256i &a_sc, const __m256i &a_s);
@@ -133,12 +135,14 @@ public:
     static inline void add_avx_a_sc(__m256i &c, const __m256i &a_c, const __m256i &b);
     static inline void add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
     static inline void sub_avx(__m256i &c, const __m256i &a, const __m256i &b);
-    static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b);
+    static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
     static inline void reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
     static inline void square_avx(__m256i &c, __m256i &a);
     static inline void square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a);
+    static inline Element dot_avx(__m256i a0, __m256i a1, __m256i a2, const Element[12]);
+    static inline void spmv_avx(__m256i a0, __m256i a1, __m256i a2, Element M[144]);
 };
 
 /*

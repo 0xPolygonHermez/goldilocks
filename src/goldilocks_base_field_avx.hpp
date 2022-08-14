@@ -4,8 +4,9 @@
 #include <immintrin.h>
 
 // PENDING:
-// * optimized mult for b small?
-// * aligment
+// * optimized mult for b small?. To be uses in the product by M and dot product
+// * aligment: https://stackoverflow.com/questions/17091382/memory-alignment-how-to-use-alignof-alignas
+// * reduce utilization of registers
 
 // NOTATION:
 // _c value is in canonical form
@@ -13,6 +14,7 @@
 // _n negative P_n = -P
 // _l low part of a uint64 [31:0] or uint128 [63:0]
 // _h high part of a uint64 [63:32] or uint128 [127:64]
+// _a alingned pointer
 
 // OBSERVATIONS:
 // 1.  a + b overflows iff (a + b) < a (AVX does not suport carry)
@@ -37,10 +39,19 @@ inline void Goldilocks::load(__m256i &a, const Goldilocks::Element *a4)
 {
     a = _mm256_loadu_si256((__m256i *)(a4));
 }
-
 inline void Goldilocks::store(Goldilocks::Element *a4, const __m256i &a)
 {
     _mm256_storeu_si256((__m256i *)a4, a);
+}
+// We assume a4_a is aligned
+inline void Goldilocks::load_a(__m256i &a, const Goldilocks::Element *a4_a)
+{
+    a = _mm256_load_si256((__m256i *)(a4_a));
+}
+// We assume a4_a is aligned
+inline void Goldilocks::store_a(Goldilocks::Element *a4_a, const __m256i &a)
+{
+    _mm256_store_si256((__m256i *)a4_a, a);
 }
 
 inline void Goldilocks::shift(__m256i &a_s, const __m256i &a)
@@ -172,7 +183,7 @@ inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &
 
     // 3: c_l = r1_l | c_ll_l
     __m256i r1_l = _mm256_slli_epi64(r1, 32);
-    c_l = _mm256_add_epi64(r1_l, c_ll);
+    c_l = _mm256_blend_epi32(c_ll, r1_l, 0xaa);
 
     // HIGH PART: c_h = c_hh + r0_h + r1_h
     // 1: r2 = r0_h + c_hh //does not overflow
@@ -193,10 +204,13 @@ inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m2
     shift(c_ls, c_l);
     __m256i c_hh = _mm256_srli_epi64(c_h, 32);
     __m256i c1_s;
-    sub_avx_s_b_small(c1_s, c_ls, c_hh);         // pxc_hl < 0xFFFFFFFF00000000
+    // sub_avx_s_b_small(c1_s, c_ls, c_hh); // pxc_hl < 0xFFFFFFFF00000000
+    sub_avx(c1_s, c_ls, c_hh); // pxc_hl < 0xFFFFFFFF00000000
+
     __m256i pxc_hl = _mm256_mul_epu32(c_h, P_n); // c_hl*P_n (only 32bits of c_h useds)
     __m256i c_s;
-    add_avx_s_b_small(c_s, c1_s, pxc_hl); // pxc_hl < 0xFFFFFFFF00000000
+    // add_avx_s_b_small(c_s, c1_s, pxc_hl); // pxc_hl < 0xFFFFFFFF00000000
+    add_avx(c_s, c1_s, pxc_hl); // pxc_hl < 0xFFFFFFFF00000000
     shift(c, c_s);
 }
 inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
@@ -251,12 +265,32 @@ inline void Goldilocks::square_avx(__m256i &c, __m256i &a)
     square_avx_128(c_h, c_l, a);
     reduce_128_64(c, c_h, c_l);
 }
+// We assume b_a is aligned
+inline Goldilocks::Element Goldilocks::dot_avx(__m256i a0, __m256i a1, __m256i a2, const Element b_a[12])
+{
 
-//
-// Dot
-//
+    // load b into avx registers, latter
+    __m256i b0, b1, b2;
+    load(b0, &(b_a[0]));
+    load(b1, &(b_a[4]));
+    load(b2, &(b_a[8]));
 
-//
-// Spmv
-//
+    __m256i c0, c1, c2;
+    mult_avx(c0, a0, b0);
+    mult_avx(c1, a1, b1);
+    mult_avx(c2, a2, b2);
+    __m256i sum1, sum2;
+
+    add_avx(sum1, c0, c1);
+    add_avx(sum2, sum1, c2);
+
+    alignas(32) Goldilocks::Element c[4];
+    store_a(c, sum2);
+    return (c[0] + c[1]) + (c[2] + c[3]);
+}
+
+inline void Goldilocks::spmv_avx(__m256i st0, __m256i st1, __m256i st2, Element[144])
+{
+}
+
 #endif
