@@ -142,8 +142,9 @@ public:
     static inline void square_avx(__m256i &c, __m256i &a);
     static inline void square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a);
     static inline Element dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element[12]);
-    static inline void mmult_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12]);
-    static inline void mmult_avx(__m256i a0, __m256i a1, __m256i a2, Element M[144]);
+    static inline void spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12]);
+    static inline void mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element M_a[48]); // rick: arrays comes from reference
+    static inline void mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]);                                   // rick: arrays comes from reference
 };
 
 /*
