@@ -326,7 +326,13 @@ inline void Goldilocks::mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m2
 
 inline void Goldilocks::mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_a[144])
 {
-    // call 3 time routine 4x12
+    __m256i b0, b1, b2;
+    Goldilocks::mmult_4x12_avx(b0, a0, a1, a2, &(M_a[0]));
+    Goldilocks::mmult_4x12_avx(b1, a0, a1, a2, &(M_a[48]));
+    Goldilocks::mmult_4x12_avx(b2, a0, a1, a2, &(M_a[96]));
+    _mm256_store_si256(&a0, b0);
+    _mm256_store_si256(&a1, b1);
+    _mm256_store_si256(&a2, b2);
 }
 
 #endif
