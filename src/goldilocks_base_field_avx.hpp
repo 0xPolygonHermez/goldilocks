@@ -210,10 +210,12 @@ inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &
 inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
 {
     __m256i c_hh = _mm256_srli_epi64(c_h, 32);
-    __m256i c1;
-    sub_avx(c1, c_l, c_hh);                  // pxc_hl < 0xFFFFFFFF00000000
+    __m256i c1_s, c_ls, c_s;
+    shift(c_ls, c_l);
+    sub_avx_s_b_small(c1_s, c_ls, c_hh);
     __m256i c2 = _mm256_mul_epu32(c_h, P_n); // c_hl*P_n (only 32bits of c_h useds)
-    add_avx(c, c1, c2);                      // pxc_hl < 0xFFFFFFFF00000000
+    add_avx_s_b_small(c_s, c1_s, c2);
+    shift(c, c_s);
 }
 inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
 {
