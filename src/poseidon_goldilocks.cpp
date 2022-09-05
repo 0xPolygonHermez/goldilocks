@@ -152,16 +152,16 @@ void PoseidonGoldilocks::hash_full_result_avx(Goldilocks::Element *state, const 
     Goldilocks::load(st0, &(state[0]));
     Goldilocks::load(st1, &(state[4]));
     Goldilocks::load(st2, &(state[8]));
-    add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[0]));
+    add_avx_a(st0, st1, st2, &(PoseidonGoldilocksConstants::C[0]));
 
     for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
     {
         pow7_avx(st0, st1, st2);
-        add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
+        add_avx_a(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
         Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::M_[0]));
     }
     pow7_avx(st0, st1, st2);
-    add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS * SPONGE_WIDTH)]));
+    add_avx_a(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS * SPONGE_WIDTH)]));
     Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::P_[0]));
 
     Goldilocks::store(&(state[0]), st0);
@@ -187,7 +187,7 @@ void PoseidonGoldilocks::hash_full_result_avx(Goldilocks::Element *state, const 
     for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
     {
         pow7_avx(st0, st1, st2);
-        add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
+        add_avx_a(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
         Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::M_[0]));
     }
     pow7_avx(st0, st1, st2);

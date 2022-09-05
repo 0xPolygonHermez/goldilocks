@@ -4,7 +4,6 @@
 #include <immintrin.h>
 
 // PENDING:
-// * test for matrix-vector product
 // * optimized mult for b small?. To be uses in the product by M and dot product
 // * aligment: https://stackoverflow.com/questions/17091382/memory-alignment-how-to-use-alignof-alignas
 // * reduce utilization of registers
@@ -12,6 +11,7 @@
 // * canviar nom a sqmask (no entenc el valor)
 // * repassar lo del borrow, perque es suma 1?
 // * When b is in canonical form is allways <= 0xFFFFFFFF00000000 (isn't it), consider this in the optimizations
+// * mirar bé com ordeno les coses entre base_field.avx y goldilocks_avx.cpp
 
 // NOTATION:
 // _c value is in canonical form
@@ -269,15 +269,14 @@ inline void Goldilocks::square_avx(__m256i &c, __m256i &a)
 }
 // Sparse matrix-vector product (4x12 sparce matrix formed of four diagonal blocs 4x5 stored in a0...a3)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
-// We assume b_a is aligned
-inline void Goldilocks::spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b_a[12])
+inline void Goldilocks::spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b[12])
 {
 
     // load b into avx registers, latter
     __m256i b0, b1, b2;
-    load(b0, &(b_a[0]));
-    load(b1, &(b_a[4]));
-    load(b2, &(b_a[8]));
+    load(b0, &(b[0]));
+    load(b1, &(b[4]));
+    load(b2, &(b[8]));
 
     __m256i c0, c1, c2;
     mult_avx(c0, a0, b0);
@@ -288,24 +287,81 @@ inline void Goldilocks::spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m25
     add_avx(c_, c0, c1);
     add_avx(c, c_, c2);
 }
-inline Goldilocks::Element Goldilocks::dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12])
+
+// Sparse matrix-vector product (4x12 sparce matrix formed of four diagonal blocs 4x5 stored in a0...a3)
+// c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
+// We assume b_a is aligned
+inline void Goldilocks::spmv_4x12_avx_a(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b_a[12])
+{
+
+    // load b into avx registers, latter
+    __m256i b0, b1, b2;
+    load_a(b0, &(b_a[0]));
+    load_a(b1, &(b_a[4]));
+    load_a(b2, &(b_a[8]));
+
+    __m256i c0, c1, c2;
+    mult_avx(c0, a0, b0);
+    mult_avx(c1, a1, b1);
+    mult_avx(c2, a2, b2);
+
+    __m256i c_;
+    add_avx(c_, c0, c1);
+    add_avx(c, c_, c2);
+}
+
+inline Goldilocks::Element Goldilocks::dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b[12])
 {
     __m256i c_;
-    spmv_4x12_avx(c_, a0, a1, a2, b_a);
+    spmv_4x12_avx(c_, a0, a1, a2, b);
+    alignas(32) Goldilocks::Element c[4];
+    store_a(c, c_);
+    return (c[0] + c[1]) + (c[2] + c[3]);
+}
+// We assume b_a is aligned
+inline Goldilocks::Element Goldilocks::dot_avx_a(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12])
+{
+    __m256i c_;
+    spmv_4x12_avx_a(c_, a0, a1, a2, b_a);
     alignas(32) Goldilocks::Element c[4];
     store_a(c, c_);
     return (c[0] + c[1]) + (c[2] + c[3]);
 }
 // Dense matrix-vector product
-
-inline void Goldilocks::mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element M_a[48])
+inline void Goldilocks::mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element M[48])
 {
     // Generate matrix 4x4
     __m256i r0, r1, r2, r3;
-    Goldilocks::spmv_4x12_avx(r0, a0, a1, a2, &(M_a[0]));
-    Goldilocks::spmv_4x12_avx(r1, a0, a1, a2, &(M_a[12]));
-    Goldilocks::spmv_4x12_avx(r2, a0, a1, a2, &(M_a[24]));
-    Goldilocks::spmv_4x12_avx(r3, a0, a1, a2, &(M_a[36]));
+    Goldilocks::spmv_4x12_avx(r0, a0, a1, a2, &(M[0]));
+    Goldilocks::spmv_4x12_avx(r1, a0, a1, a2, &(M[12]));
+    Goldilocks::spmv_4x12_avx(r2, a0, a1, a2, &(M[24]));
+    Goldilocks::spmv_4x12_avx(r3, a0, a1, a2, &(M[36]));
+
+    // Transpose: transform de 4x4 matrix stored in rows r0...r3 to the columns c0...c3
+    __m256i t0 = _mm256_permute2f128_si256(r0, r2, 0b00100000);
+    __m256i t1 = _mm256_permute2f128_si256(r1, r3, 0b00100000);
+    __m256i t2 = _mm256_permute2f128_si256(r0, r2, 0b00110001);
+    __m256i t3 = _mm256_permute2f128_si256(r1, r3, 0b00110001);
+    __m256i c0 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(t0), _mm256_castsi256_pd(t1)));
+    __m256i c1 = _mm256_castpd_si256(_mm256_unpackhi_pd(_mm256_castsi256_pd(t0), _mm256_castsi256_pd(t1)));
+    __m256i c2 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(t2), _mm256_castsi256_pd(t3)));
+    __m256i c3 = _mm256_castpd_si256(_mm256_unpackhi_pd(_mm256_castsi256_pd(t2), _mm256_castsi256_pd(t3)));
+
+    // Add columns to obtain result
+    __m256i sum0, sum1;
+    add_avx(sum0, c0, c1);
+    add_avx(sum1, c2, c3);
+    add_avx(b, sum0, sum1);
+}
+// Dense matrix-vector product, M_a is data aligned
+inline void Goldilocks::mmult_4x12_avx_a(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element M_a[48])
+{
+    // Generate matrix 4x4
+    __m256i r0, r1, r2, r3;
+    Goldilocks::spmv_4x12_avx_a(r0, a0, a1, a2, &(M_a[0]));
+    Goldilocks::spmv_4x12_avx_a(r1, a0, a1, a2, &(M_a[12]));
+    Goldilocks::spmv_4x12_avx_a(r2, a0, a1, a2, &(M_a[24]));
+    Goldilocks::spmv_4x12_avx_a(r3, a0, a1, a2, &(M_a[36]));
 
     // Transpose: transform de 4x4 matrix stored in rows r0...r3 to the columns c0...c3
     __m256i t0 = _mm256_permute2f128_si256(r0, r2, 0b00100000);
@@ -324,15 +380,25 @@ inline void Goldilocks::mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m2
     add_avx(b, sum0, sum1);
 }
 
-inline void Goldilocks::mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_a[144])
+inline void Goldilocks::mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M[144])
 {
     __m256i b0, b1, b2;
-    Goldilocks::mmult_4x12_avx(b0, a0, a1, a2, &(M_a[0]));
-    Goldilocks::mmult_4x12_avx(b1, a0, a1, a2, &(M_a[48]));
-    Goldilocks::mmult_4x12_avx(b2, a0, a1, a2, &(M_a[96]));
+    Goldilocks::mmult_4x12_avx(b0, a0, a1, a2, &(M[0]));
+    Goldilocks::mmult_4x12_avx(b1, a0, a1, a2, &(M[48]));
+    Goldilocks::mmult_4x12_avx(b2, a0, a1, a2, &(M[96]));
     _mm256_store_si256(&a0, b0);
     _mm256_store_si256(&a1, b1);
     _mm256_store_si256(&a2, b2);
 }
 
+inline void Goldilocks::mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_a[144])
+{
+    __m256i b0, b1, b2;
+    Goldilocks::mmult_4x12_avx_a(b0, a0, a1, a2, &(M_a[0]));
+    Goldilocks::mmult_4x12_avx_a(b1, a0, a1, a2, &(M_a[48]));
+    Goldilocks::mmult_4x12_avx_a(b2, a0, a1, a2, &(M_a[96]));
+    _mm256_store_si256(&a0, b0);
+    _mm256_store_si256(&a1, b1);
+    _mm256_store_si256(&a2, b2);
+}
 #endif
