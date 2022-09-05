@@ -143,6 +143,61 @@ void PoseidonGoldilocks::hash_full_result_(Goldilocks::Element *state, const Gol
     mvp_(state, PoseidonGoldilocksConstants::M);
 }
 
+void PoseidonGoldilocks::hash_full_result_avx(Goldilocks::Element *state, const Goldilocks::Element *input)
+{
+
+    const int length = SPONGE_WIDTH * sizeof(Goldilocks::Element);
+    std::memcpy(state, input, length);
+    __m256i st0, st1, st2;
+    Goldilocks::load(st0, &(state[0]));
+    Goldilocks::load(st1, &(state[4]));
+    Goldilocks::load(st2, &(state[8]));
+    add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[0]));
+
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
+    {
+        pow7_avx(st0, st1, st2);
+        add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
+        Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::M_[0]));
+    }
+    pow7_avx(st0, st1, st2);
+    add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS * SPONGE_WIDTH)]));
+    Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::P_[0]));
+
+    Goldilocks::store(&(state[0]), st0);
+    Goldilocks::store(&(state[4]), st1);
+    Goldilocks::store(&(state[8]), st2);
+
+    Goldilocks::Element W_[SPONGE_WIDTH];
+    Goldilocks::Element s0;
+
+    for (int r = 0; r < N_PARTIAL_ROUNDS; r++)
+    {
+        pow7(state[0]);
+        state[0] = state[0] + PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
+        s0 = dot_(state, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r]));
+        prod_(W_, state[0], &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1]));
+        add_(state, W_);
+        state[0] = s0;
+    }
+
+    Goldilocks::load(st0, &(state[0]));
+    Goldilocks::load(st1, &(state[4]));
+    Goldilocks::load(st2, &(state[8]));
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
+    {
+        pow7_avx(st0, st1, st2);
+        add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
+        Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::M_[0]));
+    }
+    pow7_avx(st0, st1, st2);
+    Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::M_[0]));
+
+    Goldilocks::store(&(state[0]), st0);
+    Goldilocks::store(&(state[4]), st1);
+    Goldilocks::store(&(state[8]), st2);
+}
+
 void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)
 {
     uint64_t remaining = size;
