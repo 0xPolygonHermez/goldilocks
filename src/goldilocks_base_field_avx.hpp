@@ -4,8 +4,6 @@
 #include <immintrin.h>
 
 // PENDING:
-// * optimized mult for b small?. To be uses in the product by M and dot product
-// * aligment: https://stackoverflow.com/questions/17091382/memory-alignment-how-to-use-alignof-alignas
 // * reduce utilization of registers
 // * check possible redundant shifts
 // * canviar nom a sqmask (no entenc el valor)
@@ -20,6 +18,7 @@
 // _l low part of a variable: uint64 [31:0] or uint128 [63:0]
 // _h high part of a variable: uint64 [63:32] or uint128 [127:64]
 // _a alingned pointer
+// _8 variable can be expressed in 8 bits (<256)
 
 // OBSERVATIONS:
 // 1.  a + b overflows iff (a + b) < a (AVX does not suport carry, this is the way to check)
@@ -48,12 +47,12 @@ inline void Goldilocks::store(Goldilocks::Element *a4, const __m256i &a)
 {
     _mm256_storeu_si256((__m256i *)a4, a);
 }
-// We assume a4_a is aligned
+// We assume a4_a aligned on a 32-byte boundary
 inline void Goldilocks::load_a(__m256i &a, const Goldilocks::Element *a4_a)
 {
     a = _mm256_load_si256((__m256i *)(a4_a));
 }
-// We assume a4_a is aligned
+// We assume a4_a aligned on a 32-byte boundary
 inline void Goldilocks::store_a(Goldilocks::Element *a4_a, const __m256i &a)
 {
     _mm256_store_si256((__m256i *)a4_a, a);
@@ -157,7 +156,7 @@ inline void Goldilocks::sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, cons
     c_s = _mm256_sub_epi64(c0_s, corr_);
 }
 
-// The 128 og the result are stored in c_h | c_l
+// The 128 bits of the result are stored in c_h[64:0]| c_l[64:0]
 inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b)
 {
     // Obtain a_h and b_h in the lower 32 bits
@@ -204,6 +203,40 @@ inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &
     c_h = _mm256_add_epi64(r2, r1_h);
 }
 
+// The 72 bits the result are stored in c_h[32:0] | c_l[64:0]
+inline void Goldilocks::mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b)
+{
+    // Obtain a_h and b_h in the lower 32 bits
+    //__m256i a_h = _mm256_srli_epi64(a, 32);
+    __m256i a_h = _mm256_castps_si256(_mm256_movehdup_ps(_mm256_castsi256_ps(a)));
+
+    // c = (a_h+a_l)*(b_l)=a_h*b_l+a_l*b_l=c_hl+c_ll
+    // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l and b=b_l
+    __m256i c_hl = _mm256_mul_epu32(a_h, b);
+    __m256i c_ll = _mm256_mul_epu32(a, b);
+
+    // Bignum addition
+    // Ranges: c_hl[95:32], c_ll[63:0]
+    // parts that intersect must be added
+
+    // LOW PART:
+    // 1: r0 = c_hl + c_ll_h
+    //    does not overflow: c_hl <= (2^32-1)*(2^32-1)=2^64-2*2^32+1
+    //                       c_ll_h <= 2^32-1
+    //                       c_hl + c_ll_h <= 2^64-2^32
+    __m256i c_ll_h = _mm256_srli_epi64(c_ll, 32);
+    __m256i r0 = _mm256_add_epi64(c_hl, c_ll_h);
+
+    // 3: c_l = r0_l | c_ll_l
+    //__m256i r0_l = _mm256_slli_epi64(r0, 32);
+    __m256i r0_l = _mm256_castps_si256(_mm256_moveldup_ps(_mm256_castsi256_ps(r0)));
+    c_l = _mm256_blend_epi32(c_ll, r0_l, 0xaa);
+
+    // HIGH PART: c_h =  r0_h + r1_h
+    // 1: r2 = r0_h + c_hh //does not overflow
+    c_h = _mm256_srli_epi64(r0, 32);
+}
+
 // 2^64 = P+P_n => [2^64]=[P_n]
 // c % P = [c] = [c_h*1^64+c_l] = [c_h*P_n+c_l] = [c_hh*2^32*P_n+c_hl*P_n+c_l] =
 //             = [c_hh(P-1) +c_hl*P_n+c_l] = [c_l-c_hh+c_hl*P_n]
@@ -221,6 +254,13 @@ inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
 {
     __m256i c_h, c_l;
     mult_avx_128(c_h, c_l, a, b);
+    reduce_128_64(c, c_h, c_l);
+}
+// We assume coeficients of M_8 can be expressed with 8 bits (<256)
+inline void Goldilocks::mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b_8)
+{
+    __m256i c_h, c_l;
+    mult_avx_72(c_h, c_l, a, b_8);
     reduce_128_64(c, c_h, c_l);
 }
 
@@ -292,7 +332,7 @@ inline void Goldilocks::spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m25
 
 // Sparse matrix-vector product (4x12 sparce matrix formed of four diagonal blocs 4x5 stored in a0...a3)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
-// We assume b_a is aligned
+// We assume b_a aligned on a 32-byte boundary
 inline void Goldilocks::spmv_4x12_avx_a(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b_a[12])
 {
 
@@ -311,7 +351,28 @@ inline void Goldilocks::spmv_4x12_avx_a(__m256i &c, const __m256i &a0, const __m
     add_avx(c_, c0, c1);
     add_avx(c, c_, c2);
 }
+// Sparse matrix-vector product (4x12 sparce matrix formed of four diagonal blocs 4x5 stored in a0...a3)
+// c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
+// We assume b_a aligned on a 32-byte boundary
+// We assume coeficients of b_8 can be expressed with 8 bits (<256)
+inline void Goldilocks::spmv_4x12_avx_8(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b_8[12])
+{
 
+    // load b into avx registers, latter
+    __m256i b0, b1, b2;
+    load_a(b0, &(b_8[0]));
+    load_a(b1, &(b_8[4]));
+    load_a(b2, &(b_8[8]));
+
+    __m256i c0, c1, c2;
+    mult_avx_8(c0, a0, b0);
+    mult_avx_8(c1, a1, b1);
+    mult_avx_8(c2, a2, b2);
+
+    __m256i c_;
+    add_avx(c_, c0, c1);
+    add_avx(c, c_, c2);
+}
 inline Goldilocks::Element Goldilocks::dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b[12])
 {
     __m256i c_;
@@ -320,7 +381,7 @@ inline Goldilocks::Element Goldilocks::dot_avx(const __m256i &a0, const __m256i 
     store_a(c, c_);
     return (c[0] + c[1]) + (c[2] + c[3]);
 }
-// We assume b_a is aligned
+// We assume b_a aligned on a 32-byte boundary
 inline Goldilocks::Element Goldilocks::dot_avx_a(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12])
 {
     __m256i c_;
@@ -355,7 +416,34 @@ inline void Goldilocks::mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m2
     add_avx(sum1, c2, c3);
     add_avx(b, sum0, sum1);
 }
-// Dense matrix-vector product, M_a is data aligned
+// Dense matrix-vector product
+// We assume coeficients of M_8 can be expressed with 8 bits (<256)
+inline void Goldilocks::mmult_4x12_avx_8(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element M_8[48])
+{
+    // Generate matrix 4x4
+    __m256i r0, r1, r2, r3;
+    Goldilocks::spmv_4x12_avx_8(r0, a0, a1, a2, &(M_8[0]));
+    Goldilocks::spmv_4x12_avx_8(r1, a0, a1, a2, &(M_8[12]));
+    Goldilocks::spmv_4x12_avx_8(r2, a0, a1, a2, &(M_8[24]));
+    Goldilocks::spmv_4x12_avx_8(r3, a0, a1, a2, &(M_8[36]));
+
+    // Transpose: transform de 4x4 matrix stored in rows r0...r3 to the columns c0...c3
+    __m256i t0 = _mm256_permute2f128_si256(r0, r2, 0b00100000);
+    __m256i t1 = _mm256_permute2f128_si256(r1, r3, 0b00100000);
+    __m256i t2 = _mm256_permute2f128_si256(r0, r2, 0b00110001);
+    __m256i t3 = _mm256_permute2f128_si256(r1, r3, 0b00110001);
+    __m256i c0 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(t0), _mm256_castsi256_pd(t1)));
+    __m256i c1 = _mm256_castpd_si256(_mm256_unpackhi_pd(_mm256_castsi256_pd(t0), _mm256_castsi256_pd(t1)));
+    __m256i c2 = _mm256_castpd_si256(_mm256_unpacklo_pd(_mm256_castsi256_pd(t2), _mm256_castsi256_pd(t3)));
+    __m256i c3 = _mm256_castpd_si256(_mm256_unpackhi_pd(_mm256_castsi256_pd(t2), _mm256_castsi256_pd(t3)));
+
+    // Add columns to obtain result
+    __m256i sum0, sum1;
+    add_avx(sum0, c0, c1);
+    add_avx(sum1, c2, c3);
+    add_avx(b, sum0, sum1);
+}
+// Dense matrix-vector product, we assume that M_a aligned on a 32-byte boundary
 inline void Goldilocks::mmult_4x12_avx_a(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element M_a[48])
 {
     // Generate matrix 4x4
@@ -392,13 +480,24 @@ inline void Goldilocks::mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const G
     _mm256_store_si256(&a1, b1);
     _mm256_store_si256(&a2, b2);
 }
-
+// we assume that M_a aligned on a 32-byte boundary
 inline void Goldilocks::mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_a[144])
 {
     __m256i b0, b1, b2;
     Goldilocks::mmult_4x12_avx_a(b0, a0, a1, a2, &(M_a[0]));
     Goldilocks::mmult_4x12_avx_a(b1, a0, a1, a2, &(M_a[48]));
     Goldilocks::mmult_4x12_avx_a(b2, a0, a1, a2, &(M_a[96]));
+    _mm256_store_si256(&a0, b0);
+    _mm256_store_si256(&a1, b1);
+    _mm256_store_si256(&a2, b2);
+}
+// We assume coeficients of M_8 can be expressed with 8 bits (<256)
+inline void Goldilocks::mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_8[144])
+{
+    __m256i b0, b1, b2;
+    Goldilocks::mmult_4x12_avx_8(b0, a0, a1, a2, &(M_8[0]));
+    Goldilocks::mmult_4x12_avx_8(b1, a0, a1, a2, &(M_8[48]));
+    Goldilocks::mmult_4x12_avx_8(b2, a0, a1, a2, &(M_8[96]));
     _mm256_store_si256(&a0, b0);
     _mm256_store_si256(&a1, b1);
     _mm256_store_si256(&a2, b2);

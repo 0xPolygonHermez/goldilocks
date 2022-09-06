@@ -136,19 +136,31 @@ public:
     static inline void add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
     static inline void sub_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
+
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
+    static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
+
     static inline void mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
+    static inline void mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
     static inline void reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
+
     static inline void square_avx(__m256i &c, __m256i &a);
     static inline void square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a);
+
     static inline Element dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b[12]);
     static inline Element dot_avx_a(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12]);
+
     static inline void spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b[12]);
     static inline void spmv_4x12_avx_a(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12]);
+    static inline void spmv_4x12_avx_8(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_8[12]);
+
     static inline void mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element M[48]);     // rick: arrays comes from reference
     static inline void mmult_4x12_avx_a(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element M_a[48]); // rick: arrays comes from reference
+    static inline void mmult_4x12_avx_8(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element M_8[48]); // rick: arrays comes from reference
+
     static inline void mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const Element M[144]);
-    static inline void mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]); // rick: arrays comes from reference
+    static inline void mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]);
+    static inline void mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_8[144]); // rick: arrays comes from reference
                                                                                                    // rick: arrays comes from reference
 };
 
