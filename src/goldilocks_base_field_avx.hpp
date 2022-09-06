@@ -8,7 +8,7 @@
 // * check possible redundant shifts
 // * canviar nom a sqmask (no entenc el valor)
 // * repassar lo del borrow, perque es suma 1?
-// * When b is in canonical form is allways <= 0xFFFFFFFF00000000 (isn't it), consider this in the optimizations
+// * When b is in canonical form is allways <= 0xFFFFFFFF00000000, consider this in the optimizations
 // * mirar bé com ordeno les coses entre base_field.avx y goldilocks_avx.cpp
 
 // NOTATION:
@@ -250,6 +250,16 @@ inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m2
     add_avx_s_b_small(c_s, c1_s, c2);
     shift(c, c_s);
 }
+
+// 2^64 = P+P_n => [2^64]=[P_n]
+// c % P = [c] = [c_h*1^64+c_l] = [c_h*P_n+c_l] = [c_hh*2^32*P_n+c_hl*P_n+c_l] =
+//             = [c_hl*P_n+c_l] = [c_l+c_hl*P_n]
+inline void Goldilocks::reduce_96_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
+{
+    __m256i c2 = _mm256_mul_epu32(c_h, P_n); // c_hl*P_n (only 32bits of c_h useds)
+    add_avx_s_b_small(c, c_l, c2);
+}
+
 inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
 {
     __m256i c_h, c_l;
@@ -261,7 +271,7 @@ inline void Goldilocks::mult_avx_8(__m256i &c, const __m256i &a, const __m256i &
 {
     __m256i c_h, c_l;
     mult_avx_72(c_h, c_l, a, b_8);
-    reduce_128_64(c, c_h, c_l);
+    reduce_96_64(c, c_h, c_l);
 }
 
 inline void Goldilocks::square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a)

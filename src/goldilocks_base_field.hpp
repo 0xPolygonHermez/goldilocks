@@ -143,6 +143,7 @@ public:
     static inline void mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
     static inline void mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
     static inline void reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
+    static inline void reduce_96_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
 
     static inline void square_avx(__m256i &c, __m256i &a);
     static inline void square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a);
