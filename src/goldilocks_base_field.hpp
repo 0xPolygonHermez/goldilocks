@@ -6,6 +6,7 @@
 #include <gmpxx.h>
 #include <iostream> // string
 #include <omp.h>
+#include <immintrin.h>
 
 #define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0
@@ -120,6 +121,49 @@ public:
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
 
     static void batchInverse(Goldilocks::Element *res, Element *src, uint64_t size);
+
+    // AVX:
+    static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
+    static inline void load(__m256i &a, const Goldilocks::Element *a4);      // rick: argument should be a[4]??
+    static inline void store(Goldilocks::Element *a4, const __m256i &a);     // rick: argument should be a[4]??
+    static inline void load_a(__m256i &a, const Goldilocks::Element *a4_a);  // rick: argument should be a[4]??
+    static inline void store_a(Goldilocks::Element *a4_a, const __m256i &a); // rick: argument should be a[4]??
+    static inline void shift(__m256i &a_s, const __m256i &a);
+    static inline void toCanonical(__m256i &a_c, const __m256i &a);
+    static inline void toCanonical_s(__m256i &a_sc, const __m256i &a_s);
+    static inline void add_avx(__m256i &c, const __m256i &a, const __m256i &b);
+    static inline void add_avx_a_sc(__m256i &c, const __m256i &a_c, const __m256i &b);
+    static inline void add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
+    static inline void add_avx_b_small(__m256i &c, const __m256i &a, const __m256i &b_small);
+    static inline void sub_avx(__m256i &c, const __m256i &a, const __m256i &b);
+    static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
+
+    static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
+    static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
+
+    static inline void mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
+    static inline void mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
+    static inline void reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
+    static inline void reduce_96_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
+
+    static inline void square_avx(__m256i &c, __m256i &a);
+    static inline void square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a);
+
+    static inline Element dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b[12]);
+    static inline Element dot_avx_a(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12]);
+
+    static inline void spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b[12]);
+    static inline void spmv_4x12_avx_a(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_a[12]);
+    static inline void spmv_4x12_avx_8(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b_8[12]);
+
+    static inline void mmult_4x12_avx(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element M[48]);     // rick: arrays comes from reference
+    static inline void mmult_4x12_avx_a(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element M_a[48]); // rick: arrays comes from reference
+    static inline void mmult_4x12_avx_8(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element M_8[48]); // rick: arrays comes from reference
+
+    static inline void mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const Element M[144]);
+    static inline void mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]);
+    static inline void mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_8[144]); // rick: arrays comes from reference
+                                                                                                   // rick: arrays comes from reference
 };
 
 /*
