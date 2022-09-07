@@ -151,42 +151,52 @@ void PoseidonGoldilocks::hash_full_result_avx(Goldilocks::Element *state, const 
     Goldilocks::load(st0, &(state[0]));
     Goldilocks::load(st1, &(state[4]));
     Goldilocks::load(st2, &(state[8]));
-    add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[0]));
+    add_avx_small(st0, st1, st2, &(PoseidonGoldilocksConstants::C[0]));
 
     for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
     {
         pow7_avx(st0, st1, st2);
-        add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
+        add_avx_small(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
         Goldilocks::mmult_avx_8(st0, st1, st2, &(PoseidonGoldilocksConstants::M_[0]));
     }
     pow7_avx(st0, st1, st2);
     add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS * SPONGE_WIDTH)]));
     Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::P_[0]));
 
-    Goldilocks::store(&(state[0]), st0);
-    Goldilocks::store(&(state[4]), st1);
-    Goldilocks::store(&(state[8]), st2);
+    Goldilocks::store(&(state[0]), st0); // rick: aqui puc usar un mask store, export_epi
+    Goldilocks::Element s0 = state[0];
 
-    Goldilocks::Element W_[SPONGE_WIDTH];
-    Goldilocks::Element s0;
-
+    Goldilocks::Element state0;
+    __m256i mask = _mm256_set_epi64x(0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0xFFFFFFFFFFFFFFFF, 0);
     for (int r = 0; r < N_PARTIAL_ROUNDS; r++)
     {
-        pow7(state[0]);
-        state[0] = state[0] + PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
-        s0 = dot_(state, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r]));
-        prod_(W_, state[0], &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1]));
-        add_(state, W_);
-        state[0] = s0;
+        state0 = s0;
+        pow7(state0);
+        state0 = state0 + PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
+        s0 = state0 * PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r];
+        st0 = _mm256_and_si256(st0, mask);
+        s0 = s0 + Goldilocks::dot_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r]));
+        __m256i scalar1 = _mm256_set1_epi64x(state0.fe);
+        __m256i w0, w1, w2, s0, s1, s2;
+        Goldilocks::load(s0, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1]));
+        Goldilocks::load(s1, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1 + 4]));
+        Goldilocks::load(s2, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1 + 8]));
+        Goldilocks::mult_avx(w0, scalar1, s0);
+        Goldilocks::mult_avx(w1, scalar1, s1);
+        Goldilocks::mult_avx(w2, scalar1, s2);
+        Goldilocks::add_avx(st0, st0, w0);
+        Goldilocks::add_avx(st1, st1, w1);
+        Goldilocks::add_avx(st2, st2, w2);
+        state0 = state0 + PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1];
     }
-
+    Goldilocks::store(&(state[0]), st0); // rick: aqui puc usar un mask store, export_epi
+    state[0] = s0;
     Goldilocks::load(st0, &(state[0]));
-    Goldilocks::load(st1, &(state[4]));
-    Goldilocks::load(st2, &(state[8]));
+
     for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; r++)
     {
         pow7_avx(st0, st1, st2);
-        add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
+        add_avx_small(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
         Goldilocks::mmult_avx_8(st0, st1, st2, &(PoseidonGoldilocksConstants::M_[0]));
     }
     pow7_avx(st0, st1, st2);

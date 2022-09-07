@@ -4,6 +4,8 @@
 #include <immintrin.h>
 
 // PENDING:
+// operació de suma amb 32 bits
+
 // * reduce utilization of registers
 // * check possible redundant shifts
 // * canviar nom a sqmask (no entenc el valor)
@@ -120,6 +122,27 @@ inline void Goldilocks::add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, cons
     const __m256i corr_ = _mm256_srli_epi64(mask_, 32); // corr=P_n when a_s > c0_s
     c_s = _mm256_add_epi64(c0_s, corr_);
 }
+
+// Assume b<=0xFFFFFFFF00000000 (b_small), the result is shifted (c_s)
+inline void Goldilocks::add_avx_b_small(__m256i &c, const __m256i &a, const __m256i &b_small)
+{
+    __m256i a_s;
+    shift(a_s, a);
+    const __m256i c0_s = _mm256_add_epi64(a_s, b_small);
+    // We can use 32-bit comparison that is faster, lets see:
+    // 1) a_s > c0_s => a_sh >= c0_sh
+    // 2) If a_sh = c0_sh => there is no overlow (demonstration bellow)
+    // 3) Therefore: overflow iff a_sh > c0_sh
+    // Dem item 2:
+    //     c0_sh=a_sh+b_h+carry=a_sh
+    //     carry = 0 or 1 is optional, but b_h+carry=0
+    //     if carry==0 => b_h = 0 and as there is no carry => no overflow
+    //     if carry==1 => b_h = 0xFFFFFFFF => b_l=0 (b <=0xFFFFFFFF00000000) => carry=0!!!!
+    const __m256i mask_ = _mm256_cmpgt_epi32(a_s, c0_s);
+    const __m256i corr_ = _mm256_srli_epi64(mask_, 32); // corr=P_n when a_s > c0_s
+    shift(c, _mm256_add_epi64(c0_s, corr_));
+}
+
 //
 // Sub: a-b = (a+1^63)-(b+1^63)=a_s-b_s
 //
@@ -257,7 +280,7 @@ inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m2
 inline void Goldilocks::reduce_96_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
 {
     __m256i c2 = _mm256_mul_epu32(c_h, P_n); // c_hl*P_n (only 32bits of c_h useds)
-    add_avx_s_b_small(c, c_l, c2);
+    add_avx_b_small(c, c_l, c2);
 }
 
 inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
@@ -374,14 +397,32 @@ inline void Goldilocks::spmv_4x12_avx_8(__m256i &c, const __m256i &a0, const __m
     load_a(b1, &(b_8[4]));
     load_a(b2, &(b_8[8]));
 
-    __m256i c0, c1, c2;
-    mult_avx_8(c0, a0, b0);
-    mult_avx_8(c1, a1, b1);
-    mult_avx_8(c2, a2, b2);
+    /* __m256i c0, c1, c2;
+     mult_avx_8(c0, a0, b0);
+     mult_avx_8(c1, a1, b1);
+     mult_avx_8(c2, a2, b2);
 
-    __m256i c_;
-    add_avx(c_, c0, c1);
-    add_avx(c, c_, c2);
+     __m256i c_;
+     add_avx(c_, c0, c1);
+     add_avx(c, c_, c2);*/
+    __m256i c0_h, c1_h, c2_h;
+    __m256i c0_l, c1_l, c2_l;
+    mult_avx_72(c0_h, c0_l, a0, b0);
+
+    mult_avx_72(c1_h, c1_l, a1, b1);
+    mult_avx_72(c2_h, c2_l, a2, b2);
+
+    __m256i c_h, c_l, aux_h, aux_l;
+
+    add_avx(aux_l, c0_l, c1_l);
+    add_avx(c_l, aux_l, c2_l);
+    // aux_l = _mm256_add_epi64(c0_l, c1_l); // passar a 32
+    /// c_l = _mm256_add_epi64(aux_l, c2_l);
+
+    aux_h = _mm256_add_epi64(c0_h, c1_h); // passar a 32
+    c_h = _mm256_add_epi64(aux_h, c2_h);
+
+    reduce_96_64(c, c_h, c_l);
 }
 inline Goldilocks::Element Goldilocks::dot_avx(const __m256i &a0, const __m256i &a1, const __m256i &a2, const Element b[12])
 {

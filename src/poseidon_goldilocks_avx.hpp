@@ -73,6 +73,17 @@ inline void PoseidonGoldilocks::add_avx_a(__m256i &st0, __m256i &st1, __m256i &s
     Goldilocks::add_avx(st1, st1, c1);
     Goldilocks::add_avx(st2, st2, c2);
 }
+inline void PoseidonGoldilocks::add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C_small[SPONGE_WIDTH])
+{
+    __m256i c0, c1, c2;
+    Goldilocks::load(c0, &(C_small[0]));
+    Goldilocks::load(c1, &(C_small[4]));
+    Goldilocks::load(c2, &(C_small[8]));
+
+    Goldilocks::add_avx_b_small(st0, st0, c0);
+    Goldilocks::add_avx_b_small(st1, st1, c1);
+    Goldilocks::add_avx_b_small(st2, st2, c2);
+}
 inline void PoseidonGoldilocks::prod_(Goldilocks::Element *x, const Goldilocks::Element alpha, const Goldilocks::Element C[SPONGE_WIDTH])
 {
     for (int i = 0; i < SPONGE_WIDTH; ++i)
