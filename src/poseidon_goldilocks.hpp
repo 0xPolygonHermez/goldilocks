@@ -23,7 +23,6 @@ private:
     inline void static pow7_(Goldilocks::Element *x);
     inline void static pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2);
     inline void static add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_1(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
