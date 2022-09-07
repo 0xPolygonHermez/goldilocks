@@ -32,15 +32,15 @@ private:
     inline void static prod_(Goldilocks::Element *x, const Goldilocks::Element alpha, const Goldilocks::Element C[SPONGE_WIDTH]);
 
 public:
-    void static hash_full_result(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH]);
-    void static hash_full_result_(Goldilocks::Element *, const Goldilocks::Element *);
-    void static hash_full_result_avx(Goldilocks::Element *, const Goldilocks::Element *);
+    void static hash_full_result_seq_old(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH]);
+    void static hash_full_result_seq(Goldilocks::Element *, const Goldilocks::Element *);
+    void static hash_full_result(Goldilocks::Element *, const Goldilocks::Element *);
+    void static hash_seq(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static hash(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
-    void static hash_avx(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
+    void static linear_hash_seq(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
     void static linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
-    void static linear_hash_avx(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
+    void static merkletree_seq(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim = 1);
     void static merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim = 1);
-    void static merkletree_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim = 1);
 };
 
 inline void PoseidonGoldilocks::pow7(Goldilocks::Element &x)
