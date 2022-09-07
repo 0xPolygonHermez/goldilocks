@@ -174,6 +174,44 @@ static void POSEIDON_BENCH(benchmark::State &state)
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
 
+static void POSEIDON_BENCH_AVX(benchmark::State &state)
+{
+    uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
+    uint64_t result_size = (uint64_t)NUM_HASHES * (uint64_t)CAPACITY;
+
+    Goldilocks::Element fibonacci[input_size];
+    Goldilocks::Element result[result_size];
+
+    // Test vector: Fibonacci series
+    // 0 1 1 2 3 5 8 13 ... NUM_HASHES * SPONGE_WIDTH ...
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+    for (uint64_t i = 2; i < input_size; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+    // Benchmark
+    for (auto _ : state)
+    {
+        // Every thread process chunks of SPONGE_WIDTH elements
+#pragma omp parallel for num_threads(state.range(0))
+        for (uint64_t i = 0; i < NUM_HASHES; i++)
+        {
+            PoseidonGoldilocks::hash_avx((Goldilocks::Element(&)[CAPACITY])result[i * CAPACITY], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
+        }
+    }
+    // Check poseidon results poseidon ( 0 1 1 2 3 5 8 13 21 34 55 89 )
+    assert(Goldilocks::toU64(result[0]) == 0X3095570037F4605D);
+    assert(Goldilocks::toU64(result[1]) == 0X3D561B5EF1BC8B58);
+    assert(Goldilocks::toU64(result[2]) == 0X8129DB5EC75C3226);
+    assert(Goldilocks::toU64(result[3]) == 0X8EC2B67AFB6B87ED);
+
+    // Rate = time to process 1 posseidon per thread
+    // BytesProcessed = total bytes processed per second on every iteration
+    state.counters["Rate"] = benchmark::Counter((double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
+    state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
+}
+
 static void LINEAR_HASH_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH * sizeof(Goldilocks::Element));
@@ -218,6 +256,50 @@ static void LINEAR_HASH_BENCH(benchmark::State &state)
     state.counters["BytesProcessed"] = benchmark::Counter((uint64_t)NROWS_HASH * (uint64_t)NCOLS_HASH * sizeof(Goldilocks::Element), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
 
+static void LINEAR_HASH_BENCH_AVX(benchmark::State &state)
+{
+    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH * sizeof(Goldilocks::Element));
+    Goldilocks::Element *result = (Goldilocks::Element *)malloc((uint64_t)HASH_SIZE * (uint64_t)NROWS_HASH * sizeof(Goldilocks::Element));
+
+    // Test vector: Fibonacci series on the columns and increase the initial values to the right,
+    // 1 2 3 4  5  6  ... NUM_COLS
+    // 1 2 3 4  5  6  ... NUM_COLS
+    // 2 4 6 8  10 12 ... NUM_COLS + NUM_COLS
+    // 3 6 9 12 15 18 ... NUM_COLS + NUM_COLS + NUM_COLS
+
+    for (uint64_t i = 0; i < NCOLS_HASH; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + NCOLS_HASH] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+    for (uint64_t j = 2; j < NROWS_HASH; j++)
+    {
+        for (uint64_t i = 0; i < NCOLS_HASH; i++)
+        {
+            cols[j * NCOLS_HASH + i] = cols[(j - 2) * NCOLS_HASH + i] + cols[(j - 1) * NCOLS_HASH + i];
+        }
+    }
+
+    // Benchmark
+    for (auto _ : state)
+    {
+#pragma omp parallel for num_threads(state.range(0))
+        for (uint64_t i = 0; i < NROWS_HASH; i++)
+        {
+            Goldilocks::Element intermediate[NCOLS_HASH];
+            Goldilocks::Element temp_result[HASH_SIZE];
+
+            std::memcpy(&intermediate[0], &cols[i * NCOLS_HASH], NCOLS_HASH * sizeof(Goldilocks::Element));
+            PoseidonGoldilocks::linear_hash_avx(temp_result, intermediate, NCOLS_HASH);
+            std::memcpy(&result[i * HASH_SIZE], &temp_result[0], HASH_SIZE * sizeof(Goldilocks::Element));
+        }
+    }
+    // Rate = time to process 1 linear hash per thread
+    // BytesProcessed = total bytes processed per second on every iteration
+    state.counters["Rate"] = benchmark::Counter((float)NROWS_HASH * (float)ceil((float)NCOLS_HASH / (float)RATE) / state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
+    state.counters["BytesProcessed"] = benchmark::Counter((uint64_t)NROWS_HASH * (uint64_t)NCOLS_HASH * sizeof(Goldilocks::Element), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
+}
+
 static void MERKLE_TREE_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH * sizeof(Goldilocks::Element));
@@ -247,6 +329,47 @@ static void MERKLE_TREE_BENCH(benchmark::State &state)
     for (auto _ : state)
     {
         PoseidonGoldilocks::merkletree(tree, cols, NCOLS_HASH, NROWS_HASH);
+    }
+    Goldilocks::Element root[4];
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    free(cols);
+    free(tree);
+    // Rate = time to process 1 posseidon per thread
+    // BytesProcessed = total bytes processed per second on every iteration
+    state.counters["Rate"] = benchmark::Counter((((float)NROWS_HASH * (float)ceil((float)NCOLS_HASH / (float)RATE)) + log2(NROWS_HASH)) / state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
+    state.counters["BytesProcessed"] = benchmark::Counter((uint64_t)NROWS_HASH * (uint64_t)NCOLS_HASH * sizeof(Goldilocks::Element), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
+}
+
+static void MERKLE_TREE_BENCH_AVX(benchmark::State &state)
+{
+    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH * sizeof(Goldilocks::Element));
+
+    // Test vector: Fibonacci series on the columns and increase the initial values to the right,
+    // 1 2 3 4  5  6  ... NUM_COLS
+    // 1 2 3 4  5  6  ... NUM_COLS
+    // 2 4 6 8  10 12 ... NUM_COLS + NUM_COLS
+    // 3 6 9 12 15 18 ... NUM_COLS + NUM_COLS + NUM_COLS
+    for (uint64_t i = 0; i < NCOLS_HASH; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + NCOLS_HASH] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+    for (uint64_t j = 2; j < NROWS_HASH; j++)
+    {
+        for (uint64_t i = 0; i < NCOLS_HASH; i++)
+        {
+            cols[j * NCOLS_HASH + i] = cols[(j - 2) * NCOLS_HASH + i] + cols[(j - 1) * NCOLS_HASH + i];
+        }
+    }
+
+    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(NCOLS_HASH, NROWS_HASH);
+    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+
+    // Benchmark
+    for (auto _ : state)
+    {
+        PoseidonGoldilocks::merkletree_avx(tree, cols, NCOLS_HASH, NROWS_HASH);
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
@@ -463,6 +586,15 @@ BENCHMARK(POSEIDON_BENCH)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
 
+BENCHMARK(POSEIDON_BENCH_AVX)
+    ->Unit(benchmark::kMicrosecond)
+    /*->DenseRange(1, 1, 1)
+    ->RangeMultiplier(2)
+    ->Range(2, omp_get_max_threads())
+    ->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)*/
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->UseRealTime();
+
 BENCHMARK(LINEAR_HASH_BENCH)
     ->Unit(benchmark::kMicrosecond)
     //->RangeMultiplier(2)
@@ -470,7 +602,19 @@ BENCHMARK(LINEAR_HASH_BENCH)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+BENCHMARK(LINEAR_HASH_BENCH_AVX)
+    ->Unit(benchmark::kMicrosecond)
+    //->RangeMultiplier(2)
+    //->Range(2, omp_get_max_threads())
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
+    ->UseRealTime();
+
 BENCHMARK(MERKLE_TREE_BENCH)
+    ->Unit(benchmark::kMicrosecond)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
+    ->UseRealTime();
+
+BENCHMARK(MERKLE_TREE_BENCH_AVX)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();

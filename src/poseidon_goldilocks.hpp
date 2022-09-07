@@ -36,8 +36,11 @@ public:
     void static hash_full_result_(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash_full_result_avx(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
+    void static hash_avx(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
+    void static linear_hash_avx(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
     void static merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim = 1);
+    void static merkletree_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim = 1);
 };
 
 #include "poseidon_goldilocks_avx.hpp"
