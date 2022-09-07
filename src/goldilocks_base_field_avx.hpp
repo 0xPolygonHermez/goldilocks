@@ -3,16 +3,6 @@
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
 
-// PENDING:
-// operació de suma amb 32 bits
-
-// * reduce utilization of registers
-// * check possible redundant shifts
-// * canviar nom a sqmask (no entenc el valor)
-// * repassar lo del borrow, perque es suma 1?
-// * When b is in canonical form is allways <= 0xFFFFFFFF00000000, consider this in the optimizations
-// * mirar bé com ordeno les coses entre base_field.avx y goldilocks_avx.cpp
-
 // NOTATION:
 // _c value is in canonical form
 // _s value shifted (a_s = a + (1<<63) = a XOR (1<<63)
@@ -230,8 +220,8 @@ inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &
 inline void Goldilocks::mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b)
 {
     // Obtain a_h and b_h in the lower 32 bits
-    //__m256i a_h = _mm256_srli_epi64(a, 32);
-    __m256i a_h = _mm256_castps_si256(_mm256_movehdup_ps(_mm256_castsi256_ps(a)));
+    __m256i a_h = _mm256_srli_epi64(a, 32);
+    //__m256i a_h = _mm256_castps_si256(_mm256_movehdup_ps(_mm256_castsi256_ps(a)));
 
     // c = (a_h+a_l)*(b_l)=a_h*b_l+a_l*b_l=c_hl+c_ll
     // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l and b=b_l
@@ -251,8 +241,8 @@ inline void Goldilocks::mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a
     __m256i r0 = _mm256_add_epi64(c_hl, c_ll_h);
 
     // 3: c_l = r0_l | c_ll_l
-    //__m256i r0_l = _mm256_slli_epi64(r0, 32);
-    __m256i r0_l = _mm256_castps_si256(_mm256_moveldup_ps(_mm256_castsi256_ps(r0)));
+    __m256i r0_l = _mm256_slli_epi64(r0, 32);
+    //__m256i r0_l = _mm256_castps_si256(_mm256_moveldup_ps(_mm256_castsi256_ps(r0)));
     c_l = _mm256_blend_epi32(c_ll, r0_l, 0xaa);
 
     // HIGH PART: c_h =  r0_h + r1_h
@@ -408,7 +398,6 @@ inline void Goldilocks::spmv_4x12_avx_8(__m256i &c, const __m256i &a0, const __m
     __m256i c0_h, c1_h, c2_h;
     __m256i c0_l, c1_l, c2_l;
     mult_avx_72(c0_h, c0_l, a0, b0);
-
     mult_avx_72(c1_h, c1_l, a1, b1);
     mult_avx_72(c2_h, c2_l, a2, b2);
 
@@ -416,10 +405,8 @@ inline void Goldilocks::spmv_4x12_avx_8(__m256i &c, const __m256i &a0, const __m
 
     add_avx(aux_l, c0_l, c1_l);
     add_avx(c_l, aux_l, c2_l);
-    // aux_l = _mm256_add_epi64(c0_l, c1_l); // passar a 32
-    /// c_l = _mm256_add_epi64(aux_l, c2_l);
 
-    aux_h = _mm256_add_epi64(c0_h, c1_h); // passar a 32
+    aux_h = _mm256_add_epi64(c0_h, c1_h); // do with epi32?
     c_h = _mm256_add_epi64(aux_h, c2_h);
 
     reduce_96_64(c, c_h, c_l);

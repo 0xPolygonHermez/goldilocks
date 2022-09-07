@@ -163,7 +163,7 @@ void PoseidonGoldilocks::hash_full_result_avx(Goldilocks::Element *state, const 
     add_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS * SPONGE_WIDTH)]));
     Goldilocks::mmult_avx(st0, st1, st2, &(PoseidonGoldilocksConstants::P_[0]));
 
-    Goldilocks::store(&(state[0]), st0); // rick: aqui puc usar un mask store, export_epi
+    Goldilocks::store(&(state[0]), st0);
     Goldilocks::Element s0 = state[0];
 
     Goldilocks::Element state0;
@@ -189,7 +189,7 @@ void PoseidonGoldilocks::hash_full_result_avx(Goldilocks::Element *state, const 
         Goldilocks::add_avx(st2, st2, w2);
         state0 = state0 + PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1];
     }
-    Goldilocks::store(&(state[0]), st0); // rick: aqui puc usar un mask store, export_epi
+    Goldilocks::store(&(state[0]), st0);
     state[0] = s0;
     Goldilocks::load(st0, &(state[0]));
 
