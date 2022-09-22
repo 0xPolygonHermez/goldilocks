@@ -253,6 +253,11 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
     uint64_t remaining = size;
     Goldilocks::Element state[SPONGE_WIDTH];
 
+    if (size <= CAPACITY)
+    {
+        std::memcpy(output, input, size * sizeof(Goldilocks::Element));
+        return; // no need to hash
+    }
     while (remaining)
     {
         if (remaining == size)
@@ -331,6 +336,7 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Eleme
     }
     tree[0] = Goldilocks::fromU64(num_cols * dim);
     tree[1] = Goldilocks::fromU64(num_rows);
+    std::cout << "num_cols: " << num_cols << std::endl;
     int numThreads = omp_get_max_threads() / 2;
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, numThreads);
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];

@@ -28,7 +28,7 @@ public:
     uint64_t p = GOLDILOCKS_PRIME;
     uint64_t n64 = 1;
     uint64_t n32 = n64 * 2;
-    uint64_t n8 = n32 * 8;
+    uint64_t n8 = n32 * 4;
 
     static inline const Element &zero() { return ZERO; };
     static inline void zero(Element &result)
