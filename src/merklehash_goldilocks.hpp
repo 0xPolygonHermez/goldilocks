@@ -46,7 +46,7 @@ public:
         genMerkleProof(&proof[elementsInLinear], tree, idx, MERKLEHASHGOLDILOCKS_HEADER_SIZE + elementsInLinear * nLinears, nLinears * HASH_SIZE);
     }
 
-    static void genMerkleProof(Goldilocks::Element *proof, Goldilocks::Element *tree, uint32_t idx, uint32_t offset, uint32_t n)
+    static void genMerkleProof(Goldilocks::Element *proof, Goldilocks::Element *tree, uint64_t idx, uint64_t offset, uint64_t n)
     {
 
         if (n <= HASH_SIZE)
@@ -60,13 +60,13 @@ public:
         genMerkleProof(&proof[HASH_SIZE], tree, nextIdx, offset + nextN * 2, nextN);
     }
 
-    static uint32_t _nElements(uint32_t n)
+    static uint64_t _nElements(uint64_t n)
     {
         if (n <= 1)
             return 0;
 
-        uint32_t l = 0;
-        std::vector<uint32_t> treeSize = {1};
+        uint64_t l = 0;
+        std::vector<uint64_t> treeSize = {1};
 
         while (n > treeSize[l])
         {
@@ -74,8 +74,8 @@ public:
             treeSize.push_back(treeSize[l - 1] + std::pow(MERKLEHASHGOLDILOCKS_ARITY, l));
         }
 
-        uint32_t acc = 0;
-        uint32_t rem = n;
+        uint64_t acc = 0;
+        uint64_t rem = n;
         while ((l > 0) && (rem > 0))
         {
             rem--;
@@ -89,11 +89,11 @@ public:
         return acc;
     }
 
-    static uint32_t MerkleProofSize(uint32_t size)
+    static uint64_t MerkleProofSize(uint64_t size)
     {
         if (size > 1)
         {
-            return (uint32_t)ceil(log10(size) / log10(MERKLEHASHGOLDILOCKS_ARITY));
+            return (uint64_t)ceil(log10(size) / log10(MERKLEHASHGOLDILOCKS_ARITY));
         }
         return 0;
     }
