@@ -1358,4 +1358,4 @@ int main(int argc, char **argv)
     return RUN_ALL_TESTS();
 }
 
-// Build command: g++ tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -L/usr/lib/llvm-13/lib/
+// Build command: g++ tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2 -L/usr/lib/llvm-13/lib/
