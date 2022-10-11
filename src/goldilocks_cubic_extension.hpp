@@ -4,6 +4,7 @@
 #include <stdint.h> // for uint64_t
 #include "goldilocks_base_field.hpp"
 #include <cassert>
+#include <vector>
 
 #define FIELD_EXTENSION 3
 
