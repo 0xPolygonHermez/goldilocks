@@ -217,7 +217,12 @@ void PoseidonGoldilocks::linear_hash_seq(Goldilocks::Element *output, Goldilocks
 {
     uint64_t remaining = size;
     Goldilocks::Element state[SPONGE_WIDTH];
-
+    
+    if (size <= CAPACITY)
+    {
+        std::memcpy(output, input, size * sizeof(Goldilocks::Element));
+        return; // no need to hash
+    }
     while (remaining)
     {
         if (remaining == size)
@@ -290,7 +295,7 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
 }
 void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
-    if (num_rows == 0)
+    if (num_rows == 0 || num_cols == 0)
     {
         return;
     }
@@ -330,7 +335,7 @@ void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::E
 }
 void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
-    if (num_rows == 0)
+    if (num_rows == 0 || num_cols == 0)
     {
         return;
     }
