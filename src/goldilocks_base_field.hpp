@@ -626,10 +626,13 @@ inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
 }
 inline void Goldilocks::parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy)
 {
-    uint64_t dim_total = size * sizeof(Goldilocks::Element);
-    uint64_t dim_thread = dim_total / num_threads_copy;
+    if (num_threads_copy < 1)
+    {
+        num_threads_copy = 1;
+    }
     uint64_t components_thread = size / num_threads_copy;
-    uint64_t dim_res = dim_total % num_threads_copy;
+    uint64_t dim_thread = components_thread * sizeof(Goldilocks::Element);
+    uint64_t dim_res = (size - components_thread * num_threads_copy) * sizeof(Goldilocks::Element);
 
 #pragma omp parallel num_threads(num_threads_copy) firstprivate(dim_thread)
     {
