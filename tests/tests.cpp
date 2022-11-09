@@ -997,6 +997,23 @@ TEST(GOLDILOCKS_TEST, merkle_tree_avx)
     ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
 
     free(tree);
+
+    // Edge case
+    ncols_hash = 0;
+    nrows_hash = (1 << 17);
+
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(ncols_hash, nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+    PoseidonGoldilocks::merkletree(tree, cols, ncols_hash, nrows_hash);
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
+
+    free(tree);
 }
 
 TEST(GOLDILOCKS_TEST, merkle_tree_seq)
@@ -1034,7 +1051,7 @@ TEST(GOLDILOCKS_TEST, merkle_tree_seq)
     free(cols);
     free(tree);
 
-    // Edge case, nrows_hash =0
+    // Edge case, ncols_hash =0
     ncols_hash = 0;
     nrows_hash = (1 << 6);
 
@@ -1048,6 +1065,20 @@ TEST(GOLDILOCKS_TEST, merkle_tree_seq)
     ASSERT_EQ(Goldilocks::toU64(root[1]), 0X5A1D2A648EEE8F03);
     ASSERT_EQ(Goldilocks::toU64(root[2]), 0xDDA8F741C47DFB10);
     ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
+
+    free(tree);
+    ncols_hash = 0;
+    nrows_hash = (1 << 17);
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(ncols_hash, nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+    PoseidonGoldilocks::merkletree_seq(tree, cols, ncols_hash, nrows_hash);
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
 
     free(tree);
 }
