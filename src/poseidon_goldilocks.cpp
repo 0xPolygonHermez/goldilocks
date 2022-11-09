@@ -217,7 +217,7 @@ void PoseidonGoldilocks::linear_hash_seq(Goldilocks::Element *output, Goldilocks
 {
     uint64_t remaining = size;
     Goldilocks::Element state[SPONGE_WIDTH];
-    
+
     if (size <= CAPACITY)
     {
         std::memcpy(output, input, size * sizeof(Goldilocks::Element));
@@ -295,7 +295,7 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
 }
 void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
-    if (num_rows == 0 || num_cols == 0)
+    if (num_rows == 0)
     {
         return;
     }
@@ -304,6 +304,7 @@ void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::E
     int numThreads = omp_get_max_threads() / 2;
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, numThreads);
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
+    memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
 
 #pragma omp parallel for
     for (uint64_t i = 0; i < num_rows; i++)
@@ -335,7 +336,7 @@ void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::E
 }
 void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
-    if (num_rows == 0 || num_cols == 0)
+    if (num_rows == 0)
     {
         return;
     }
@@ -344,6 +345,7 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Eleme
     int numThreads = omp_get_max_threads() / 2;
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, numThreads);
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
+    memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
 
 #pragma omp parallel for
     for (uint64_t i = 0; i < num_rows; i++)
