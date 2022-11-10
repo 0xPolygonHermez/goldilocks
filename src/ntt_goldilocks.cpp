@@ -132,7 +132,7 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
     }
 }
 
-void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase, u_int64_t nblock)
+void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, Goldilocks::Element *buffer, u_int64_t nphase, u_int64_t nblock)
 {
     if (ncols == 0 || size == 0)
     {
@@ -156,7 +156,15 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
         ncols_alloc += 1;
     }
     Goldilocks::Element *dst_ = NULL;
-    Goldilocks::Element *aux = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols_alloc);
+    Goldilocks::Element *aux = NULL;
+    if (buffer == NULL)
+    {
+        aux = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols_alloc);
+    }
+    else
+    {
+        aux = buffer;
+    }
     if (nblock > 1)
     {
         dst_ = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols_alloc);
@@ -186,7 +194,10 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
     {
         free(dst_);
     }
-    free(aux);
+    if (buffer == NULL)
+    {
+        free(aux);
+    }
 }
 /**
  * @brief permutation of components of an array in bit-reversal order. If dst==src the permutation is performed on-site.
@@ -232,7 +243,7 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
     }
 }
 
-void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, u_int64_t nphase, u_int64_t nblock)
+void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, Goldilocks::Element *buffer, u_int64_t nphase, u_int64_t nblock)
 {
 
     if (ncols == 0 || size == 0)
@@ -248,7 +259,7 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_
     {
         dst_ = dst;
     }
-    NTT(dst_, src, size, ncols, nphase, nblock);
+    NTT(dst_, src, size, ncols, buffer, nphase, nblock);
     u_int64_t domainPow = log2(size);
     u_int64_t nDiv2 = size >> 1;
 
@@ -277,12 +288,19 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_
     }
 }
 
-void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols)
+void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer, u_int64_t nphase, u_int64_t nblock)
 {
     NTT_Goldilocks ntt_extension(N_Extended);
 
-    Goldilocks::Element *tmp = (Goldilocks::Element *)malloc(N_Extended * ncols * sizeof(Goldilocks::Element));
-
+    Goldilocks::Element *tmp = NULL;
+    if (buffer == NULL)
+    {
+        tmp = (Goldilocks::Element *)malloc(N_Extended * ncols * sizeof(Goldilocks::Element));
+    }
+    else
+    {
+        tmp = buffer;
+    }
     // TODO: Pre-compute r
     Goldilocks::Element *r;
     r = (Goldilocks::Element *)malloc(N * sizeof(Goldilocks::Element));
@@ -293,23 +311,27 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
         Goldilocks::mul(r[i], r[i - 1], Goldilocks::shift());
     }
 
-    INTT(tmp, input, N, ncols);
+    INTT(output, input, N, ncols, tmp);
 #pragma omp parallel for
     for (uint64_t i = 0; i < N; i++)
         for (uint64_t j = 0; j < ncols; j++)
         {
             {
 
-                Goldilocks::mul(tmp[i * ncols + j], tmp[ncols * i + j], r[i]);
+                Goldilocks::mul(output[i * ncols + j], output[ncols * i + j], r[i]);
             }
         }
 #pragma omp parallel for schedule(static)
     for (uint64_t i = N * ncols; i < N_Extended * ncols; i++)
     {
-        tmp[i] = Goldilocks::zero();
+        output[i] = Goldilocks::zero();
     }
-    ntt_extension.NTT(output, tmp, N_Extended, ncols);
+
+    ntt_extension.NTT(output, output, N_Extended, ncols, tmp);
 
     free(r);
-    free(tmp);
+    if (buffer == NULL)
+    {
+        free(tmp);
+    }
 }
