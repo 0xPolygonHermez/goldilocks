@@ -17,7 +17,7 @@
 #define NUM_HASHES 10000
 
 #define FFT_SIZE (1 << 23)
-#define NUM_COLUMNS 100
+#define NUM_COLUMNS 500
 #define BLOWUP_FACTOR 1
 #define NPHASES_NTT 2
 #define NPHASES_LDE 2
@@ -433,7 +433,7 @@ static void NTT_BLOCK_BENCH(benchmark::State &state)
     }
     for (auto _ : state)
     {
-        gntt.NTT(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT, NBLOCKS);
+        gntt.NTT(a, a, FFT_SIZE, NUM_COLUMNS, NULL, NPHASES_NTT, NBLOCKS);
     }
     free(a);
 }
@@ -513,40 +513,71 @@ static void LDE_BLOCK_BENCH(benchmark::State &state)
             a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * (i - 1) + j] + a[NUM_COLUMNS * (i - 2) + j];
         }
     }
-
-    Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
-
-    gntt.INTT(a, a, FFT_SIZE, NUM_COLUMNS, NPHASES_NTT);
-
-    // TODO: This can be pre-generated
-    Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
-    r[0] = Goldilocks::one();
-    for (int i = 1; i < FFT_SIZE; i++)
+    for (auto _ : state)
     {
-        r[i] = r[i - 1] * shift;
-    }
+        Goldilocks::Element shift = Goldilocks::fromU64(49); // TODO: ask for this number, where to put it how to calculate it
+
+        gntt.INTT(a, a, FFT_SIZE, NUM_COLUMNS, NULL, NPHASES_NTT);
+
+        // TODO: This can be pre-generated
+        Goldilocks::Element *r = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
+        r[0] = Goldilocks::one();
+        for (int i = 1; i < FFT_SIZE; i++)
+        {
+            r[i] = r[i - 1] * shift;
+        }
 
 #pragma omp parallel for
-    for (uint64_t i = 0; i < FFT_SIZE; i++)
+        for (uint64_t i = 0; i < FFT_SIZE; i++)
+        {
+            for (uint j = 0; j < NUM_COLUMNS; j++)
+            {
+                a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * i + j] * r[i];
+            }
+        }
+#pragma omp parallel for schedule(static)
+        for (uint64_t i = (uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS; i < (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * (uint64_t)NUM_COLUMNS; i++)
+        {
+            a[i] = Goldilocks::zero();
+        }
+
+        gntt_extension.NTT(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NULL, NPHASES_LDE, NBLOCKS);
+        free(r);
+    }
+    free(a);
+}
+static void EXTENDEDPOL_BENCH(benchmark::State &state)
+{
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+
+    NTT_Goldilocks ntt(FFT_SIZE, state.range(0));
+
+    for (uint i = 0; i < 2; i++)
     {
         for (uint j = 0; j < NUM_COLUMNS; j++)
         {
-            a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * i + j] * r[i];
+            Goldilocks::add(a[i * NUM_COLUMNS + j], Goldilocks::one(), Goldilocks::fromU64(j));
         }
     }
-#pragma omp parallel for schedule(static)
-    for (uint64_t i = (uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS; i < (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * (uint64_t)NUM_COLUMNS; i++)
+
+    for (uint64_t i = 2; i < FFT_SIZE; i++)
     {
-        a[i] = Goldilocks::zero();
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * (i - 1) + j] + a[NUM_COLUMNS * (i - 2) + j];
+        }
     }
     for (auto _ : state)
     {
-        gntt_extension.NTT(a, a, (FFT_SIZE << BLOWUP_FACTOR), NUM_COLUMNS, NPHASES_LDE, NBLOCKS);
+        ntt.extendPol(b, a, FFT_SIZE << BLOWUP_FACTOR, FFT_SIZE, NUM_COLUMNS, c);
     }
     free(a);
-    free(r);
+    free(b);
+    free(c);
 }
-
+#if 0
 BENCHMARK(POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     //->DenseRange(1, 1, 1)
@@ -618,7 +649,6 @@ BENCHMARK(MERKLE_TREE_BENCH_AVX)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
-
 BENCHMARK(NTT_BENCH)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
@@ -636,7 +666,6 @@ BENCHMARK(NTT_BLOCK_BENCH)
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
-
 BENCHMARK(LDE_BENCH)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
@@ -645,8 +674,17 @@ BENCHMARK(LDE_BENCH)
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
-
 BENCHMARK(LDE_BLOCK_BENCH)
+    ->Unit(benchmark::kSecond)
+    //->DenseRange(1, 1, 1)
+    //->RangeMultiplier(2)
+    //->Range(2, omp_get_max_threads())
+    //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->UseRealTime();
+#endif
+
+BENCHMARK(EXTENDEDPOL_BENCH)
     ->Unit(benchmark::kSecond)
     //->DenseRange(1, 1, 1)
     //->RangeMultiplier(2)
