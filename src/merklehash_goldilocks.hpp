@@ -22,7 +22,7 @@ public:
         element = tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + idx * elementsInLinear + subIdx];
     };
 
-    static void root(Goldilocks::Element *root, Goldilocks::Element *tree, uint64_t numElementsTree)
+    inline static void root(Goldilocks::Element *root, Goldilocks::Element *tree, uint64_t numElementsTree)
     {
         std::memcpy(root, &tree[numElementsTree - HASH_SIZE], HASH_SIZE * sizeof(Goldilocks::Element));
     }
@@ -89,7 +89,7 @@ public:
         return acc;
     }
 
-    static uint64_t MerkleProofSize(uint64_t size)
+    static inline uint64_t MerkleProofSize(uint64_t size)
     {
         if (size > 1)
         {
@@ -98,7 +98,7 @@ public:
         return 0;
     }
 
-    static uint64_t getTreeNumElements(uint64_t numCols, uint64_t degree)
+    static inline uint64_t getTreeNumElements(uint64_t numCols, uint64_t degree)
     {
         return numCols * degree + degree * HASH_SIZE + (degree - 1) * HASH_SIZE + MERKLEHASHGOLDILOCKS_HEADER_SIZE;
     };

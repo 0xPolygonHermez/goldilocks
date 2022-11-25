@@ -304,7 +304,7 @@ public:
         result[2] = i3;
     }
 
-    static inline void batchInverse(Goldilocks3::Element *res, Goldilocks3::Element *src, uint64_t size)
+    static void batchInverse(Goldilocks3::Element *res, Goldilocks3::Element *src, uint64_t size)
     {
         Goldilocks3::Element aux[size];
         Goldilocks3::Element tmp[size];

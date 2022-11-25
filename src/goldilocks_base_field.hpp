@@ -92,20 +92,20 @@ public:
     static void mul(Element &result, const Element &in1, const Element &in2);
     static void mul2(Element &result, const Element &in1, const Element &in2);
 
-    static Element div(const Element &in1, const Element &in2) { return mul(in1, inv(in2)); };
-    static void div(Element &result, const Element &in1, const Element &in2) { mul(result, in1, inv(in2)); };
+    static inline Element div(const Element &in1, const Element &in2) { return mul(in1, inv(in2)); };
+    static inline void div(Element &result, const Element &in1, const Element &in2) { mul(result, in1, inv(in2)); };
 
-    static Element square(const Element &in1) { return mul(in1, in1); };
-    static void square(Element &result, const Element &in1) { return mul(result, in1, in1); };
+    static inline Element square(const Element &in1) { return mul(in1, in1); };
+    static inline void square(Element &result, const Element &in1) { return mul(result, in1, in1); };
 
-    static Element neg(const Element &in1) { return sub(Goldilocks::zero(), in1); };
-    static void neg(Element &result, const Element &in1) { return sub(result, Goldilocks::zero(), in1); };
+    static inline Element neg(const Element &in1) { return sub(Goldilocks::zero(), in1); };
+    static inline void neg(Element &result, const Element &in1) { return sub(result, Goldilocks::zero(), in1); };
 
-    static bool isZero(const Element &in1) { return equal(in1, Goldilocks::zero()); };
-    static bool isOne(const Element &in1) { return equal(in1, Goldilocks::one()); };
-    static bool isNegone(const Element &in1) { return equal(in1, Goldilocks::negone()); };
+    static inline bool isZero(const Element &in1) { return equal(in1, Goldilocks::zero()); };
+    static inline bool isOne(const Element &in1) { return equal(in1, Goldilocks::one()); };
+    static inline bool isNegone(const Element &in1) { return equal(in1, Goldilocks::negone()); };
 
-    static bool equal(const Element &in1, const Element &in2) { return Goldilocks::toU64(in1) == Goldilocks::toU64(in2); }
+    static inline bool equal(const Element &in1, const Element &in2) { return Goldilocks::toU64(in1) == Goldilocks::toU64(in2); }
 
     static Element inv(const Element &in1);
     static void inv(Element &result, const Element &in1);
@@ -116,8 +116,8 @@ public:
     static Element exp(Element base, uint64_t exp);
     static void exp(Element &result, Element base, uint64_t exps);
 
-    static void copy(Element &dst, const Element &src) { dst.fe = src.fe; };
-    static void copy(Element *dst, const Element *src) { dst->fe = src->fe; };
+    static inline void copy(Element &dst, const Element &src) { dst.fe = src.fe; };
+    static inline void copy(Element *dst, const Element *src) { dst->fe = src->fe; };
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
 
     static void batchInverse(Goldilocks::Element *res, Element *src, uint64_t size);
