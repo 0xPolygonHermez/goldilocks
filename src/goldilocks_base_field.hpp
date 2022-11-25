@@ -55,42 +55,42 @@ public:
     static inline const Element &w(uint64_t i) { return W[i]; };
     static inline void w(Element &result, uint64_t i) { result.fe = W[i].fe; };
 
-    static inline Element fromU64(uint64_t in1);
-    static inline void fromU64(Element &result, uint64_t in1);
+    static Element fromU64(uint64_t in1);
+    static void fromU64(Element &result, uint64_t in1);
 
-    static inline Element fromS64(int64_t in1);
-    static inline void fromS64(Element &result, int64_t in1);
+    static Element fromS64(int64_t in1);
+    static void fromS64(Element &result, int64_t in1);
 
-    static inline Element fromS32(int32_t in1);
-    static inline void fromS32(Element &result, int32_t in1);
+    static Element fromS32(int32_t in1);
+    static void fromS32(Element &result, int32_t in1);
 
-    static inline uint64_t toU64(const Element &in1);
-    static inline void toU64(uint64_t &result, const Element &in1);
+    static uint64_t toU64(const Element &in1);
+    static void toU64(uint64_t &result, const Element &in1);
 
     static int64_t toS64(const Element &in1);
     static void toS64(int64_t &result, const Element &in1);
 
-    static inline bool toS32(int32_t &result, const Element &in1);
+    static bool toS32(int32_t &result, const Element &in1);
 
-    static inline std::string toString(const Element &in1, int radix = 10);
-    static inline void toString(std::string &result, const Element &in1, int radix = 10);
-    static inline std::string toString(const Element *in1, const uint64_t size, int radix = 10);
+    static std::string toString(const Element &in1, int radix = 10);
+    static void toString(std::string &result, const Element &in1, int radix = 10);
+    static std::string toString(const Element *in1, const uint64_t size, int radix = 10);
 
-    static inline Element fromString(const std::string &in1, int radix = 10);
-    static inline void fromString(Element &result, const std::string &in1, int radix = 10);
+    static Element fromString(const std::string &in1, int radix = 10);
+    static void fromString(Element &result, const std::string &in1, int radix = 10);
 
-    static inline Element fromScalar(const mpz_class &scalar);
-    static inline void fromScalar(Element &result, const mpz_class &scalar);
+    static Element fromScalar(const mpz_class &scalar);
+    static void fromScalar(Element &result, const mpz_class &scalar);
 
-    static inline Element add(const Element &in1, const Element &in2);
-    static inline void add(Element &result, const Element &in1, const Element &in2);
+    static Element add(const Element &in1, const Element &in2);
+    static void add(Element &result, const Element &in1, const Element &in2);
 
-    static inline Element sub(const Element &in1, const Element &in2);
-    static inline void sub(Element &result, const Element &in1, const Element &in2);
+    static Element sub(const Element &in1, const Element &in2);
+    static void sub(Element &result, const Element &in1, const Element &in2);
 
-    static inline Element mul(const Element &in1, const Element &in2);
-    static inline void mul(Element &result, const Element &in1, const Element &in2);
-    static inline void mul2(Element &result, const Element &in1, const Element &in2);
+    static Element mul(const Element &in1, const Element &in2);
+    static void mul(Element &result, const Element &in1, const Element &in2);
+    static void mul2(Element &result, const Element &in1, const Element &in2);
 
     static inline Element div(const Element &in1, const Element &in2) { return mul(in1, inv(in2)); };
     static inline void div(Element &result, const Element &in1, const Element &in2) { mul(result, in1, inv(in2)); };
@@ -276,7 +276,7 @@ inline int64_t Goldilocks::toS64(const Element &in1)
 }
 
 /* Converts a field element into a signed 64bits integer */
-void Goldilocks::toS64(int64_t &result, const Element &in1)
+inline void Goldilocks::toS64(int64_t &result, const Element &in1)
 {
     mpz_class out = Goldilocks::toU64(in1);
 
@@ -295,7 +295,7 @@ void Goldilocks::toS64(int64_t &result, const Element &in1)
 
 /* Converts a field element into a signed 32bits integer */
 /* Precondition:  Goldilocks::Element < 2^31 */
-bool Goldilocks::toS32(int32_t &result, const Element &in1)
+inline bool Goldilocks::toS32(int32_t &result, const Element &in1)
 {
     mpz_class out = Goldilocks::toU64(in1);
 
