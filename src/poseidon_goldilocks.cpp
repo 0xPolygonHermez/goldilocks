@@ -375,3 +375,59 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Eleme
         nextN = floor((pending - 1) / 2) + 1;
     }
 }
+
+void PoseidonGoldilocks::merkletree_batch(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, uint64_t dim)
+{
+    if (num_rows == 0)
+    {
+        return;
+    }
+
+    tree[0] = Goldilocks::fromU64(num_cols * dim);
+    tree[1] = Goldilocks::fromU64(num_rows);
+    int numThreads = omp_get_max_threads() / 2;
+    Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, numThreads);
+    Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
+    uint64_t nbatches = 1;
+    if (num_cols > 0)
+    {
+        nbatches = (num_cols + batch_size - 1) / batch_size;
+    }
+    uint64_t nlastb = num_cols - (nbatches - 1) * batch_size;
+
+#pragma omp parallel for
+    for (uint64_t i = 0; i < num_rows; i++)
+    {
+        Goldilocks::Element buff0[nbatches * CAPACITY];
+        for (uint64_t j = 0; j < nbatches; j++)
+        {
+            uint64_t nn = batch_size;
+            if (j == nbatches - 1)
+                nn = nlastb;
+            Goldilocks::Element buff1[batch_size * dim];
+            std::memcpy(&buff1[0], &input[i * num_cols * dim + j * batch_size * dim], dim * nn * sizeof(Goldilocks::Element));
+            linear_hash(&buff0[j * CAPACITY], buff1, nn * dim);
+        }
+        linear_hash(&cursor[i * CAPACITY], buff0, nbatches * CAPACITY);
+    }
+
+    // Build the merkle tree
+    uint64_t pending = num_rows;
+    uint64_t nextN = floor((pending - 1) / 2) + 1;
+    uint64_t nextIndex = 0;
+
+    while (pending > 1)
+    {
+#pragma omp parallel for
+        for (uint64_t i = 0; i < nextN; i++)
+        {
+            Goldilocks::Element pol_input[SPONGE_WIDTH];
+            memset(pol_input, 0, SPONGE_WIDTH * sizeof(Goldilocks::Element));
+            std::memcpy(pol_input, &cursor[nextIndex + i * RATE], RATE * sizeof(Goldilocks::Element));
+            hash((Goldilocks::Element(&)[CAPACITY])cursor[nextIndex + (pending + i) * CAPACITY], pol_input);
+        }
+        nextIndex += pending * CAPACITY;
+        pending = pending / 2;
+        nextN = floor((pending - 1) / 2) + 1;
+    }
+}
