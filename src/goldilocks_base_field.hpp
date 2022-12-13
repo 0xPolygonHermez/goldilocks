@@ -84,9 +84,11 @@ public:
 
     static Element add(const Element &in1, const Element &in2);
     static void add(Element &result, const Element &in1, const Element &in2);
+    static Element inc(const Goldilocks::Element &fe);
 
     static Element sub(const Element &in1, const Element &in2);
     static void sub(Element &result, const Element &in1, const Element &in2);
+    static Element dec(const Goldilocks::Element &fe);
 
     static Element mul(const Element &in1, const Element &in2);
     static void mul(Element &result, const Element &in1, const Element &in2);
@@ -361,6 +363,37 @@ inline Goldilocks::Element Goldilocks::add(const Element &in1, const Element &in
 {
     Goldilocks::Element result;
     Goldilocks::add(result, in1, in2);
+    return result;
+}
+inline Goldilocks::Element Goldilocks::inc(const Goldilocks::Element &fe)
+{
+    Goldilocks::Element result;
+    if (fe.fe < GOLDILOCKS_PRIME - 2)
+    {
+        result.fe = fe.fe + 1;
+    }
+    else if (fe.fe == GOLDILOCKS_PRIME - 1)
+    {
+        result.fe = 0;
+    }
+    else
+    {
+        result = Goldilocks::add(fe, Goldilocks::one());
+    }
+    return result;
+}
+
+inline Goldilocks::Element Goldilocks::dec(const Goldilocks::Element &fe)
+{
+    Goldilocks::Element result;
+    if (fe.fe > 0)
+    {
+        result.fe = fe.fe - 1;
+    }
+    else
+    {
+        result.fe = GOLDILOCKS_PRIME - 1;
+    }
     return result;
 }
 
