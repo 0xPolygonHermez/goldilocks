@@ -261,6 +261,7 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
     if (size <= CAPACITY)
     {
         std::memcpy(output, input, size * sizeof(Goldilocks::Element));
+        std::memset(&output[size], 0, (CAPACITY - size) * sizeof(Goldilocks::Element));
         return; // no need to hash
     }
     while (remaining)
