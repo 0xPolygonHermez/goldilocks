@@ -303,6 +303,10 @@ void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::E
     tree[0] = Goldilocks::fromU64(num_cols * dim);
     tree[1] = Goldilocks::fromU64(num_rows);
     int numThreads = omp_get_max_threads() / 2;
+    if (numThreads == 0)
+    {
+        numThreads = 1;
+    }
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, numThreads);
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
     memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
@@ -344,6 +348,10 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Eleme
     tree[0] = Goldilocks::fromU64(num_cols * dim);
     tree[1] = Goldilocks::fromU64(num_rows);
     int numThreads = omp_get_max_threads() / 2;
+    if (numThreads == 0)
+    {
+        numThreads = 1;
+    }
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, numThreads);
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
     memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
@@ -387,6 +395,10 @@ void PoseidonGoldilocks::merkletree_batch(Goldilocks::Element *tree, Goldilocks:
     tree[0] = Goldilocks::fromU64(num_cols * dim);
     tree[1] = Goldilocks::fromU64(num_rows);
     int numThreads = omp_get_max_threads() / 2;
+    if (numThreads == 0)
+    {
+        numThreads = 1;
+    }
     Goldilocks::parcpy(&tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE], input, dim * num_cols * num_rows, numThreads);
     Goldilocks::Element *cursor = &tree[MERKLEHASHGOLDILOCKS_HEADER_SIZE + num_cols * num_rows * dim];
     uint64_t nbatches = 1;
