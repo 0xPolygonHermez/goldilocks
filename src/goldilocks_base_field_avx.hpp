@@ -94,6 +94,14 @@ inline void Goldilocks::add_avx(__m256i &c, const __m256i &a, const __m256i &b)
     toCanonical_s(a_sc, a_s);
     add_avx_a_sc(c, a_sc, b);
 }
+inline void Goldilocks::add_avx(Goldilocks::Element *c4, const Goldilocks::Element *a4, const Goldilocks::Element *b4)
+{
+    __m256i a_, b_, c_;
+    load(a_, a4);
+    load(b_, b4);
+    add_avx(c_, a_, b_);
+    store(c4, c_);
+}
 
 // Assume a shifted (a_s) and b<=0xFFFFFFFF00000000 (b_small), the result is shifted (c_s)
 inline void Goldilocks::add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small)
@@ -147,6 +155,14 @@ inline void Goldilocks::sub_avx(__m256i &c, const __m256i &a, const __m256i &b)
     // P > b > a =>  (a-b) < 0 and  P+(a-b)< P => 0 < (P-b)+a < P
     const __m256i corr_ = _mm256_and_si256(mask_, P);
     c = _mm256_add_epi64(c0, corr_);
+}
+inline void Goldilocks::sub_avx(Goldilocks::Element *c4, const Goldilocks::Element *a4, const Goldilocks::Element *b4)
+{
+    __m256i a_, b_, c_;
+    load(a_, a4);
+    load(b_, b4);
+    sub_avx(c_, a_, b_);
+    store(c4, c_);
 }
 
 // Assume a pre-shifted and b <0xFFFFFFFF00000000, the result is shifted

@@ -12,6 +12,7 @@
 #define GOLDILOCKS_DEBUG 0
 #define GOLDILOCKS_NUM_ROOTS 33
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
+#define NROWS_ 4
 
 // TODO: ROOTS of UNITY: https://github.com/hermeznetwork/starkpil/blob/e990d99d0936ec3de751ed927af98fe816d72ede/circuitsGL/fft.circom#L17
 class Goldilocks
@@ -84,15 +85,31 @@ public:
 
     static Element add(const Element &in1, const Element &in2);
     static void add(Element &result, const Element &in1, const Element &in2);
+    static void add0(Element *result, const Element *in1, const Element *in2);
+    static void add0(Element *result, const Element *in1, const Element *in2, const int offset2);
+    static void add0(Element *result, const Element *in1, const Element in2);
+    static void add0(Element *result, const Element *in1, const Element in2, const int offset1);
+    static void add0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2);
+
     static Element inc(const Goldilocks::Element &fe);
 
     static Element sub(const Element &in1, const Element &in2);
     static void sub(Element &result, const Element &in1, const Element &in2);
+    static void sub0(Element *result, const Element *in1, const Element *in2);
+    static void sub0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2);
+    static void sub0(Element *result, const Element *in1, const Element in2);
+    static void sub0(Element *result, const Element in1, const Element *in2);
+    static void sub0(Element *result, const Element *in1, const Element in2, int offset1);
+    static void sub0(Element *result, const Element in1, const Element *in2, int offset2);
     static Element dec(const Goldilocks::Element &fe);
 
     static Element mul(const Element &in1, const Element &in2);
     static void mul(Element &result, const Element &in1, const Element &in2);
     static void mul2(Element &result, const Element &in1, const Element &in2);
+    static void mul0(Element *result, const Element *in1, const Element *in2);
+    static void mul0(Element *result, const Element in1, const Element *in2);
+    static void mul0(Element *result, const Element *in1, const Element *in2, int offset1, int offset2);
+    static void mul0(Element *result, const Element in1, const Element *in2, int offset2);
 
     static inline Element div(const Element &in1, const Element &in2) { return mul(in1, inv(in2)); };
     static inline void div(Element &result, const Element &in1, const Element &in2) { mul(result, in1, inv(in2)); };
@@ -120,6 +137,27 @@ public:
 
     static inline void copy(Element &dst, const Element &src) { dst.fe = src.fe; };
     static inline void copy(Element *dst, const Element *src) { dst->fe = src->fe; };
+    static inline void copy0(Element *dst, const Element &src)
+    {
+        for (int i = 0; i < NROWS_; ++i)
+        {
+            dst[i].fe = src.fe;
+        }
+    }
+    static inline void copy1(Element *dst, const Element *src)
+    {
+        for (int i = 0; i < NROWS_; ++i)
+        {
+            dst[i].fe = src[i].fe;
+        }
+    }
+    static inline void copy1(Element *dst, const Element *src, int stride)
+    {
+        for (int i = 0; i < NROWS_; ++i)
+        {
+            dst[i].fe = src[i * stride].fe;
+        }
+    }
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
 
     static void batchInverse(Goldilocks::Element *res, Element *src, uint64_t size);
@@ -139,6 +177,8 @@ public:
     static inline void add_avx_b_small(__m256i &c, const __m256i &a, const __m256i &b_small);
     static inline void sub_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
+    static inline void add_avx(Goldilocks::Element *c4, const Goldilocks::Element *a4, const Goldilocks::Element *b4);
+    static inline void sub_avx(Goldilocks::Element *c4, const Goldilocks::Element *a4, const Goldilocks::Element *b4);
 
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
@@ -365,6 +405,44 @@ inline Goldilocks::Element Goldilocks::add(const Element &in1, const Element &in
     Goldilocks::add(result, in1, in2);
     return result;
 }
+inline void Goldilocks::add0(Element *result, const Element *in1, const Element *in2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        add(result[i], in1[i], in2[i]);
+    }
+}
+
+inline void Goldilocks::add0(Element *result, const Element *in1, const Element *in2, const int offset2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        add(result[i], in1[i], in2[i * offset2]);
+    }
+}
+
+inline void Goldilocks::add0(Element *result, const Element *in1, const Element in2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        add(result[i], in1[i], in2);
+    }
+}
+inline void Goldilocks::add0(Element *result, const Element *in1, const Element in2, const int offset1)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        add(result[i], in1[i * offset1], in2);
+    }
+}
+
+inline void Goldilocks::add0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        add(result[i], in1[i * offset1], in2[i * offset2]);
+    }
+}
 inline Goldilocks::Element Goldilocks::inc(const Goldilocks::Element &fe)
 {
     Goldilocks::Element result;
@@ -443,6 +521,48 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
+}
+inline void Goldilocks::sub0(Element *result, const Element *in1, const Element *in2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        sub(result[i], in1[i], in2[i]);
+    }
+}
+inline void Goldilocks::sub0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        sub(result[i], in1[i * offset1], in2[i * offset2]);
+    }
+}
+inline void Goldilocks::sub0(Element *result, const Element *in1, const Element in2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        sub(result[i], in1[i], in2);
+    }
+}
+inline void Goldilocks::sub0(Element *result, const Element in1, const Element *in2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        sub(result[i], in1, in2[i]);
+    }
+}
+inline void Goldilocks::sub0(Element *result, const Element *in1, const Element in2, int offset1)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        sub(result[i], in1[i * offset1], in2);
+    }
+}
+inline void Goldilocks::sub0(Element *result, const Element in1, const Element *in2, int offset2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        sub(result[i], in1, in2[i * offset2]);
+    }
 }
 
 inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in2)
@@ -540,6 +660,34 @@ inline void Goldilocks::mul2(Element &result, const Element &in1, const Element 
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
+}
+inline void Goldilocks::mul0(Element *result, const Element *in1, const Element *in2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        mul(result[i], in1[i], in2[i]);
+    }
+}
+inline void Goldilocks::mul0(Element *result, const Element in1, const Element *in2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        mul(result[i], in1, in2[i]);
+    }
+}
+inline void Goldilocks::mul0(Element *result, const Element *in1, const Element *in2, int offset1, int offset2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        mul(result[i], in1[i * offset1], in2[i * offset2]);
+    }
+}
+inline void Goldilocks::mul0(Element *result, const Element in1, const Element *in2, int offset2)
+{
+    for (int i = 0; i < NROWS_; ++i)
+    {
+        mul(result[i], in1, in2[i * offset2]);
+    }
 }
 inline Goldilocks::Element Goldilocks::inv(const Element &in1)
 {
