@@ -85,11 +85,11 @@ public:
 
     static Element add(const Element &in1, const Element &in2);
     static void add(Element &result, const Element &in1, const Element &in2);
-    static void add0(Element *result, const Element *in1, const Element *in2);
-    static void add0(Element *result, const Element *in1, const Element *in2, const int offset2);
-    static void add0(Element *result, const Element *in1, const Element in2);
-    static void add0(Element *result, const Element *in1, const Element in2, const int offset1);
-    static void add0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2);
+    static void add_batch(Element *result, const Element *in1, const Element *in2);
+    static void add_batch(Element *result, const Element *in1, const Element *in2, const int offset2);
+    static void add_batch(Element *result, const Element *in1, const Element in2);
+    static void add_batch(Element *result, const Element *in1, const Element in2, const int offset1);
+    static void add_batch(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2);
 
     static Element inc(const Goldilocks::Element &fe);
 
@@ -101,6 +101,7 @@ public:
     static void sub0(Element *result, const Element in1, const Element *in2);
     static void sub0(Element *result, const Element *in1, const Element in2, int offset1);
     static void sub0(Element *result, const Element in1, const Element *in2, int offset2);
+
     static Element dec(const Goldilocks::Element &fe);
 
     static Element mul(const Element &in1, const Element &in2);
@@ -177,8 +178,13 @@ public:
     static inline void add_avx_b_small(__m256i &c, const __m256i &a, const __m256i &b_small);
     static inline void sub_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
-    static inline void add_avx(Goldilocks::Element *c4, const Goldilocks::Element *a4, const Goldilocks::Element *b4);
-    static inline void sub_avx(Goldilocks::Element *c4, const Goldilocks::Element *a4, const Goldilocks::Element *b4);
+    static inline void add_avx(Element *c4, const Element *a4, const Element *b4);
+    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_b);
+    static inline void add_avx(Element *c4, const Element *a4, const Element b);
+    static inline void add_avx(Element *c4, const Element *a4, const Element b, const int offset_a);
+    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_a, const int offset_b);
+
+    static inline void sub_avx(Element *c4, const Element *a4, const Element *b4);
 
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
@@ -405,7 +411,7 @@ inline Goldilocks::Element Goldilocks::add(const Element &in1, const Element &in
     Goldilocks::add(result, in1, in2);
     return result;
 }
-inline void Goldilocks::add0(Element *result, const Element *in1, const Element *in2)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2)
 {
     for (int i = 0; i < NROWS_; ++i)
     {
@@ -413,7 +419,7 @@ inline void Goldilocks::add0(Element *result, const Element *in1, const Element 
     }
 }
 
-inline void Goldilocks::add0(Element *result, const Element *in1, const Element *in2, const int offset2)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2, const int offset2)
 {
     for (int i = 0; i < NROWS_; ++i)
     {
@@ -421,14 +427,14 @@ inline void Goldilocks::add0(Element *result, const Element *in1, const Element 
     }
 }
 
-inline void Goldilocks::add0(Element *result, const Element *in1, const Element in2)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element in2)
 {
     for (int i = 0; i < NROWS_; ++i)
     {
         add(result[i], in1[i], in2);
     }
 }
-inline void Goldilocks::add0(Element *result, const Element *in1, const Element in2, const int offset1)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element in2, const int offset1)
 {
     for (int i = 0; i < NROWS_; ++i)
     {
@@ -436,7 +442,7 @@ inline void Goldilocks::add0(Element *result, const Element *in1, const Element 
     }
 }
 
-inline void Goldilocks::add0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2)
 {
     for (int i = 0; i < NROWS_; ++i)
     {

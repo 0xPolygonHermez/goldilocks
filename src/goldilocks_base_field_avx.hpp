@@ -94,11 +94,65 @@ inline void Goldilocks::add_avx(__m256i &c, const __m256i &a, const __m256i &b)
     toCanonical_s(a_sc, a_s);
     add_avx_a_sc(c, a_sc, b);
 }
-inline void Goldilocks::add_avx(Goldilocks::Element *c4, const Goldilocks::Element *a4, const Goldilocks::Element *b4)
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4)
 {
     __m256i a_, b_, c_;
     load(a_, a4);
     load(b_, b4);
+    add_avx(c_, a_, b_);
+    store(c4, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_b)
+{
+    Element bb[4];
+    for (int k = 0; k < 4; ++k)
+    {
+        bb[k] = b4[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load(a_, a4);
+    load(b_, bb);
+    add_avx(c_, a_, b_);
+    store(c4, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element b)
+{
+    Element bb[4] = {b, b, b, b};
+    __m256i a_, b_, c_;
+    load(a_, a4);
+    load(b_, bb);
+    add_avx(c_, a_, b_);
+    store(c4, c_);
+}
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element b, const int offset_a)
+{
+    Element bb[4] = {b, b, b, b};
+    Element aa[4];
+    for (int k = 0; k < 4; ++k)
+    {
+        aa[k] = a4[k * offset_a];
+    }
+    __m256i a_, b_, c_;
+    load(a_, aa);
+    load(b_, bb);
+    add_avx(c_, a_, b_);
+    store(c4, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_a, const int offset_b)
+{
+    Element bb[4];
+    Element aa[4];
+    for (int k = 0; k < 4; ++k)
+    {
+        aa[k] = a4[k * offset_a];
+        bb[k] = b4[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load(a_, aa);
+    load(b_, bb);
     add_avx(c_, a_, b_);
     store(c4, c_);
 }
