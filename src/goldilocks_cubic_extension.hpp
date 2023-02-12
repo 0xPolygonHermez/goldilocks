@@ -898,6 +898,83 @@ public:
             result[k * FIELD_EXTENSION + 2] = B - G;
         }
     };
+    static inline void mul33c_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b)
+    {
+        Goldilocks::Element aux[3];
+        aux[0] = b[0] + b[1];
+        aux[1] = b[0] + b[2];
+        aux[2] = b[1] + b[2];
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            Goldilocks::Element A = (a[k * FIELD_EXTENSION] + a[k * FIELD_EXTENSION + 1]) * aux[0];
+            Goldilocks::Element B = (a[k * FIELD_EXTENSION] + a[k * FIELD_EXTENSION + 2]) * aux[1];
+            Goldilocks::Element C = (a[k * FIELD_EXTENSION + 1] + a[k * FIELD_EXTENSION + 2]) * aux[2];
+            Goldilocks::Element D = a[k * FIELD_EXTENSION] * b[0];
+            Goldilocks::Element E = a[k * FIELD_EXTENSION + 1] * b[1];
+            Goldilocks::Element F = a[k * FIELD_EXTENSION + 2] * b[2];
+            Goldilocks::Element G = D - E;
+
+            result[k * FIELD_EXTENSION] = (C + G) - F;
+            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
+            result[k * FIELD_EXTENSION + 2] = B - G;
+        }
+    };
+    static inline void mul_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride0, uint64_t stride1)
+    {
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            Goldilocks::Element A = (a[k * stride0] + a[k * stride0 + 1]) * (b[k * stride1] + b[k * stride1 + 1]);
+            Goldilocks::Element B = (a[k * stride0] + a[k * stride0 + 2]) * (b[k * stride1] + b[k * stride1 + 2]);
+            Goldilocks::Element C = (a[k * stride0 + 1] + a[k * stride0 + 2]) * (b[k * stride1 + 1] + b[k * stride1 + 2]);
+            Goldilocks::Element D = a[k * stride0] * b[k * stride1];
+            Goldilocks::Element E = a[k * stride0 + 1] * b[k * stride1 + 1];
+            Goldilocks::Element F = a[k * stride0 + 2] * b[k * stride1 + 2];
+            Goldilocks::Element G = D - E;
+
+            result[k * FIELD_EXTENSION] = (C + G) - F;
+            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
+            result[k * FIELD_EXTENSION + 2] = B - G;
+        }
+    };
+    static inline void mul33c_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a)
+    {
+        Goldilocks::Element aux[3];
+        aux[0] = b[0] + b[1];
+        aux[1] = b[0] + b[2];
+        aux[2] = b[1] + b[2];
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            Goldilocks::Element A = (a[k * stride_a] + a[k * stride_a + 1]) * aux[0];
+            Goldilocks::Element B = (a[k * stride_a] + a[k * stride_a + 2]) * aux[1];
+            Goldilocks::Element C = (a[k * stride_a + 1] + a[k * stride_a + 2]) * aux[2];
+            Goldilocks::Element D = a[k * stride_a] * b[0];
+            Goldilocks::Element E = a[k * stride_a + 1] * b[1];
+            Goldilocks::Element F = a[k * stride_a + 2] * b[2];
+            Goldilocks::Element G = D - E;
+
+            result[k * FIELD_EXTENSION] = (C + G) - F;
+            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
+            result[k * FIELD_EXTENSION + 2] = B - G;
+        }
+    };
+    static inline void mul13c_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b)
+    {
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = b[0] * a[k];
+            result[k * FIELD_EXTENSION + 1] = b[1] * a[k];
+            result[k * FIELD_EXTENSION + 2] = b[2] * a[k];
+        }
+    }
+    static inline void mul13_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a, uint64_t stride_b)
+    {
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = a[k * stride_a] * b[k * stride_b];
+            result[k * FIELD_EXTENSION + 1] = a[k * stride_a] * b[k * stride_b + 1];
+            result[k * FIELD_EXTENSION + 2] = a[k * stride_a] * b[k * stride_b + 2];
+        }
+    }
 
     static inline void mul13c_avx(Goldilocks::Element *result, Goldilocks::Element *a, Element &b, uint64_t stride_a)
     {
@@ -1093,30 +1170,7 @@ public:
         Goldilocks::sub_avx(c1_, result1_, auxr_);
         Goldilocks::sub_avx(c2_, B_, G_);
     };
-
-    static inline void mul3(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b)
-    {
-        Goldilocks::Element aux[3];
-        aux[0] = b[0] + b[1];
-        aux[1] = b[0] + b[2];
-        aux[2] = b[1] + b[2];
-        for (uint64_t k = 0; k < NROWS_; ++k)
-        {
-            Goldilocks::Element A = (a[k * FIELD_EXTENSION] + a[k * FIELD_EXTENSION + 1]) * aux[0];
-            Goldilocks::Element B = (a[k * FIELD_EXTENSION] + a[k * FIELD_EXTENSION + 2]) * aux[1];
-            Goldilocks::Element C = (a[k * FIELD_EXTENSION + 1] + a[k * FIELD_EXTENSION + 2]) * aux[2];
-            Goldilocks::Element D = a[k * FIELD_EXTENSION] * b[0];
-            Goldilocks::Element E = a[k * FIELD_EXTENSION + 1] * b[1];
-            Goldilocks::Element F = a[k * FIELD_EXTENSION + 2] * b[2];
-            Goldilocks::Element G = D - E;
-
-            result[k * FIELD_EXTENSION] = (C + G) - F;
-            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
-            result[k * FIELD_EXTENSION + 2] = B - G;
-        }
-    };
-
-    static inline void mul3_(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b)
+    static inline void mul33c_avx(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b)
     {
         assert(NROWS_ == 4);
         Goldilocks::Element aux0[4], aux1[4], aux2[4], aux[3];
@@ -1187,81 +1241,203 @@ public:
             result[k * FIELD_EXTENSION + 2] = result2[k];
         }
     };
-
-    static inline void mul4(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride0, uint64_t stride1)
+    static inline void mul_avx(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a, uint64_t stride_b)
     {
+        assert(NROWS_ == 4);
+        Goldilocks::Element a0[4], a1[4], a2[4];
+        Goldilocks::Element b0[4], b1[4], b2[4];
+        __m256i aux0_, aux1_, aux2_;
+        __m256i a0_, a1_, a2_;
+        __m256i b0_, b1_, b2_;
+
+        // redistribute data:
         for (uint64_t k = 0; k < NROWS_; ++k)
         {
-            Goldilocks::Element A = (a[k * stride0] + a[k * stride0 + 1]) * (b[k * stride1] + b[k * stride1 + 1]);
-            Goldilocks::Element B = (a[k * stride0] + a[k * stride0 + 2]) * (b[k * stride1] + b[k * stride1 + 2]);
-            Goldilocks::Element C = (a[k * stride0 + 1] + a[k * stride0 + 2]) * (b[k * stride1 + 1] + b[k * stride1 + 2]);
-            Goldilocks::Element D = a[k * stride0] * b[k * stride1];
-            Goldilocks::Element E = a[k * stride0 + 1] * b[k * stride1 + 1];
-            Goldilocks::Element F = a[k * stride0 + 2] * b[k * stride1 + 2];
-            Goldilocks::Element G = D - E;
+            a0[k] = a[k * stride_a];
+            a1[k] = a[k * stride_a + 1];
+            a2[k] = a[k * stride_a + 2];
+            b0[k] = b[k * stride_b];
+            b1[k] = b[k * stride_b + 1];
+            b2[k] = b[k * stride_b + 2];
+        }
+        Goldilocks::load(a0_, a0);
+        Goldilocks::load(a1_, a1);
+        Goldilocks::load(a2_, a2);
+        Goldilocks::load(b0_, b0);
+        Goldilocks::load(b1_, b1);
+        Goldilocks::load(b2_, b2);
 
-            result[k * FIELD_EXTENSION] = (C + G) - F;
-            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
-            result[k * FIELD_EXTENSION + 2] = B - G;
+        // operations
+        __m256i A_, B_, C_, D_, E_, F_, G_;
+        __m256i result0_, result1_, result2_, auxr_;
+        Goldilocks::Element result0[4], result1[4], result2[4];
+
+        Goldilocks::add_avx(A_, a0_, a1_);
+        Goldilocks::add_avx(B_, a0_, a2_);
+        Goldilocks::add_avx(C_, a1_, a2_);
+        Goldilocks::add_avx(aux0_, b0_, b1_);
+        Goldilocks::add_avx(aux1_, b0_, b2_);
+        Goldilocks::add_avx(aux2_, b1_, b2_);
+        Goldilocks::mult_avx(A_, A_, aux0_);
+        Goldilocks::mult_avx(B_, B_, aux1_);
+        Goldilocks::mult_avx(C_, C_, aux2_);
+        Goldilocks::mult_avx(D_, a0_, b0_);
+        Goldilocks::mult_avx(E_, a1_, b1_);
+        Goldilocks::mult_avx(F_, a2_, b2_);
+        Goldilocks::sub_avx(G_, D_, E_);
+
+        Goldilocks::add_avx(result0_, C_, G_);
+        Goldilocks::sub_avx(result0_, result0_, F_);
+        Goldilocks::add_avx(result1_, A_, C_);
+        Goldilocks::add_avx(auxr_, E_, E_);
+        Goldilocks::add_avx(auxr_, auxr_, D_);
+        Goldilocks::sub_avx(result1_, result1_, auxr_);
+        Goldilocks::sub_avx(result2_, B_, G_);
+
+        Goldilocks::store(result0, result0_);
+        Goldilocks::store(result1, result1_);
+        Goldilocks::store(result2, result2_);
+
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = result0[k];
+            result[k * FIELD_EXTENSION + 1] = result1[k];
+            result[k * FIELD_EXTENSION + 2] = result2[k];
         }
     };
-    static inline void mul5(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride0)
+    static inline void mul33c_avx(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a)
     {
-        Goldilocks::Element aux[3];
+        assert(NROWS_ == 4);
+        Goldilocks::Element aux0[4], aux1[4], aux2[4], aux[3];
+        Goldilocks::Element a0[4], a1[4], a2[4];
+        Goldilocks::Element b0[4], b1[4], b2[4];
+        __m256i aux0_, aux1_, aux2_;
+        __m256i a0_, a1_, a2_;
+        __m256i b0_, b1_, b2_;
+
+        // redistribute data:
         aux[0] = b[0] + b[1];
         aux[1] = b[0] + b[2];
         aux[2] = b[1] + b[2];
         for (uint64_t k = 0; k < NROWS_; ++k)
         {
-            Goldilocks::Element A = (a[k * stride0] + a[k * stride0 + 1]) * aux[0];
-            Goldilocks::Element B = (a[k * stride0] + a[k * stride0 + 2]) * aux[1];
-            Goldilocks::Element C = (a[k * stride0 + 1] + a[k * stride0 + 2]) * aux[2];
-            Goldilocks::Element D = a[k * stride0] * b[0];
-            Goldilocks::Element E = a[k * stride0 + 1] * b[1];
-            Goldilocks::Element F = a[k * stride0 + 2] * b[2];
-            Goldilocks::Element G = D - E;
+            aux0[k] = aux[0];
+            aux1[k] = aux[1];
+            aux2[k] = aux[2];
+            a0[k] = a[k * stride_a];
+            a1[k] = a[k * stride_a + 1];
+            a2[k] = a[k * stride_a + 2];
+            b0[k] = b[0];
+            b1[k] = b[1];
+            b2[k] = b[2];
+        }
+        Goldilocks::load(aux0_, aux0);
+        Goldilocks::load(aux1_, aux1);
+        Goldilocks::load(aux2_, aux2);
+        Goldilocks::load(a0_, a0);
+        Goldilocks::load(a1_, a1);
+        Goldilocks::load(a2_, a2);
+        Goldilocks::load(b0_, b0);
+        Goldilocks::load(b1_, b1);
+        Goldilocks::load(b2_, b2);
 
-            result[k * FIELD_EXTENSION] = (C + G) - F;
-            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
-            result[k * FIELD_EXTENSION + 2] = B - G;
+        // operations
+        __m256i A_, B_, C_, D_, E_, F_, G_;
+        __m256i result0_, result1_, result2_, auxr_;
+        Goldilocks::Element result0[4], result1[4], result2[4];
+
+        Goldilocks::add_avx(A_, a0_, a1_);
+        Goldilocks::add_avx(B_, a0_, a2_);
+        Goldilocks::add_avx(C_, a1_, a2_);
+        Goldilocks::mult_avx(A_, A_, aux0_);
+        Goldilocks::mult_avx(B_, B_, aux1_);
+        Goldilocks::mult_avx(C_, C_, aux2_);
+        Goldilocks::mult_avx(D_, a0_, b0_);
+        Goldilocks::mult_avx(E_, a1_, b1_);
+        Goldilocks::mult_avx(F_, a2_, b2_);
+        Goldilocks::sub_avx(G_, D_, E_);
+
+        Goldilocks::add_avx(result0_, C_, G_);
+        Goldilocks::sub_avx(result0_, result0_, F_);
+        Goldilocks::add_avx(result1_, A_, C_);
+        Goldilocks::add_avx(auxr_, E_, E_);
+        Goldilocks::add_avx(auxr_, auxr_, D_);
+        Goldilocks::sub_avx(result1_, result1_, auxr_);
+        Goldilocks::sub_avx(result2_, B_, G_);
+
+        Goldilocks::store(result0, result0_);
+        Goldilocks::store(result1, result1_);
+        Goldilocks::store(result2, result2_);
+
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = result0[k];
+            result[k * FIELD_EXTENSION + 1] = result1[k];
+            result[k * FIELD_EXTENSION + 2] = result2[k];
         }
     };
+    static inline void mul13c_avx(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b)
+    {
+        Goldilocks::Element aa[12];
+        Goldilocks::Element bb[12];
 
-    static inline void mul6(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b)
-    {
         for (uint64_t k = 0; k < NROWS_; ++k)
         {
-            result[k * FIELD_EXTENSION] = b[0] * a[k];
-            result[k * FIELD_EXTENSION + 1] = b[1] * a[k];
-            result[k * FIELD_EXTENSION + 2] = b[2] * a[k];
+            aa[k * FIELD_EXTENSION] = a[k];
+            aa[k * FIELD_EXTENSION + 1] = a[k];
+            aa[k * FIELD_EXTENSION + 2] = a[k];
+            bb[k * FIELD_EXTENSION] = b[0];
+            bb[k * FIELD_EXTENSION + 1] = b[1];
+            bb[k * FIELD_EXTENSION + 2] = b[2];
         }
-    }
-    static inline void mul7(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride0, uint64_t stride1)
-    {
-        for (uint64_t k = 0; k < NROWS_; ++k)
-        {
-            result[k * FIELD_EXTENSION] = a[k * stride0] * b[k * stride1];
-            result[k * FIELD_EXTENSION + 1] = a[k * stride0] * b[k * stride1 + 1];
-            result[k * FIELD_EXTENSION + 2] = a[k * stride0] * b[k * stride1 + 2];
-        }
-    }
-    static inline void mul1Add(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, Goldilocks::Element b_[3], Goldilocks::Element *c)
-    {
-        for (uint64_t k = 0; k < NROWS_; ++k)
-        {
-            Goldilocks::Element A = (a[k * FIELD_EXTENSION] + a[k * FIELD_EXTENSION + 1]) * b_[0];
-            Goldilocks::Element B = (a[k * FIELD_EXTENSION] + a[k * FIELD_EXTENSION + 2]) * b_[1];
-            Goldilocks::Element C = (a[k * FIELD_EXTENSION + 1] + a[k * FIELD_EXTENSION + 2]) * b_[2];
-            Goldilocks::Element D = a[k * FIELD_EXTENSION] * b[0];
-            Goldilocks::Element E = a[k * FIELD_EXTENSION + 1] * b[1];
-            Goldilocks::Element F = a[k * FIELD_EXTENSION + 2] * b[2];
-            Goldilocks::Element G = D - E;
+        __m256i a0_, a1_, a2_;
+        __m256i b0_, b1_, b2_;
+        __m256i c0_, c1_, c2_;
 
-            result[k * FIELD_EXTENSION] = c[k * FIELD_EXTENSION] + (C + G) - F;
-            result[k * FIELD_EXTENSION + 1] = c[k * FIELD_EXTENSION + 1] + ((((A + C) - E) - E) - D);
-            result[k * FIELD_EXTENSION + 2] = c[k * FIELD_EXTENSION + 2] + B - G;
+        Goldilocks::load(a0_, aa);
+        Goldilocks::load(a1_, &aa[4]);
+        Goldilocks::load(a2_, &aa[8]);
+        Goldilocks::load(b0_, bb);
+        Goldilocks::load(b1_, &bb[4]);
+        Goldilocks::load(b2_, &bb[8]);
+        Goldilocks::mult_avx(c0_, a0_, b0_);
+        Goldilocks::mult_avx(c1_, a1_, b1_);
+        Goldilocks::mult_avx(c2_, a2_, b2_);
+        Goldilocks::store(result, c0_);
+        Goldilocks::store(&result[4], c1_);
+        Goldilocks::store(&result[8], c2_);
+    }
+    static inline void mul13_avx(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a, uint64_t stride_b)
+    {
+        Goldilocks::Element aa[12];
+        Goldilocks::Element bb[12];
+
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            aa[k * FIELD_EXTENSION] = a[k * stride_a];
+            aa[k * FIELD_EXTENSION + 1] = a[k * stride_a];
+            aa[k * FIELD_EXTENSION + 2] = a[k * stride_a];
+            bb[k * FIELD_EXTENSION] = b[k * stride_b];
+            bb[k * FIELD_EXTENSION + 1] = b[k * stride_b + 1];
+            bb[k * FIELD_EXTENSION + 2] = b[k * stride_b + 2];
         }
-    };
+        __m256i a0_, a1_, a2_;
+        __m256i b0_, b1_, b2_;
+        __m256i c0_, c1_, c2_;
+
+        Goldilocks::load(a0_, aa);
+        Goldilocks::load(a1_, &aa[4]);
+        Goldilocks::load(a2_, &aa[8]);
+        Goldilocks::load(b0_, bb);
+        Goldilocks::load(b1_, &bb[4]);
+        Goldilocks::load(b2_, &bb[8]);
+        Goldilocks::mult_avx(c0_, a0_, b0_);
+        Goldilocks::mult_avx(c1_, a1_, b1_);
+        Goldilocks::mult_avx(c2_, a2_, b2_);
+        Goldilocks::store(result, c0_);
+        Goldilocks::store(&result[4], c1_);
+        Goldilocks::store(&result[8], c2_);
+    }
 
     // ======== DIV ========
     static inline void div(Element &result, Element &a, Goldilocks::Element b)
