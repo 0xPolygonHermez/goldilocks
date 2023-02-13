@@ -215,6 +215,52 @@ TEST(GOLDILOCKS_TEST, sub_avx)
     free(b);
     free(c);
 }
+TEST(GOLDILOCKS_TEST, sub_avx_2)
+{
+
+    Goldilocks::Element a0 = Goldilocks::fromU64(1);
+    Goldilocks::Element b0 = Goldilocks::fromString("6824165416642549846");
+    Goldilocks::Element b1 = Goldilocks::fromString("13754891152847927955");
+    Goldilocks::Element b2 = Goldilocks::fromString("17916068787382203463");
+    Goldilocks::Element b3 = Goldilocks::fromU64(18446744071248801682ULL);
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+
+    a[0] = a0;
+    a[1] = a0;
+    a[2] = a0;
+    a[3] = a0;
+
+    b[0] = b0;
+    b[1] = b1;
+    b[2] = b2;
+    b[3] = b3;
+
+    __m256i a_;
+    __m256i b_;
+    __m256i c_;
+
+    Goldilocks::load(a_, a);
+    Goldilocks::set(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::sub_avx(c_, a_, b_);
+    Goldilocks::store(c, c_);
+
+    std::cout << " " << Goldilocks::toU64(c[0]) << std::endl;
+    std::cout << " " << Goldilocks::toU64(c[1]) << std::endl;
+    std::cout << " " << Goldilocks::toU64(c[2]) << std::endl;
+    std::cout << " " << Goldilocks::toU64(c[3]) << std::endl;
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] - b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] - b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] - b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] - b[3]), Goldilocks::toU64(c[3]));
+
+    free(a);
+    free(b);
+    free(c);
+}
 TEST(GOLDILOCKS_TEST, mul)
 {
     uint64_t in1 = 3;
