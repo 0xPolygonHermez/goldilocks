@@ -142,9 +142,9 @@ inline void Goldilocks::sub_avx(__m256i &c, const __m256i &a, const __m256i &b)
     shift(b_s, b);
     shift(a_s, a);
     toCanonical_s(b_sc, b_s);
-    const __m256i c0 = _mm256_sub_epi64(a_s, b_s);
-    const __m256i mask_ = _mm256_cmpgt_epi64(b_s, a_s);
-    // P > b > a =>  (a-b) < 0 and  P+(a-b)< P => 0 < (P-b)+a < P
+    const __m256i c0 = _mm256_sub_epi64(a_s, b_sc);
+    const __m256i mask_ = _mm256_cmpgt_epi64(b_sc, a_s);
+    // P > b_c > a =>  (a-b_c) < 0 and  P+(a-b_c)< P => 0 < (P-b_c)+a < P
     const __m256i corr_ = _mm256_and_si256(mask_, P);
     c = _mm256_add_epi64(c0, corr_);
 }
