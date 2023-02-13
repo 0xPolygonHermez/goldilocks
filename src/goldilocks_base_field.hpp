@@ -107,10 +107,10 @@ public:
     static Element mul(const Element &in1, const Element &in2);
     static void mul(Element &result, const Element &in1, const Element &in2);
     static void mul2(Element &result, const Element &in1, const Element &in2);
-    static void mul0(Element *result, const Element *in1, const Element *in2);
-    static void mul0(Element *result, const Element in1, const Element *in2);
-    static void mul0(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2);
-    static void mul0(Element *result, const Element in1, const Element *in2, uint64_t offset2);
+    static void mul_batch(Element *result, const Element *in1, const Element *in2);
+    static void mul_batch(Element *result, const Element in1, const Element *in2);
+    static void mul_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2);
+    static void mul_batch(Element *result, const Element in1, const Element *in2, uint64_t offset2);
 
     static inline Element div(const Element &in1, const Element &in2) { return mul(in1, inv(in2)); };
     static inline void div(Element &result, const Element &in1, const Element &in2) { mul(result, in1, inv(in2)); };
@@ -218,6 +218,11 @@ public:
     static inline void mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]);
     static inline void mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_8[144]); // rick: arrays comes from reference
                                                                                                    // rick: arrays comes from reference
+
+    static inline void mul_avx(Element *c4, const Element *a4, const Element *b4);
+    static inline void mul_avx(Element *c4, const Element a, const Element *b4);
+    static inline void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
+    static inline void mul_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
 };
 
 /*
@@ -673,28 +678,28 @@ inline void Goldilocks::mul2(Element &result, const Element &in1, const Element 
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
-inline void Goldilocks::mul0(Element *result, const Element *in1, const Element *in2)
+inline void Goldilocks::mul_batch(Element *result, const Element *in1, const Element *in2)
 {
     for (uint64_t i = 0; i < NROWS_; ++i)
     {
         mul(result[i], in1[i], in2[i]);
     }
 }
-inline void Goldilocks::mul0(Element *result, const Element in1, const Element *in2)
+inline void Goldilocks::mul_batch(Element *result, const Element in1, const Element *in2)
 {
     for (uint64_t i = 0; i < NROWS_; ++i)
     {
         mul(result[i], in1, in2[i]);
     }
 }
-inline void Goldilocks::mul0(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2)
+inline void Goldilocks::mul_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2)
 {
     for (uint64_t i = 0; i < NROWS_; ++i)
     {
         mul(result[i], in1[i * offset1], in2[i * offset2]);
     }
 }
-inline void Goldilocks::mul0(Element *result, const Element in1, const Element *in2, uint64_t offset2)
+inline void Goldilocks::mul_batch(Element *result, const Element in1, const Element *in2, uint64_t offset2)
 {
     for (uint64_t i = 0; i < NROWS_; ++i)
     {
