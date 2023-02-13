@@ -103,10 +103,10 @@ inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b
     store(c4, c_);
 }
 
-inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_b)
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_b)
 {
     Element bb[4];
-    for (int k = 0; k < 4; ++k)
+    for (uint64_t k = 0; k < 4; ++k)
     {
         bb[k] = b4[k * offset_b];
     }
@@ -126,11 +126,11 @@ inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element b)
     add_avx(c_, a_, b_);
     store(c4, c_);
 }
-inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element b, const int offset_a)
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a)
 {
     Element bb[4] = {b, b, b, b};
     Element aa[4];
-    for (int k = 0; k < 4; ++k)
+    for (uint64_t k = 0; k < 4; ++k)
     {
         aa[k] = a4[k * offset_a];
     }
@@ -141,11 +141,11 @@ inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element b,
     store(c4, c_);
 }
 
-inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_a, const int offset_b)
+inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b)
 {
     Element bb[4];
     Element aa[4];
-    for (int k = 0; k < 4; ++k)
+    for (uint64_t k = 0; k < 4; ++k)
     {
         aa[k] = a4[k * offset_a];
         bb[k] = b4[k * offset_b];
@@ -218,6 +218,67 @@ inline void Goldilocks::sub_avx(Goldilocks::Element *c4, const Goldilocks::Eleme
     sub_avx(c_, a_, b_);
     store(c4, c_);
 }
+inline void Goldilocks::sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b)
+{
+    Element bb[4];
+    Element aa[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        aa[k] = a4[k * offset_a];
+        bb[k] = b4[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load(a_, aa);
+    load(b_, bb);
+    sub_avx(c_, a_, b_);
+    store(c4, c_);
+};
+inline void Goldilocks::sub_avx(Element *c4, const Element *a4, const Element b)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element b4[4] = {b, b, b, b};
+    load(a_, a4);
+    load(b_, b4);
+    sub_avx(c_, a_, b_);
+    store(c4, c_);
+};
+inline void Goldilocks::sub_avx(Element *c4, const Element a, const Element *b4)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element a4[4] = {a, a, a, a};
+    load(a_, a4);
+    load(b_, b4);
+    sub_avx(c_, a_, b_);
+    store(c4, c_);
+};
+inline void Goldilocks::sub_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element b4[4] = {b, b, b, b};
+    Element aa[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        aa[k] = a4[k * offset_a];
+    }
+    load(a_, aa);
+    load(b_, b4);
+    sub_avx(c_, a_, b_);
+    store(c4, c_);
+};
+inline void Goldilocks::sub_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element a4[4], bb[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        bb[k].fe = b4[k * offset_b].fe;
+        a4[k].fe = a.fe;
+    }
+    load(a_, a4);
+    load(b_, bb);
+    sub_avx(c_, a_, b_);
+    store(c4, c_);
+};
 
 // Assume a pre-shifted and b <0xFFFFFFFF00000000, the result is shifted
 // a_s-b=(a+2^63)-b = 2^63+(a-b)=(a-b)_s

@@ -83,24 +83,24 @@ public:
     static Element fromScalar(const mpz_class &scalar);
     static void fromScalar(Element &result, const mpz_class &scalar);
 
-    static Element add(const Element &in1, const Element &in2);
-    static void add(Element &result, const Element &in1, const Element &in2);
-    static void add_batch(Element *result, const Element *in1, const Element *in2);
-    static void add_batch(Element *result, const Element *in1, const Element *in2, const int offset2);
-    static void add_batch(Element *result, const Element *in1, const Element in2);
-    static void add_batch(Element *result, const Element *in1, const Element in2, const int offset1);
-    static void add_batch(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2);
+    static inline Element add(const Element &in1, const Element &in2);
+    static inline void add(Element &result, const Element &in1, const Element &in2);
+    static inline void add_batch(Element *result, const Element *in1, const Element *in2);
+    static inline void add_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset2);
+    static inline void add_batch(Element *result, const Element *in1, const Element in2);
+    static inline void add_batch(Element *result, const Element *in1, const Element in2, uint64_t offset1);
+    static inline void add_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2);
 
-    static Element inc(const Goldilocks::Element &fe);
+    static inline Element inc(const Goldilocks::Element &fe);
 
-    static Element sub(const Element &in1, const Element &in2);
-    static void sub(Element &result, const Element &in1, const Element &in2);
-    static void sub0(Element *result, const Element *in1, const Element *in2);
-    static void sub0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2);
-    static void sub0(Element *result, const Element *in1, const Element in2);
-    static void sub0(Element *result, const Element in1, const Element *in2);
-    static void sub0(Element *result, const Element *in1, const Element in2, int offset1);
-    static void sub0(Element *result, const Element in1, const Element *in2, int offset2);
+    static inline Element sub(const Element &in1, const Element &in2);
+    static inline void sub(Element &result, const Element &in1, const Element &in2);
+    static inline void sub_batch(Element *result, const Element *in1, const Element *in2);
+    static inline void sub_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2);
+    static inline void sub_batch(Element *result, const Element *in1, const Element in2);
+    static inline void sub_batch(Element *result, const Element in1, const Element *in2);
+    static inline void sub_batch(Element *result, const Element *in1, const Element in2, uint64_t offset1);
+    static inline void sub_batch(Element *result, const Element in1, const Element *in2, uint64_t offset2);
 
     static Element dec(const Goldilocks::Element &fe);
 
@@ -109,8 +109,8 @@ public:
     static void mul2(Element &result, const Element &in1, const Element &in2);
     static void mul0(Element *result, const Element *in1, const Element *in2);
     static void mul0(Element *result, const Element in1, const Element *in2);
-    static void mul0(Element *result, const Element *in1, const Element *in2, int offset1, int offset2);
-    static void mul0(Element *result, const Element in1, const Element *in2, int offset2);
+    static void mul0(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2);
+    static void mul0(Element *result, const Element in1, const Element *in2, uint64_t offset2);
 
     static inline Element div(const Element &in1, const Element &in2) { return mul(in1, inv(in2)); };
     static inline void div(Element &result, const Element &in1, const Element &in2) { mul(result, in1, inv(in2)); };
@@ -140,21 +140,21 @@ public:
     static inline void copy(Element *dst, const Element *src) { dst->fe = src->fe; };
     static inline void copy0(Element *dst, const Element &src)
     {
-        for (int i = 0; i < NROWS_; ++i)
+        for (uint64_t i = 0; i < NROWS_; ++i)
         {
             dst[i].fe = src.fe;
         }
     }
     static inline void copy1(Element *dst, const Element *src)
     {
-        for (int i = 0; i < NROWS_; ++i)
+        for (uint64_t i = 0; i < NROWS_; ++i)
         {
             dst[i].fe = src[i].fe;
         }
     }
-    static inline void copy1(Element *dst, const Element *src, int stride)
+    static inline void copy1(Element *dst, const Element *src, uint64_t stride)
     {
-        for (int i = 0; i < NROWS_; ++i)
+        for (uint64_t i = 0; i < NROWS_; ++i)
         {
             dst[i].fe = src[i * stride].fe;
         }
@@ -178,13 +178,19 @@ public:
     static inline void add_avx_b_small(__m256i &c, const __m256i &a, const __m256i &b_small);
     static inline void sub_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void sub_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
+
     static inline void add_avx(Element *c4, const Element *a4, const Element *b4);
-    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_b);
+    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_b);
     static inline void add_avx(Element *c4, const Element *a4, const Element b);
-    static inline void add_avx(Element *c4, const Element *a4, const Element b, const int offset_a);
-    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, const int offset_a, const int offset_b);
+    static inline void add_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
+    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
 
     static inline void sub_avx(Element *c4, const Element *a4, const Element *b4);
+    static inline void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
+    static inline void sub_avx(Element *c4, const Element *a4, const Element b);
+    static inline void sub_avx(Element *c4, const Element a, const Element *b4);
+    static inline void sub_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
+    static inline void sub_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
 
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
@@ -413,15 +419,15 @@ inline Goldilocks::Element Goldilocks::add(const Element &in1, const Element &in
 }
 inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         add(result[i], in1[i], in2[i]);
     }
 }
 
-inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2, const int offset2)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         add(result[i], in1[i], in2[i * offset2]);
     }
@@ -429,22 +435,22 @@ inline void Goldilocks::add_batch(Element *result, const Element *in1, const Ele
 
 inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element in2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         add(result[i], in1[i], in2);
     }
 }
-inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element in2, const int offset1)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element in2, uint64_t offset1)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         add(result[i], in1[i * offset1], in2);
     }
 }
 
-inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2)
+inline void Goldilocks::add_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         add(result[i], in1[i * offset1], in2[i * offset2]);
     }
@@ -528,44 +534,44 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
-inline void Goldilocks::sub0(Element *result, const Element *in1, const Element *in2)
+inline void Goldilocks::sub_batch(Element *result, const Element *in1, const Element *in2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         sub(result[i], in1[i], in2[i]);
     }
 }
-inline void Goldilocks::sub0(Element *result, const Element *in1, const Element *in2, const int offset1, const int offset2)
+inline void Goldilocks::sub_batch(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         sub(result[i], in1[i * offset1], in2[i * offset2]);
     }
 }
-inline void Goldilocks::sub0(Element *result, const Element *in1, const Element in2)
+inline void Goldilocks::sub_batch(Element *result, const Element *in1, const Element in2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         sub(result[i], in1[i], in2);
     }
 }
-inline void Goldilocks::sub0(Element *result, const Element in1, const Element *in2)
+inline void Goldilocks::sub_batch(Element *result, const Element in1, const Element *in2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         sub(result[i], in1, in2[i]);
     }
 }
-inline void Goldilocks::sub0(Element *result, const Element *in1, const Element in2, int offset1)
+inline void Goldilocks::sub_batch(Element *result, const Element *in1, const Element in2, uint64_t offset1)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         sub(result[i], in1[i * offset1], in2);
     }
 }
-inline void Goldilocks::sub0(Element *result, const Element in1, const Element *in2, int offset2)
+inline void Goldilocks::sub_batch(Element *result, const Element in1, const Element *in2, uint64_t offset2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         sub(result[i], in1, in2[i * offset2]);
     }
@@ -669,28 +675,28 @@ inline void Goldilocks::mul2(Element &result, const Element &in1, const Element 
 }
 inline void Goldilocks::mul0(Element *result, const Element *in1, const Element *in2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         mul(result[i], in1[i], in2[i]);
     }
 }
 inline void Goldilocks::mul0(Element *result, const Element in1, const Element *in2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         mul(result[i], in1, in2[i]);
     }
 }
-inline void Goldilocks::mul0(Element *result, const Element *in1, const Element *in2, int offset1, int offset2)
+inline void Goldilocks::mul0(Element *result, const Element *in1, const Element *in2, uint64_t offset1, uint64_t offset2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         mul(result[i], in1[i * offset1], in2[i * offset2]);
     }
 }
-inline void Goldilocks::mul0(Element *result, const Element in1, const Element *in2, int offset2)
+inline void Goldilocks::mul0(Element *result, const Element in1, const Element *in2, uint64_t offset2)
 {
-    for (int i = 0; i < NROWS_; ++i)
+    for (uint64_t i = 0; i < NROWS_; ++i)
     {
         mul(result[i], in1, in2[i * offset2]);
     }
