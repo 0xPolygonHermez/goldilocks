@@ -11,7 +11,11 @@ void PoseidonGoldilocks::hash_seq(Goldilocks::Element (&state)[CAPACITY], Goldil
 void PoseidonGoldilocks::hash(Goldilocks::Element (&state)[CAPACITY], Goldilocks::Element const (&input)[SPONGE_WIDTH])
 {
     Goldilocks::Element aux[SPONGE_WIDTH];
+#ifdef __x86_64__
     hash_full_result(aux, input);
+#else
+    hash_full_result_seq(aux, input);
+#endif
     std::memcpy(state, aux, CAPACITY * sizeof(Goldilocks::Element));
 }
 void PoseidonGoldilocks::hash_full_result_seq_old(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH])
@@ -148,6 +152,7 @@ void PoseidonGoldilocks::hash_full_result_seq(Goldilocks::Element *state, const 
     mvp_(state, PoseidonGoldilocksConstants::M);
 }
 
+#ifdef X86_64
 void PoseidonGoldilocks::hash_full_result(Goldilocks::Element *state, const Goldilocks::Element *input)
 {
 
@@ -212,6 +217,7 @@ void PoseidonGoldilocks::hash_full_result(Goldilocks::Element *state, const Gold
     Goldilocks::store(&(state[4]), st1);
     Goldilocks::store(&(state[8]), st2);
 }
+#endif
 
 void PoseidonGoldilocks::linear_hash_seq(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)
 {
@@ -253,6 +259,7 @@ void PoseidonGoldilocks::linear_hash_seq(Goldilocks::Element *output, Goldilocks
         memset(output, 0, CAPACITY * sizeof(Goldilocks::Element));
     }
 }
+#ifdef X86_64
 void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)
 {
     uint64_t remaining = size;
@@ -294,6 +301,8 @@ void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::El
         memset(output, 0, CAPACITY * sizeof(Goldilocks::Element));
     }
 }
+#endif
+
 void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim)
 {
     if (num_rows == 0)

@@ -6,7 +6,12 @@
 #include <gmpxx.h>
 #include <iostream> // string
 #include <omp.h>
+#ifdef __x86_64__
 #include <immintrin.h>
+#define USE_MONTGOMERY 0
+else 
+#define USE_MONTGOMERY 0
+#endif
 
 #define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0
@@ -124,7 +129,8 @@ public:
 
     static void batchInverse(Goldilocks::Element *res, Element *src, uint64_t size);
 
-    // AVX:
+// AVX:
+#ifdef __x86_64__
     static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
     static inline void load(__m256i &a, const Goldilocks::Element *a4);      // rick: argument should be a[4]??
     static inline void store(Goldilocks::Element *a4, const __m256i &a);     // rick: argument should be a[4]??
@@ -133,6 +139,7 @@ public:
     static inline void shift(__m256i &a_s, const __m256i &a);
     static inline void toCanonical(__m256i &a_c, const __m256i &a);
     static inline void toCanonical_s(__m256i &a_sc, const __m256i &a_s);
+
     static inline void add_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void add_avx_a_sc(__m256i &c, const __m256i &a_c, const __m256i &b);
     static inline void add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, const __m256i &b_small);
@@ -166,6 +173,7 @@ public:
     static inline void mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]);
     static inline void mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_8[144]); // rick: arrays comes from reference
                                                                                                    // rick: arrays comes from reference
+#endif
 };
 
 /*
@@ -401,6 +409,7 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
 {
     uint64_t in_1 = in1.fe;
     uint64_t in_2 = in2.fe;
+#ifdef __x86_64__
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %0\n\t"
             "add   %2, %0\n\t"
@@ -412,6 +421,9 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
+#else
+    result.fe = in_1 + in_2 % GOLDILOCKS_PRIME;
+#endif
 
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
@@ -429,6 +441,7 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
 {
     uint64_t in_1 = in1.fe;
     uint64_t in_2 = in2.fe;
+#ifdef __x86_64__
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %0\n\t"
             "sub   %2, %0\n\t"
@@ -440,6 +453,10 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
+#else
+    result.fe = in_1 - in_2 % GOLDILOCKS_PRIME;
+#endif
+
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
@@ -454,6 +471,7 @@ inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in
 
 inline void Goldilocks::mul(Element &result, const Element &in1, const Element &in2)
 {
+#ifdef __x86_64__
 #if USE_MONTGOMERY == 1
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %%rax\n\t"
@@ -504,7 +522,9 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in1.fe), "r"(in2.fe), "m"(CQ), "m"(TWO32)
             : "%rbx", "%rcx", "%rdx");
-
+#endif
+#else
+    result.fe = in1.fe * in2.fe % GOLDILOCKS_PRIME;
 #endif
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
@@ -513,6 +533,7 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
 
 inline void Goldilocks::mul2(Element &result, const Element &in1, const Element &in2)
 {
+#ifdef __x86_64__
 #if USE_MONTGOMERY == 1
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %%rax\n\t"
@@ -536,6 +557,9 @@ inline void Goldilocks::mul2(Element &result, const Element &in1, const Element 
         : "=&d"(result.fe)
         : "r"(in1.fe), "r"(in2.fe), "m"(Q)
         : "%rax");
+#endif
+#else
+    result.fe = in1.fe * in2.fe % GOLDILOCKS_PRIME;
 #endif
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
@@ -621,6 +645,7 @@ inline void Goldilocks::exp(Element &result, Element base, uint64_t exp)
 */
 inline uint64_t Goldilocks::to_montgomery(const uint64_t &in1)
 {
+#if USE_MONTGOMERY == 1
     uint64_t res;
     __asm__(
         "xor   %%r10, %%r10\n\t"
@@ -638,9 +663,13 @@ inline uint64_t Goldilocks::to_montgomery(const uint64_t &in1)
         : "r"(in1), "m"(MM), "m"(Q), "m"(CQ), "m"(R2)
         : "%rax", "%r8", "%r9", "%r10");
     return res;
+#else
+    return in1;
+#endif
 }
 inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
 {
+#if USE_MONTGOMERY == 1
     uint64_t res;
     __asm__(
         "xor   %%r10, %%r10\n\t"
@@ -656,6 +685,9 @@ inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
         : "r"(in1), "m"(MM), "m"(Q), "m"(CQ)
         : "%rax", "%r8", "%r9", "%r10");
     return res;
+#else
+    return in1;
+#endif
 }
 inline void Goldilocks::parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy)
 {

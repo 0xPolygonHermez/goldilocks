@@ -4,7 +4,10 @@
 #include "../src/goldilocks_base_field.hpp"
 #include "../src/goldilocks_base_field_avx.hpp"
 #include "../src/poseidon_goldilocks.hpp"
+
+#ifdef __x86_64__ 
 #include "../src/poseidon_goldilocks_avx.hpp"
+#endif
 #include "../src/ntt_goldilocks.hpp"
 #include "../src/merklehash_goldilocks.hpp"
 #include <immintrin.h>

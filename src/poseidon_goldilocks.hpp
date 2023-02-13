@@ -3,8 +3,10 @@
 
 #include "poseidon_goldilocks_constants.hpp"
 #include "goldilocks_base_field.hpp"
+#ifdef __x86_64__
 #include "goldilocks_base_field_avx.hpp"
 #include <immintrin.h>
+#endif
 
 #define RATE 8
 #define CAPACITY 4
@@ -21,11 +23,13 @@ class PoseidonGoldilocks
 private:
     inline void static pow7(Goldilocks::Element &x);
     inline void static pow7_(Goldilocks::Element *x);
-    inline void static pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2);
     inline void static add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
+#ifdef __x86_64__
     inline void static add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2);
     inline void static add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+#endif
     inline void static pow7add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static mvp_(Goldilocks::Element *state, const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH]);
     inline Goldilocks::Element static dot_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
@@ -34,7 +38,11 @@ private:
 public:
     void static hash_full_result_seq_old(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH]);
     void static hash_full_result_seq(Goldilocks::Element *, const Goldilocks::Element *);
+#ifdef __x86_64__
     void static hash_full_result(Goldilocks::Element *, const Goldilocks::Element *);
+#else
+    inline void static hash_full_result(Goldilocks::Element *state, const Goldilocks::Element *input){hash_full_result_seq(state, input);};
+#endif
     void static hash_seq(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static hash(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static linear_hash_seq(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
@@ -118,5 +126,8 @@ inline void PoseidonGoldilocks::mvp_(Goldilocks::Element *state, const Goldilock
         }
     }
 };
+
+#ifdef __x86_64__
 #include "poseidon_goldilocks_avx.hpp"
+#endif
 #endif

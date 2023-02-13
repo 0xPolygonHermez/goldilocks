@@ -1,3 +1,4 @@
+#ifdef __x86_64__  
 #ifndef GOLDILOCKS_AVX
 #define GOLDILOCKS_AVX
 #include "goldilocks_base_field.hpp"
@@ -540,4 +541,5 @@ inline void Goldilocks::mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const
     _mm256_store_si256(&a1, b1);
     _mm256_store_si256(&a2, b2);
 }
+#endif
 #endif
