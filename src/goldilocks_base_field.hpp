@@ -173,7 +173,6 @@ public:
     }
     static inline void copy_batch(Element *dst, const Element *src, uint64_t stride[4])
     {
-        // Does not make sense to vectorize yet
         for (uint64_t i = 0; i < NROWS_; ++i)
         {
             dst[i].fe = src[stride[i]].fe;
@@ -203,6 +202,14 @@ public:
             dst[i].fe = src[i * stride].fe;
         }
     }
+    static inline void copy_avx(Element *dst, const Element *src, uint64_t stride[4])
+    {
+        // Does not make sense to vectorize yet
+        for (uint64_t i = 0; i < NROWS_; ++i)
+        {
+            dst[i].fe = src[stride[i]].fe;
+        }
+    }
 
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
 
@@ -224,9 +231,12 @@ public:
 
     static inline void add_avx(Element *c4, const Element *a4, const Element *b4);
     static inline void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_b);
+    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_b[4]);
     static inline void add_avx(Element *c4, const Element *a4, const Element b);
     static inline void add_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
     static inline void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
+    static inline void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
+    static inline void add_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);
 
     static inline void sub_avx(Element *c4, const Element *a4, const Element *b4);
     static inline void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
@@ -234,6 +244,9 @@ public:
     static inline void sub_avx(Element *c4, const Element a, const Element *b4);
     static inline void sub_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
     static inline void sub_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
+    static inline void sub_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
+    static inline void sub_avx(Element *c4, const Element a, const Element *b4, const uint64_t offset_b[4]);
+    static inline void sub_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);
 
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
@@ -266,6 +279,7 @@ public:
     static inline void mul_avx(Element *c4, const Element a, const Element *b4);
     static inline void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
     static inline void mul_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
+    static inline void mul_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
 };
 
 /*
