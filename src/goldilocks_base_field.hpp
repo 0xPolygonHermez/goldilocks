@@ -171,6 +171,14 @@ public:
             dst[i].fe = src[i * stride].fe;
         }
     }
+    static inline void copy_batch(Element *dst, const Element *src, uint64_t stride[4])
+    {
+        // Does not make sense to vectorize yet
+        for (uint64_t i = 0; i < NROWS_; ++i)
+        {
+            dst[i].fe = src[stride[i]].fe;
+        }
+    }
     static inline void copy_avx(Element *dst, const Element &src)
     {
         // Does not make sense to vectorize yet

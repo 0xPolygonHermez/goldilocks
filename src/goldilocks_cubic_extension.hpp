@@ -864,6 +864,27 @@ public:
             result[k * FIELD_EXTENSION + 2] = b[2] * a[k * stride_a];
         }
     }
+    static inline void mul1c3c_batch(Goldilocks::Element *result, Goldilocks::Element a, Element &b)
+    {
+        result[0] = b[0] * a;
+        result[1] = b[1] * a;
+        result[2] = b[2] * a;
+        for (uint64_t k = 1; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = result[0];
+            result[k * FIELD_EXTENSION + 1] = result[1];
+            result[k * FIELD_EXTENSION + 2] = result[2];
+        }
+    }
+    static inline void mul13c_batch(Goldilocks::Element *result, Goldilocks::Element *a, Element &b, uint64_t stride_a[4])
+    {
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = b[0] * a[stride_a[k]];
+            result[k * FIELD_EXTENSION + 1] = b[1] * a[stride_a[k]];
+            result[k * FIELD_EXTENSION + 2] = b[2] * a[stride_a[k]];
+        }
+    }
     static inline void mul_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, Goldilocks::Element b_[3])
     {
         for (uint64_t k = 0; k < NROWS_; ++k)
@@ -936,6 +957,23 @@ public:
             result[k * FIELD_EXTENSION + 2] = B - G;
         }
     };
+    static inline void mul_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride0[4], uint64_t stride1[4])
+    {
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            Goldilocks::Element A = (a[stride0[k]] + a[stride0[k] + 1]) * (b[stride1[k]] + b[stride1[k] + 1]);
+            Goldilocks::Element B = (a[stride0[k]] + a[stride0[k] + 2]) * (b[stride1[k]] + b[stride1[k] + 2]);
+            Goldilocks::Element C = (a[stride0[k] + 1] + a[stride0[k] + 2]) * (b[stride1[k] + 1] + b[stride1[k] + 2]);
+            Goldilocks::Element D = a[stride0[k]] * b[stride1[k]];
+            Goldilocks::Element E = a[stride0[k] + 1] * b[stride1[k] + 1];
+            Goldilocks::Element F = a[stride0[k] + 2] * b[stride1[k] + 2];
+            Goldilocks::Element G = D - E;
+
+            result[k * FIELD_EXTENSION] = (C + G) - F;
+            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
+            result[k * FIELD_EXTENSION + 2] = B - G;
+        }
+    };
     static inline void mul33c_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a)
     {
         Goldilocks::Element aux[3];
@@ -950,6 +988,27 @@ public:
             Goldilocks::Element D = a[k * stride_a] * b[0];
             Goldilocks::Element E = a[k * stride_a + 1] * b[1];
             Goldilocks::Element F = a[k * stride_a + 2] * b[2];
+            Goldilocks::Element G = D - E;
+
+            result[k * FIELD_EXTENSION] = (C + G) - F;
+            result[k * FIELD_EXTENSION + 1] = ((((A + C) - E) - E) - D);
+            result[k * FIELD_EXTENSION + 2] = B - G;
+        }
+    };
+    static inline void mul33c_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a[4])
+    {
+        Goldilocks::Element aux[3];
+        aux[0] = b[0] + b[1];
+        aux[1] = b[0] + b[2];
+        aux[2] = b[1] + b[2];
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            Goldilocks::Element A = (a[stride_a[k]] + a[stride_a[k] + 1]) * aux[0];
+            Goldilocks::Element B = (a[stride_a[k]] + a[stride_a[k] + 2]) * aux[1];
+            Goldilocks::Element C = (a[stride_a[k] + 1] + a[stride_a[k] + 2]) * aux[2];
+            Goldilocks::Element D = a[stride_a[k]] * b[0];
+            Goldilocks::Element E = a[stride_a[k] + 1] * b[1];
+            Goldilocks::Element F = a[stride_a[k] + 2] * b[2];
             Goldilocks::Element G = D - E;
 
             result[k * FIELD_EXTENSION] = (C + G) - F;
@@ -973,6 +1032,15 @@ public:
             result[k * FIELD_EXTENSION] = a[k * stride_a] * b[k * stride_b];
             result[k * FIELD_EXTENSION + 1] = a[k * stride_a] * b[k * stride_b + 1];
             result[k * FIELD_EXTENSION + 2] = a[k * stride_a] * b[k * stride_b + 2];
+        }
+    }
+    static inline void mul13_batch(Goldilocks::Element *result, Goldilocks::Element *a, Goldilocks::Element *b, uint64_t stride_a[4], uint64_t stride_b[4])
+    {
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = a[stride_a[k]] * b[stride_b[k]];
+            result[k * FIELD_EXTENSION + 1] = a[stride_a[k]] * b[stride_b[k] + 1];
+            result[k * FIELD_EXTENSION + 2] = a[stride_a[k]] * b[stride_b[k] + 2];
         }
     }
 
