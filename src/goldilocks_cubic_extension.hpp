@@ -537,6 +537,49 @@ public:
         Goldilocks::store(&result[8], c2_);
     }
 
+    static inline void add13_avx(Goldilocks::Element *result, const __m256i &a_, const Goldilocks::Element *b)
+    {
+        Goldilocks::Element aa[12];
+        Goldilocks::Element a[4];
+        Goldilocks::store(a, a_);
+
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            aa[k * FIELD_EXTENSION] = a[k];
+            aa[k * FIELD_EXTENSION + 1] = Goldilocks::zero();
+            aa[k * FIELD_EXTENSION + 2] = Goldilocks::zero();
+        }
+        __m256i a0_, a1_, a2_;
+        __m256i b0_, b1_, b2_;
+        __m256i c0_, c1_, c2_;
+
+        Goldilocks::load(a0_, aa);
+        Goldilocks::load(a1_, &aa[4]);
+        Goldilocks::load(a2_, &aa[8]);
+        Goldilocks::load(b0_, b);
+        Goldilocks::load(b1_, &b[4]);
+        Goldilocks::load(b2_, &b[8]);
+
+        Goldilocks::add_avx(c0_, a0_, b0_);
+        Goldilocks::add_avx(c1_, a1_, b1_);
+        Goldilocks::add_avx(c2_, a2_, b2_);
+
+        Goldilocks::store(result, c0_);
+        Goldilocks::store(&result[4], c1_);
+        Goldilocks::store(&result[8], c2_);
+    }
+    static inline void add13c_avx(Goldilocks::Element *result, const __m256i &a_, const Goldilocks::Element *b)
+    {
+        Goldilocks::Element a[4];
+        Goldilocks::store(a, a_);
+        // does not make sense to vectorise
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            result[k * FIELD_EXTENSION] = a[k] + b[0];
+            result[k * FIELD_EXTENSION + 1] = b[1];
+            result[k * FIELD_EXTENSION + 2] = b[2];
+        }
+    }
     // ======== SUB ========
     static inline void sub(Element &result, Element &a, uint64_t &b)
     {
@@ -1698,6 +1741,72 @@ public:
             bb[k * FIELD_EXTENSION] = b[stride_b[k]];
             bb[k * FIELD_EXTENSION + 1] = b[stride_b[k] + 1];
             bb[k * FIELD_EXTENSION + 2] = b[stride_b[k] + 2];
+        }
+        __m256i a0_, a1_, a2_;
+        __m256i b0_, b1_, b2_;
+        __m256i c0_, c1_, c2_;
+
+        Goldilocks::load(a0_, aa);
+        Goldilocks::load(a1_, &aa[4]);
+        Goldilocks::load(a2_, &aa[8]);
+        Goldilocks::load(b0_, bb);
+        Goldilocks::load(b1_, &bb[4]);
+        Goldilocks::load(b2_, &bb[8]);
+        Goldilocks::mult_avx(c0_, a0_, b0_);
+        Goldilocks::mult_avx(c1_, a1_, b1_);
+        Goldilocks::mult_avx(c2_, a2_, b2_);
+        Goldilocks::store(result, c0_);
+        Goldilocks::store(&result[4], c1_);
+        Goldilocks::store(&result[8], c2_);
+    }
+
+    static inline void mul13c_avx(Goldilocks::Element *result, const __m256i &a_, Goldilocks::Element *b)
+    {
+        Goldilocks::Element aa[12];
+        Goldilocks::Element bb[12];
+        Goldilocks::Element a[4];
+        Goldilocks::store(a, a_);
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            aa[k * FIELD_EXTENSION] = a[k];
+            aa[k * FIELD_EXTENSION + 1] = a[k];
+            aa[k * FIELD_EXTENSION + 2] = a[k];
+            bb[k * FIELD_EXTENSION] = b[0];
+            bb[k * FIELD_EXTENSION + 1] = b[1];
+            bb[k * FIELD_EXTENSION + 2] = b[2];
+        }
+        __m256i a0_, a1_, a2_;
+        __m256i b0_, b1_, b2_;
+        __m256i c0_, c1_, c2_;
+
+        Goldilocks::load(a0_, aa);
+        Goldilocks::load(a1_, &aa[4]);
+        Goldilocks::load(a2_, &aa[8]);
+        Goldilocks::load(b0_, bb);
+        Goldilocks::load(b1_, &bb[4]);
+        Goldilocks::load(b2_, &bb[8]);
+        Goldilocks::mult_avx(c0_, a0_, b0_);
+        Goldilocks::mult_avx(c1_, a1_, b1_);
+        Goldilocks::mult_avx(c2_, a2_, b2_);
+        Goldilocks::store(result, c0_);
+        Goldilocks::store(&result[4], c1_);
+        Goldilocks::store(&result[8], c2_);
+    }
+    static inline void mul13_avx(Goldilocks::Element *result, const __m256i &a_, Goldilocks::Element *b)
+    {
+        Goldilocks::Element aa[12];
+        Goldilocks::Element bb[12];
+        Goldilocks::Element a[4];
+        Goldilocks::store(a, a_);
+
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            aa[k * FIELD_EXTENSION] = a[k];
+            aa[k * FIELD_EXTENSION + 1] = a[k];
+            aa[k * FIELD_EXTENSION + 2] = a[k];
+            bb[k * FIELD_EXTENSION] = b[k * FIELD_EXTENSION];
+            bb[k * FIELD_EXTENSION + 1] = b[k * FIELD_EXTENSION + 1];
+            bb[k * FIELD_EXTENSION + 2] = b[k * FIELD_EXTENSION + 2];
         }
         __m256i a0_, a1_, a2_;
         __m256i b0_, b1_, b2_;
