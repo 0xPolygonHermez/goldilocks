@@ -31,10 +31,6 @@ inline void Goldilocks::set(__m256i &a, const Goldilocks::Element &a0, const Gol
     a = _mm256_set_epi64x(a3.fe, a2.fe, a1.fe, a0.fe);
 }
 
-inline void Goldilocks::load(__m256i &a, const Goldilocks::Element *a4)
-{
-    a = _mm256_loadu_si256((__m256i *)(a4));
-}
 inline void Goldilocks::store(Goldilocks::Element *a4, const __m256i &a)
 {
     _mm256_storeu_si256((__m256i *)a4, a);
