@@ -246,7 +246,10 @@ public:
 
     // AVX:
     static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
-    static inline void load(__m256i &a, const Goldilocks::Element *a4);
+    static inline void load(__m256i &a, const Goldilocks::Element *a4)
+    {
+        a = _mm256_loadu_si256((__m256i *)(a4));
+    }
     static inline void store(Goldilocks::Element *a4, const __m256i &a);
     static inline void load_a(__m256i &a, const Goldilocks::Element *a4_a);
     static inline void store_a(Goldilocks::Element *a4_a, const __m256i &a);
