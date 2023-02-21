@@ -988,19 +988,17 @@ inline void Goldilocks::parcpy(Element *dst, const Element *src, uint64_t size, 
     {
         num_threads_copy = 1;
     }
-    uint64_t components_thread = size / num_threads_copy;
-    uint64_t dim_thread = components_thread * sizeof(Goldilocks::Element);
-    uint64_t dim_res = (size - components_thread * num_threads_copy) * sizeof(Goldilocks::Element);
+    uint64_t components_thread = (size + num_threads_copy - 1) / num_threads_copy;
 
-#pragma omp parallel num_threads(num_threads_copy) firstprivate(dim_thread)
+#pragma omp parallel for num_threads(num_threads_copy)
+    for (uint64_t i = 0; i < size; i += components_thread)
     {
-        int id = omp_get_thread_num();
-        uint64_t offset = id * components_thread;
-        if (id == num_threads_copy - 1)
+        uint64_t dim_ = components_thread * sizeof(Goldilocks::Element);
+        if (size - i < components_thread)
         {
-            dim_thread += dim_res;
+            dim_ = (size - i) * sizeof(Goldilocks::Element);
         }
-        std::memcpy(&dst[offset], &src[offset], dim_thread);
+        std::memcpy(&dst[i], &src[i], dim_);
     }
 }
 

@@ -17,7 +17,7 @@
 #define NUM_HASHES 10000
 
 #define FFT_SIZE (1 << 23)
-#define NUM_COLUMNS 500
+#define NUM_COLUMNS 100
 #define BLOWUP_FACTOR 1
 #define NPHASES_NTT 2
 #define NPHASES_LDE 2
@@ -577,7 +577,6 @@ static void EXTENDEDPOL_BENCH(benchmark::State &state)
     free(b);
     free(c);
 }
-#if 0
 BENCHMARK(POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     //->DenseRange(1, 1, 1)
@@ -682,7 +681,6 @@ BENCHMARK(LDE_BLOCK_BENCH)
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
     ->UseRealTime();
-#endif
 
 BENCHMARK(EXTENDEDPOL_BENCH)
     ->Unit(benchmark::kSecond)
