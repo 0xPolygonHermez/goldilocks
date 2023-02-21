@@ -990,7 +990,7 @@ inline void Goldilocks::parcpy(Element *dst, const Element *src, uint64_t size, 
     }
     uint64_t components_thread = (size + num_threads_copy - 1) / num_threads_copy;
 
-#pragma omp parallel num_threads(num_threads_copy)
+#pragma omp parallel for num_threads(num_threads_copy)
     for (uint64_t i = 0; i < size; i += components_thread)
     {
         uint64_t dim_ = components_thread * sizeof(Goldilocks::Element);
