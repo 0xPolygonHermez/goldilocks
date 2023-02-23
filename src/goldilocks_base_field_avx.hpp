@@ -30,11 +30,6 @@ inline void Goldilocks::set(__m256i &a, const Goldilocks::Element &a0, const Gol
 {
     a = _mm256_set_epi64x(a3.fe, a2.fe, a1.fe, a0.fe);
 }
-
-inline void Goldilocks::store(Goldilocks::Element *a4, const __m256i &a)
-{
-    _mm256_storeu_si256((__m256i *)a4, a);
-}
 // We assume a4_a aligned on a 32-byte boundary
 inline void Goldilocks::load_a(__m256i &a, const Goldilocks::Element *a4_a)
 {
@@ -203,6 +198,35 @@ inline void Goldilocks::add_avx(__m256i &c_, const __m256i &a_, const Element *b
     load(b_, bb);
     add_avx(c_, a_, b_);
 };
+inline void Goldilocks::add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_)
+{
+    __m256i c_;
+    add_avx(c_, a_, b_);
+    Element c4[4];
+    store(c4, c_);
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        c[k * offset_c] = c4[k];
+    }
+}
+inline void Goldilocks::add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const Element *b, uint64_t offset_b)
+{
+    Element bb[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        bb[k] = b[k * offset_b];
+    }
+    __m256i b_, c_;
+    load(b_, bb);
+    add_avx(c_, a_, b_);
+    Element c4[4];
+    store(c4, c_);
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        c[k * offset_c] = c4[k];
+    }
+}
+
 inline void Goldilocks::add_avx(__m256i &c_, const __m256i &a_, const Element *b4, const uint64_t offset_b[4])
 {
     Element bb[4];
@@ -736,6 +760,35 @@ inline void Goldilocks::mul_avx(__m256i &c_, const Element *a4, const __m256i &b
     }
     __m256i a_;
     load(a_, aa);
+    mult_avx(c_, a_, b_);
+}
+inline void Goldilocks::mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, uint64_t offset_a[4])
+{
+    Element aa[4], c4[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        aa[k] = a4[offset_a[k]];
+    }
+    __m256i a_, c_;
+    load(a_, aa);
+    mult_avx(c_, a_, b_);
+    Goldilocks::store(c4, c_);
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        c[offset_c[k]] = c4[k];
+    }
+}
+inline void Goldilocks::mul_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4])
+{
+    Element aa[4], bb[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        aa[k] = a4[offset_a[k]];
+        bb[k] = b;
+    }
+    __m256i a_, b_;
+    load(a_, aa);
+    load(b_, bb);
     mult_avx(c_, a_, b_);
 }
 

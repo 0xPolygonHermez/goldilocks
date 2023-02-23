@@ -739,6 +739,90 @@ public:
         Goldilocks::add_avx(c_[2], a2_, b2_);
     }
 
+    static inline void add13_avx(Goldilocks::Element *c, uint64_t stride_c, const __m256i &a_, Goldilocks3::Element_avx b_)
+    {
+        __m256i c0_;
+        Goldilocks::add_avx(c0_, a_, b_[0]);
+
+        Goldilocks::Element c0[4], c1[4], c2[4];
+        Goldilocks::store(c0, c0_);
+        Goldilocks::store(c1, b_[1]);
+        Goldilocks::store(c2, b_[2]);
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            c[k * stride_c] = c0[k];
+            c[k * stride_c + 1] = c1[k];
+            c[k * stride_c + 2] = c2[k];
+        }
+    }
+    static inline void add_avx(Goldilocks::Element *c, uint64_t stride_c, const Goldilocks::Element *a, Goldilocks3::Element_avx b_, uint64_t stride_a)
+    {
+        Goldilocks::Element a0[4];
+        Goldilocks::Element a1[4];
+        Goldilocks::Element a2[4];
+
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            a0[k] = a[k * stride_a];
+            a1[k] = a[k * stride_a + 1];
+            a2[k] = a[k * stride_a + 2];
+        }
+        __m256i a0_, a1_, a2_;
+
+        Goldilocks::load(a0_, a0);
+        Goldilocks::load(a1_, a1);
+        Goldilocks::load(a2_, a2);
+
+        __m256i c0_, c1_, c2_;
+        Goldilocks::add_avx(c0_, a0_, b_[0]);
+        Goldilocks::add_avx(c1_, a1_, b_[1]);
+        Goldilocks::add_avx(c2_, a2_, b_[2]);
+
+        Goldilocks::Element c0[4], c1[4], c2[4];
+        Goldilocks::store(c0, c0_);
+        Goldilocks::store(c1, c1_);
+        Goldilocks::store(c2, c2_);
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            c[k * stride_c] = c0[k];
+            c[k * stride_c + 1] = c1[k];
+            c[k * stride_c + 2] = c2[k];
+        }
+    }
+    static inline void add33c_avx(Goldilocks::Element *c, uint64_t stride_c, Goldilocks3::Element_avx a_, const Goldilocks::Element *b)
+    {
+        Goldilocks::Element b0[4];
+        Goldilocks::Element b1[4];
+        Goldilocks::Element b2[4];
+
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            b0[k] = b[0];
+            b1[k] = b[1];
+            b2[k] = b[2];
+        }
+        __m256i b0_, b1_, b2_;
+
+        Goldilocks::load(b0_, b0);
+        Goldilocks::load(b1_, b1);
+        Goldilocks::load(b2_, b2);
+
+        __m256i c0_, c1_, c2_;
+        Goldilocks::add_avx(c0_, a_[0], b0_);
+        Goldilocks::add_avx(c1_, a_[1], b1_);
+        Goldilocks::add_avx(c2_, a_[2], b2_);
+
+        Goldilocks::Element c0[4], c1[4], c2[4];
+        Goldilocks::store(c0, c0_);
+        Goldilocks::store(c1, c1_);
+        Goldilocks::store(c2, c2_);
+        for (uint64_t k = 0; k < NROWS_; ++k)
+        {
+            c[k * stride_c] = c0[k];
+            c[k * stride_c + 1] = c1[k];
+            c[k * stride_c + 2] = c2[k];
+        }
+    }
     // ======== SUB ========
     static inline void sub(Element &result, Element &a, uint64_t &b)
     {
