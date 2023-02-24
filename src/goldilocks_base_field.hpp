@@ -317,6 +317,9 @@ public:
 
     static inline void add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
     static inline void add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const Element *b4, uint64_t offset_b);
+    static inline void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
+    static inline void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
+    static inline void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b[4]);
 
     static inline void sub_avx(Element *c4, const Element *a4, const Element *b4);
     static inline void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
@@ -340,6 +343,11 @@ public:
     static inline void sub_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
     static inline void sub_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t offset_b[4]);
     static inline void sub_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t offset_a[4]);
+
+    static inline void sub_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
+    static inline void sub_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
+    static inline void sub_avx(Element *c, uint64_t offset_c, const Element a, const __m256i &b_);
+    static inline void sub_avx(Element *c, const uint64_t offset_c[4], const Element a, const __m256i &b_);
 
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
@@ -367,7 +375,6 @@ public:
     static inline void mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]);
     static inline void mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_8[144]); // rick: arrays comes from reference
                                                                                                    // rick: arrays comes from reference
-
     static inline void mul_avx(Element *c4, const Element *a4, const Element *b4);
     static inline void mul_avx(Element *c4, const Element a, const Element *b4);
     static inline void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
@@ -384,6 +391,15 @@ public:
     static inline void mul_avx(__m256i &c_, const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
     static inline void mul_avx(Element *c4, uint64_t offset_c[4], const Element *a4, const __m256i &b_, uint64_t offset_a[4]);
     static inline void mul_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
+
+    static inline void mul_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
+    static inline void mul_avx(Element *c, uint64_t offset_c, const Element *a4, const __m256i &b_, uint64_t offset_a);
+    static inline void mul_avx(Element *c, uint64_t offset_c, const __m256i &a_, const Element *b, uint64_t offset_b);
+    static inline void mul_avx(Element *c, uint64_t offset_c, const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, uint64_t offset_a);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
 };
 
 /*
