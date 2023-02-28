@@ -389,7 +389,6 @@ public:
     static inline void mul_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
     static inline void mul_avx(__m256i &c_, const __m256i &a_, const Element *b4, const uint64_t offset_b[4]);
     static inline void mul_avx(__m256i &c_, const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
-    static inline void mul_avx(Element *c4, uint64_t offset_c[4], const Element *a4, const __m256i &b_, uint64_t offset_a[4]);
     static inline void mul_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
 
     static inline void mul_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
