@@ -275,6 +275,7 @@ public:
     }
 
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
+    static void parSetZero(Element *dst, uint64_t size, int num_threads_copy = 64);
 
     // AVX:
     static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
@@ -1039,6 +1040,29 @@ inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
 }
 inline void Goldilocks::parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy)
 {
+    if (num_threads_copy < 1)
+    {
+        num_threads_copy = 1;
+    }
+    uint64_t components_thread = size / num_threads_copy;
+    uint64_t dim_thread = components_thread * sizeof(Goldilocks::Element);
+    uint64_t dim_res = (size - components_thread * num_threads_copy) * sizeof(Goldilocks::Element);
+
+#pragma omp parallel num_threads(num_threads_copy) firstprivate(dim_thread)
+    {
+        int id = omp_get_thread_num();
+        uint64_t offset = id * components_thread;
+        if (id == num_threads_copy - 1)
+        {
+            dim_thread += dim_res;
+        }
+        std::memcpy(&dst[offset], &src[offset], dim_thread);
+    }
+}
+inline void Goldilocks::parSetZero(Element *dst, uint64_t size, int num_threads_copy)
+{
+    memset((void *)dst, 0, size * sizeof(Element));
+
     if (num_threads_copy < 1)
     {
         num_threads_copy = 1;
