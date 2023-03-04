@@ -17,7 +17,7 @@
 #define NUM_HASHES 10000
 
 #define FFT_SIZE (1 << 23)
-#define NUM_COLUMNS 500
+#define NUM_COLUMNS 100
 #define BLOWUP_FACTOR 1
 #define NPHASES_NTT 2
 #define NPHASES_LDE 2
