@@ -260,6 +260,7 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_
         dst_ = dst;
     }
     NTT(dst_, src, size, ncols, buffer, nphase, nblock);
+    double time0 = omp_get_wtime();
     u_int64_t domainPow = log2(size);
     u_int64_t nDiv2 = size >> 1;
 
@@ -286,6 +287,8 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_
         Goldilocks::mul(dst_[k], dst_[k], powTwoInv[domainPow]);
         Goldilocks::mul(dst_[offset_n + k], dst_[offset_n + k], powTwoInv[domainPow]);
     }
+    double time1 = omp_get_wtime();
+    std::cout << "time intt specific: " << time1 - time0 << std::endl;
 }
 
 void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer, u_int64_t nphase, u_int64_t nblock)
