@@ -290,6 +290,7 @@ void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_
 
 void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer, u_int64_t nphase, u_int64_t nblock)
 {
+    double t0 = omp_get_wtime();
     NTT_Goldilocks ntt_extension(N_Extended);
 
     Goldilocks::Element *tmp = NULL;
@@ -310,8 +311,9 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
     {
         Goldilocks::mul(r[i], r[i - 1], Goldilocks::shift());
     }
-
+    double t1 = omp_get_wtime();
     INTT(output, input, N, ncols, tmp);
+    double t2 = omp_get_wtime();
 #pragma omp parallel for
     for (uint64_t i = 0; i < N; i++)
         for (uint64_t j = 0; j < ncols; j++)
@@ -326,12 +328,15 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
     {
         output[i] = Goldilocks::zero();
     }
-
+    double t3 = omp_get_wtime();
     ntt_extension.NTT(output, output, N_Extended, ncols, tmp);
+    double t4 = omp_get_wtime();
 
     free(r);
     if (buffer == NULL)
     {
         free(tmp);
     }
+    double t5 = omp_get_wtime();
+    std::cout << "Times: " << t1 - t0 << " " << t2 - t1 << " " << t3 - t2 << " " << t4 - t3 << " " << t5 - t4 << std::endl;
 }
