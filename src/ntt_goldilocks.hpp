@@ -34,7 +34,16 @@ private:
             return res;
         }
     }
-    void NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux);
+    void NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux, bool inverse, bool extend);
+    inline int intt_idx(int i, int N)
+    {
+        int ind1 = N - i;
+        if (ind1 == N)
+        {
+            ind1 = 0;
+        }
+        return ind1;
+    }
 
 public:
     NTT_Goldilocks(u_int64_t maxDomainSize, u_int32_t _nThreads = 0, int extension_ = 1)
@@ -153,7 +162,7 @@ public:
             Goldilocks::mul(r_[i], r[i], powTwoInv[domainPow]);
         }
     }
-    void NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
+    void NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS, bool inverse = false, bool extend = false);
     void INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS, bool extend = false);
     void reversePermutation(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all);
     inline Goldilocks::Element &root(u_int32_t domainPow, u_int64_t idx)
