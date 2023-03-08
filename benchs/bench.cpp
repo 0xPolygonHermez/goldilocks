@@ -8,6 +8,15 @@
 #include "../src/ntt_goldilocks.hpp"
 #include "../src/merklehash_goldilocks.hpp"
 #include <immintrin.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <linux/perf_event.h>
+#include <asm/unistd.h>
+#include <linux/perf_event.h>
+#include <sys/ioctl.h>
+#include <linux/perf_event.h>
+#include <asm/unistd.h>
 
 #include <math.h> /* ceil */
 #include "omp.h"
@@ -17,13 +26,102 @@
 #define NUM_HASHES 10000
 
 #define FFT_SIZE (1 << 23)
-#define NUM_COLUMNS 100
+#define NUM_COLUMNS 669
 #define BLOWUP_FACTOR 1
-#define NPHASES_NTT 2
+#define NPHASES_NTT 3
 #define NPHASES_LDE 2
 #define NBLOCKS 1
 #define NCOLS_HASH 100
 #define NROWS_HASH FFT_SIZE
+
+//// perf counters
+
+#define NUM_EVENTS 3
+#define PERF_COUNT_HW_DTLB_LOAD_MISSES 0x08
+#define PERF_COUNT_HW_DTLB_LOADS 0x01
+
+struct perf_event_attr events[NUM_EVENTS];
+int fds[NUM_EVENTS];
+
+int init_perf_counters()
+{
+    // Set up events to monitor
+    events[0].type = PERF_TYPE_HARDWARE;
+    events[0].config = PERF_COUNT_HW_CPU_CYCLES;
+
+    events[1].type = PERF_TYPE_HARDWARE;
+    events[1].config = PERF_COUNT_HW_CACHE_MISSES;
+
+    events[2].type = PERF_TYPE_HARDWARE;
+    events[2].config = PERF_COUNT_HW_CACHE_REFERENCES;
+
+    /*events[3].type = PERF_TYPE_HARDWARE;
+    events[3].config = PERF_COUNT_HW_DTLB_LOAD_MISSES;
+
+    events[4].type = PERF_TYPE_HARDWARE;
+    events[4].config = PERF_COUNT_HW_DTLB_LOADS;
+
+    events[5].type = PERF_TYPE_SOFTWARE;
+    events[5].config = PERF_COUNT_SW_PAGE_FAULTS;*/
+
+    // Create the perf counters
+    for (int i = 0; i < NUM_EVENTS; i++)
+    {
+        fds[i] = syscall(__NR_perf_event_open, &events[i], 0, -1, -1, 0);
+        if (fds[i] == -1)
+        {
+            perror("perf_event_open failed");
+            return -1;
+        }
+    }
+
+    return 0;
+}
+
+void read_perf_counters(long long counters[NUM_EVENTS])
+{
+    for (int i = 0; i < NUM_EVENTS; i++)
+    {
+        long long count;
+        if (read(fds[i], &count, sizeof(long long)) == -1)
+        {
+            std::cout << " read failed" << i << std::endl;
+        }
+        else
+        {
+            counters[i] = count;
+        }
+    }
+}
+
+void start_perf_counters()
+{
+    // Start the perf counters
+    for (int i = 0; i < NUM_EVENTS; i++)
+    {
+        ioctl(fds[i], PERF_EVENT_IOC_RESET, 0);
+        ioctl(fds[i], PERF_EVENT_IOC_ENABLE, 0);
+    }
+}
+
+void stop_perf_counters()
+{
+    // Stop the perf counters
+    for (int i = 0; i < NUM_EVENTS; i++)
+    {
+        ioctl(fds[i], PERF_EVENT_IOC_DISABLE, 0);
+    }
+}
+
+void close_perf_counters()
+{
+    for (int i = 0; i < NUM_EVENTS; i++)
+    {
+        close(fds[i]);
+    }
+}
+
+//////////
 
 static void POSEIDON_BENCH_FULL(benchmark::State &state)
 {
@@ -546,6 +644,7 @@ static void LDE_BLOCK_BENCH(benchmark::State &state)
     }
     free(a);
 }
+
 static void EXTENDEDPOL_BENCH(benchmark::State &state)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
@@ -577,6 +676,66 @@ static void EXTENDEDPOL_BENCH(benchmark::State &state)
     free(b);
     free(c);
 }
+
+static void EXTENDEDPOL_BENCH_2(benchmark::State &state)
+{
+
+    // Initialize perf counters
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+
+    NTT_Goldilocks ntt(FFT_SIZE, state.range(0));
+    ntt.computeR(FFT_SIZE);
+    int aa = 0;
+    long long aux = ((long long)FFT_SIZE << BLOWUP_FACTOR) * (long long)NUM_COLUMNS;
+
+    init_perf_counters();
+    start_perf_counters();
+
+    for (long long i = 0; i < 1000; i++)
+    {
+        a += i;
+    }
+    stop_perf_counters();
+
+    // Read perf counters
+    long long counters[NUM_EVENTS];
+    read_perf_counters(counters);
+    /*for (uint i = 0; i < 2; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            Goldilocks::add(a[i * NUM_COLUMNS + j], Goldilocks::one(), Goldilocks::fromU64(j));
+        }
+    }
+
+    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * (i - 1) + j] + a[NUM_COLUMNS * (i - 2) + j];
+        }
+    }*/
+
+    for (auto _ : state)
+    {
+        aa += 1;
+        // ntt.extendPol(b, a, FFT_SIZE << BLOWUP_FACTOR, FFT_SIZE, 1, c);
+    }
+
+    // Print results
+    // printf("\nPage faults: %lld\n", counters[NUM_EVENTS]);
+    // printf("cycles: %lld\n", counters[0]);
+    printf("\ncache misses: %lld %f\n", counters[1], (double)counters[1] / (double)counters[2]);
+    printf("cache references: %lld %lld\n", counters[2], (aux * 8) / (64 * 1024 * 1024));
+
+    // printf("dTLB load misses: %lld\n", counters[2]);
+    // printf("dTLB loads: %lld\n", counters[4]);
+    close_perf_counters();
+}
+
 BENCHMARK(POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     //->DenseRange(1, 1, 1)
@@ -689,6 +848,16 @@ BENCHMARK(EXTENDEDPOL_BENCH)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
     ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
+    ->UseRealTime();
+
+BENCHMARK(EXTENDEDPOL_BENCH_2)
+    ->Unit(benchmark::kSecond)
+    //->DenseRange(1, 1, 1)
+    //->RangeMultiplier(2)
+    //->Range(2, omp_get_max_threads())
+    //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
+    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
+    ->Iterations(1)
     ->UseRealTime();
 
 BENCHMARK_MAIN();

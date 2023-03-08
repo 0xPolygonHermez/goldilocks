@@ -276,6 +276,7 @@ public:
 
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
     static void parSetZero(Element *dst, uint64_t size, int num_threads_copy = 64);
+    static void nt_8Element_copy(Element *dst, Element *src);
 
     // AVX:
     static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
@@ -1076,6 +1077,24 @@ inline void Goldilocks::parSetZero(Element *dst, uint64_t size, int num_threads_
         }
         std::memset(&dst[i], 0, dim_);
     }
+}
+
+inline void Goldilocks::nt_8Element_copy(Element *dst, Element *src)
+{
+    __m128i *dst128 = (__m128i *)dst;
+    __m128i *src128 = (__m128i *)src;
+    __m128i xmm0;
+    __m128i xmm1;
+    __m128i xmm2;
+    __m128i xmm3;
+    xmm0 = _mm_load_si128(&src128[0]);
+    xmm1 = _mm_load_si128(&src128[1]);
+    xmm2 = _mm_load_si128(&src128[2]);
+    xmm3 = _mm_load_si128(&src128[3]);
+    _mm_stream_si128(&dst128[0], xmm0);
+    _mm_stream_si128(&dst128[1], xmm1);
+    _mm_stream_si128(&dst128[2], xmm2);
+    _mm_stream_si128(&dst128[3], xmm3);
 }
 
 #endif // GOLDILOCKS

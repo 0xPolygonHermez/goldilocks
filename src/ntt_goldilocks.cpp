@@ -72,15 +72,30 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
         u_int64_t batchSize = 1 << sInc;
         u_int64_t nBatches = size / batchSize;
 
+        // int chunk1 = (nBatches + (nThreads - 1)) / nThreads;
         int chunk1 = nBatches / nThreads;
         if (chunk1 == 0)
         {
             chunk1 = 1;
         }
 
+        // std::cout << "batchsize: " << batchSize << " ncols: " << ncols << std::endl;
+
 #pragma omp parallel for schedule(static, chunk1)
         for (u_int64_t b = 0; b < nBatches; b++)
         {
+            u_int64_t pref_begin = b * batchSize * ncols;
+            u_int64_t pref_end = pref_begin + batchSize * ncols;
+            uint64_t max = 0;
+            /*for (u_int64_t k = pref_begin; k < pref_end; k += 1)
+            {
+                if (a[k].fe > max)
+                {
+                    max = a[k].fe;
+                }
+            }
+            if (max > 0)
+            {*/
             for (u_int64_t si = 0; si < sInc; si++)
             {
                 u_int64_t m = 1 << (s + si);
@@ -109,6 +124,7 @@ void NTT_Goldilocks::NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *sr
                         Goldilocks::sub(a[offset1 + k], u, t);
                     }
                 }
+                //}
             }
             if (s + maxBatchPow <= domainPow || !inverse)
             {
@@ -247,6 +263,7 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
     {
         if (extension <= 1)
         {
+            // double time0 = omp_get_wtime();
 #pragma omp parallel for schedule(static)
             for (u_int64_t i = 0; i < size; i++)
             {
@@ -254,7 +271,13 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
                 u_int64_t offset_r1 = r * ncols_all + offset_cols;
                 u_int64_t offset_i1 = i * ncols;
                 std::memcpy(&dst[offset_i1], &src[offset_r1], ncols * sizeof(Goldilocks::Element));
+                /*for (int i = 0; i < 83; ++i)
+                {
+                    Goldilocks::nt_8Element_copy(&dst[offset_i1 + 8 * i], &src[offset_r1 + 8 * i]);
+                }*/
             }
+            // double time1 = omp_get_wtime();
+            // std::cout << "Time: " << time1 - time0 << std::endl;
         }
         else
         {
