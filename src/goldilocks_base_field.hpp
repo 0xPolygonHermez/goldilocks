@@ -178,6 +178,20 @@ public:
             dst[i].fe = src[stride[i]].fe;
         }
     }
+    static inline void copy_batch(Element *dst, uint64_t stride, const Element *src)
+    {
+        dst[0] = src[0];
+        dst[stride] = src[1];
+        dst[2 * stride] = src[2];
+        dst[3 * stride] = src[3];
+    }
+    static inline void copy_batch(Element *dst, uint64_t stride[4], const Element *src)
+    {
+        for (uint64_t i = 0; i < NROWS_; ++i)
+        {
+            dst[stride[i]].fe = src[i].fe;
+        }
+    }
     static inline void copy_avx(Element *dst, const Element &src)
     {
         // Does not make sense to vectorize yet
@@ -241,8 +255,27 @@ public:
         }
         load(dst_, dst);
     };
+    static inline void copy_avx(Element *dst, uint64_t stride, const __m256i &src_)
+    {
+        Element src[4];
+        Goldilocks::store(src, src_);
+        dst[0] = src[0];
+        dst[stride] = src[1];
+        dst[2 * stride] = src[2];
+        dst[3 * stride] = src[3];
+    }
+    static inline void copy_avx(Element *dst, uint64_t stride[4], const __m256i &src_)
+    {
+        Element src[4];
+        Goldilocks::store(src, src_);
+        for (uint64_t i = 0; i < NROWS_; ++i)
+        {
+            dst[stride[i]].fe = src[i].fe;
+        }
+    }
 
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
+    static void parSetZero(Element *dst, uint64_t size, int num_threads_copy = 64);
 
     // AVX:
     static inline void set(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
@@ -250,7 +283,10 @@ public:
     {
         a = _mm256_loadu_si256((__m256i *)(a4));
     }
-    static inline void store(Goldilocks::Element *a4, const __m256i &a);
+    static inline void store(Goldilocks::Element *a4, const __m256i &a)
+    {
+        _mm256_storeu_si256((__m256i *)a4, a);
+    }
     static inline void load_a(__m256i &a, const Goldilocks::Element *a4_a);
     static inline void store_a(Goldilocks::Element *a4_a, const __m256i &a);
     static inline void shift(__m256i &a_s, const __m256i &a);
@@ -280,6 +316,12 @@ public:
     static inline void add_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
     static inline void add_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
 
+    static inline void add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
+    static inline void add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const Element *b4, uint64_t offset_b);
+    static inline void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
+    static inline void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
+    static inline void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b[4]);
+
     static inline void sub_avx(Element *c4, const Element *a4, const Element *b4);
     static inline void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
     static inline void sub_avx(Element *c4, const Element *a4, const Element b);
@@ -302,6 +344,11 @@ public:
     static inline void sub_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
     static inline void sub_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t offset_b[4]);
     static inline void sub_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t offset_a[4]);
+
+    static inline void sub_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
+    static inline void sub_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
+    static inline void sub_avx(Element *c, uint64_t offset_c, const Element a, const __m256i &b_);
+    static inline void sub_avx(Element *c, const uint64_t offset_c[4], const Element a, const __m256i &b_);
 
     static inline void mult_avx(__m256i &c, const __m256i &a, const __m256i &b);
     static inline void mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b);
@@ -329,7 +376,6 @@ public:
     static inline void mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_a[144]);
     static inline void mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_8[144]); // rick: arrays comes from reference
                                                                                                    // rick: arrays comes from reference
-
     static inline void mul_avx(Element *c4, const Element *a4, const Element *b4);
     static inline void mul_avx(Element *c4, const Element a, const Element *b4);
     static inline void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
@@ -344,6 +390,16 @@ public:
     static inline void mul_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
     static inline void mul_avx(__m256i &c_, const __m256i &a_, const Element *b4, const uint64_t offset_b[4]);
     static inline void mul_avx(__m256i &c_, const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
+    static inline void mul_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
+
+    static inline void mul_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
+    static inline void mul_avx(Element *c, uint64_t offset_c, const Element *a4, const __m256i &b_, uint64_t offset_a);
+    static inline void mul_avx(Element *c, uint64_t offset_c, const __m256i &a_, const Element *b, uint64_t offset_b);
+    static inline void mul_avx(Element *c, uint64_t offset_c, const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, uint64_t offset_a);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
+    static inline void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
 };
 
 /*
@@ -999,6 +1055,26 @@ inline void Goldilocks::parcpy(Element *dst, const Element *src, uint64_t size, 
             dim_ = (size - i) * sizeof(Goldilocks::Element);
         }
         std::memcpy(&dst[i], &src[i], dim_);
+    }
+}
+inline void Goldilocks::parSetZero(Element *dst, uint64_t size, int num_threads_copy)
+{
+
+    if (num_threads_copy < 1)
+    {
+        num_threads_copy = 1;
+    }
+    uint64_t components_thread = (size + num_threads_copy - 1) / num_threads_copy;
+
+#pragma omp parallel for num_threads(num_threads_copy)
+    for (uint64_t i = 0; i < size; i += components_thread)
+    {
+        uint64_t dim_ = components_thread * sizeof(Goldilocks::Element);
+        if (size - i < components_thread)
+        {
+            dim_ = (size - i) * sizeof(Goldilocks::Element);
+        }
+        std::memset(&dst[i], 0, dim_);
     }
 }
 

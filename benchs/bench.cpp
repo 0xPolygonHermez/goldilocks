@@ -688,7 +688,7 @@ BENCHMARK(EXTENDEDPOL_BENCH)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
-    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->DenseRange(omp_get_max_threads(), omp_get_max_threads(), 1)
     ->UseRealTime();
 
 BENCHMARK_MAIN();

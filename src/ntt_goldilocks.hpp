@@ -6,7 +6,6 @@
 #include <gmp.h>
 #include <omp.h>
 
-#define CACHESIZE 1 << 18
 #define NUM_PHASES 3
 #define NUM_BLOCKS 1
 
@@ -18,6 +17,9 @@ private:
     uint64_t nqr;
     Goldilocks::Element *roots;
     Goldilocks::Element *powTwoInv;
+    Goldilocks::Element *r;
+    Goldilocks::Element *r_;
+    int extension;
 
     static u_int32_t log2(u_int64_t size)
     {
@@ -32,14 +34,27 @@ private:
             return res;
         }
     }
-    void NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux);
+    void NTT_iters(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all, u_int64_t nphase, Goldilocks::Element *aux, bool inverse, bool extend);
+    inline int intt_idx(int i, int N)
+    {
+        int ind1 = N - i;
+        if (ind1 == N)
+        {
+            ind1 = 0;
+        }
+        return ind1;
+    }
 
 public:
-    NTT_Goldilocks(u_int64_t maxDomainSize, u_int32_t _nThreads = 0)
+    NTT_Goldilocks(u_int64_t maxDomainSize, u_int32_t _nThreads = 0, int extension_ = 1)
     {
+
+        r = NULL;
+        r_ = NULL;
         if (maxDomainSize == 0)
             return;
         nThreads = _nThreads == 0 ? omp_get_max_threads() : _nThreads;
+        extension = extension_;
 
         u_int32_t domainPow = NTT_Goldilocks::log2(maxDomainSize);
 
@@ -125,16 +140,36 @@ public:
             free(roots);
             free(powTwoInv);
         }
+        if (r != NULL)
+        {
+            delete (r);
+        }
+        if (r_ != NULL)
+        {
+            delete (r_);
+        }
     }
-
-    void NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
-    void INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
+    inline void computeR(int N)
+    {
+        u_int64_t domainPow = log2(N);
+        r = new Goldilocks::Element[N];
+        r_ = new Goldilocks::Element[N];
+        r[0] = Goldilocks::one();
+        r_[0] = powTwoInv[domainPow];
+        for (int i = 1; i < N; i++)
+        {
+            Goldilocks::mul(r[i], r[i - 1], Goldilocks::shift());
+            Goldilocks::mul(r_[i], r[i], powTwoInv[domainPow]);
+        }
+    }
+    void NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS, bool inverse = false, bool extend = false);
+    void INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols = 1, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS, bool extend = false);
     void reversePermutation(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t offset_cols, u_int64_t ncols, u_int64_t ncols_all);
     inline Goldilocks::Element &root(u_int32_t domainPow, u_int64_t idx)
     {
         return roots[idx << (s - domainPow)];
     }
-    void extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N, uint64_t N_Extended, uint64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
+    void extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
 };
 
 #endif
