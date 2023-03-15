@@ -654,7 +654,7 @@ BENCHMARK(NTT_BENCH)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
-    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
 BENCHMARK(NTT_BLOCK_BENCH)
@@ -663,7 +663,7 @@ BENCHMARK(NTT_BLOCK_BENCH)
     //->RangeMultiplier(2)
     //->Range(2, omp_get_max_threads())
     //->DenseRange(omp_get_max_threads() / 2 - 8, omp_get_max_threads() / 2 + 8, 2)
-    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads() / 2, 1)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 BENCHMARK(LDE_BENCH)
     ->Unit(benchmark::kSecond)
