@@ -55,3 +55,82 @@ const Goldilocks::Element Goldilocks::NEGONE = {(uint64_t)0XFFFFFFFE00000002LL};
 const Goldilocks::Element Goldilocks::SHIFT = Goldilocks::fromU64(7);
 
 #endif
+
+/*
+    Scalar operations
+*/
+void Goldilocks::parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy)
+{
+    if (num_threads_copy < 1)
+    {
+        num_threads_copy = 1;
+    }
+    uint64_t components_thread = (size + num_threads_copy - 1) / num_threads_copy;
+
+#pragma omp parallel for num_threads(num_threads_copy)
+    for (uint64_t i = 0; i < size; i += components_thread)
+    {
+        uint64_t dim_ = components_thread * sizeof(Goldilocks::Element);
+        if (size - i < components_thread)
+        {
+            dim_ = (size - i) * sizeof(Goldilocks::Element);
+        }
+        std::memcpy(&dst[i], &src[i], dim_);
+    }
+}
+
+void Goldilocks::parSetZero(Element *dst, uint64_t size, int num_threads_copy)
+{
+
+    if (num_threads_copy < 1)
+    {
+        num_threads_copy = 1;
+    }
+    uint64_t components_thread = (size + num_threads_copy - 1) / num_threads_copy;
+
+#pragma omp parallel for num_threads(num_threads_copy)
+    for (uint64_t i = 0; i < size; i += components_thread)
+    {
+        uint64_t dim_ = components_thread * sizeof(Goldilocks::Element);
+        if (size - i < components_thread)
+        {
+            dim_ = (size - i) * sizeof(Goldilocks::Element);
+        }
+        std::memset(&dst[i], 0, dim_);
+    }
+}
+
+// TODO: Review and optimize inv imlementation
+void Goldilocks::inv(Element &result, const Element &in1)
+{
+    if (Goldilocks::isZero(in1))
+    {
+        std::cerr << "Error: Goldilocks::inv called with zero" << std::endl;
+        exit(-1);
+    }
+    u_int64_t t = 0;
+    u_int64_t r = GOLDILOCKS_PRIME;
+    u_int64_t newt = 1;
+
+    u_int64_t newr = Goldilocks::toU64(in1);
+    Element q;
+    Element aux1;
+    Element aux2;
+    while (newr != 0)
+    {
+        q = Goldilocks::fromU64(r / newr);
+        aux1 = Goldilocks::fromU64(t);
+        aux2 = Goldilocks::fromU64(newt);
+        t = Goldilocks::toU64(aux2);
+        newt = Goldilocks::toU64(Goldilocks::sub(aux1, Goldilocks::mul(q, aux2)));
+        aux1 = Goldilocks::fromU64(r);
+        aux2 = Goldilocks::fromU64(newr);
+        r = Goldilocks::toU64(aux2);
+        newr = Goldilocks::toU64(Goldilocks::sub(aux1, Goldilocks::mul(q, aux2)));
+    }
+
+    Goldilocks::fromU64(result, t);
+#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
+    result.fe = result.fe % GOLDILOCKS_PRIME;
+#endif
+};

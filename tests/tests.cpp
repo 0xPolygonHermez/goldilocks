@@ -2,7 +2,6 @@
 #include <iostream>
 
 #include "../src/goldilocks_base_field.hpp"
-#include "../src/goldilocks_base_field_avx.hpp"
 #include "../src/goldilocks_cubic_extension.hpp"
 #include "../src/poseidon_goldilocks.hpp"
 #include "../src/ntt_goldilocks.hpp"
@@ -101,10 +100,10 @@ TEST(GOLDILOCKS_TEST, add_avx)
     __m256i b_;
     __m256i c_;
 
-    Goldilocks::load(a_, a);
-    Goldilocks::set(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
     Goldilocks::add_avx(c_, a_, b_);
-    Goldilocks::store(c, c_);
+    Goldilocks::store_avx(c, c_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] + b[0]), Goldilocks::toU64(c[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] + b[1]), Goldilocks::toU64(c[1]));
@@ -116,9 +115,72 @@ TEST(GOLDILOCKS_TEST, add_avx)
     a[2] = inE4;
     a[3] = max;
 
-    Goldilocks::load(a_, a);
+    Goldilocks::load_avx(a_, a);
     Goldilocks::add_avx(b_, a_, c_);
-    Goldilocks::store(b, b_);
+    Goldilocks::store_avx(b, b_);
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] + c[0]), Goldilocks::toU64(b[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] + c[1]), Goldilocks::toU64(b[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] + c[2]), Goldilocks::toU64(b[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] + c[3]), Goldilocks::toU64(b[3]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+TEST(GOLDILOCKS_TEST, add_avx512)
+{
+    uint64_t in1 = 3;
+    int32_t in2 = 9;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+    int32_t in4 = -12;
+
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element p_1 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
+    Goldilocks::Element max = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFFULL);
+
+    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+    Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF));
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+
+    a[0] = p_1;
+    a[1] = a1;
+    a[2] = inE1;
+    a[3] = max;
+
+    b[0] = p_1;
+    b[1] = a2;
+    b[2] = inE2;
+    b[3] = max;
+
+    __m256i a_;
+    __m256i b_;
+    __m256i c_;
+
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::add_avx(c_, a_, b_);
+    Goldilocks::store_avx(c, c_);
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] + b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] + b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] + b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] + b[3]), Goldilocks::toU64(c[3]));
+
+    a[0] = inE3;
+    a[1] = c[1];
+    a[2] = inE4;
+    a[3] = max;
+
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::add_avx(b_, a_, c_);
+    Goldilocks::store_avx(b, b_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] + c[0]), Goldilocks::toU64(b[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] + c[1]), Goldilocks::toU64(b[1]));
@@ -187,10 +249,10 @@ TEST(GOLDILOCKS_TEST, sub_avx)
     __m256i b_;
     __m256i c_;
 
-    Goldilocks::load(a_, a);
-    Goldilocks::set(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
     Goldilocks::sub_avx(c_, a_, b_);
-    Goldilocks::store(c, c_);
+    Goldilocks::store_avx(c, c_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] - b[0]), Goldilocks::toU64(c[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] - b[1]), Goldilocks::toU64(c[1]));
@@ -202,9 +264,9 @@ TEST(GOLDILOCKS_TEST, sub_avx)
     a[2] = Goldilocks::zero();
     a[3] = max;
 
-    Goldilocks::load(a_, a);
+    Goldilocks::load_avx(a_, a);
     Goldilocks::sub_avx(b_, a_, c_);
-    Goldilocks::store(b, b_);
+    Goldilocks::store_avx(b, b_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] - c[0]), Goldilocks::toU64(b[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] - c[1]), Goldilocks::toU64(b[1]));
@@ -242,10 +304,10 @@ TEST(GOLDILOCKS_TEST, sub_avx_2)
     __m256i b_;
     __m256i c_;
 
-    Goldilocks::load(a_, a);
-    Goldilocks::set(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
     Goldilocks::sub_avx(c_, a_, b_);
-    Goldilocks::store(c, c_);
+    Goldilocks::store_avx(c, c_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] - b[0]), Goldilocks::toU64(c[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] - b[1]), Goldilocks::toU64(c[1]));
@@ -306,10 +368,10 @@ TEST(GOLDILOCKS_TEST, mul_avx)
     __m256i b_;
     __m256i c_;
 
-    Goldilocks::load(a_, a);
-    Goldilocks::set(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
     Goldilocks::mult_avx(c_, a_, b_);
-    Goldilocks::store(c, c_);
+    Goldilocks::store_avx(c, c_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] * b[0]), Goldilocks::toU64(c[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] * b[1]), Goldilocks::toU64(c[1]));
@@ -321,9 +383,9 @@ TEST(GOLDILOCKS_TEST, mul_avx)
     a[2] = Goldilocks::zero();
     a[3] = max;
 
-    Goldilocks::load(a_, a);
+    Goldilocks::load_avx(a_, a);
     Goldilocks::mult_avx(b_, a_, c_);
-    Goldilocks::store(b, b_);
+    Goldilocks::store_avx(b, b_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] * c[0]), Goldilocks::toU64(b[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] * c[1]), Goldilocks::toU64(b[1]));
@@ -372,10 +434,10 @@ TEST(GOLDILOCKS_TEST, mul_avx_8)
     __m256i b_;
     __m256i c_;
 
-    Goldilocks::load(a_, a);
-    Goldilocks::set(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
     Goldilocks::mult_avx_8(c_, a_, b_);
-    Goldilocks::store(c, c_);
+    Goldilocks::store_avx(c, c_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] * b[0]), Goldilocks::toU64(c[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] * b[1]), Goldilocks::toU64(c[1]));
@@ -406,9 +468,9 @@ TEST(GOLDILOCKS_TEST, square_avx)
     __m256i a_;
     __m256i c_;
 
-    Goldilocks::load(a_, a);
+    Goldilocks::load_avx(a_, a);
     Goldilocks::square_avx(c_, a_);
-    Goldilocks::store(c, c_);
+    Goldilocks::store_avx(c, c_);
 
     ASSERT_EQ(Goldilocks::toU64(a[0] * a[0]), Goldilocks::toU64(c[0]));
     ASSERT_EQ(Goldilocks::toU64(a[1] * a[1]), Goldilocks::toU64(c[1]));
@@ -416,7 +478,7 @@ TEST(GOLDILOCKS_TEST, square_avx)
     ASSERT_EQ(Goldilocks::toU64(a[3] * a[3]), Goldilocks::toU64(c[3]));
 
     Goldilocks::square_avx(a_, c_);
-    Goldilocks::store(a, a_);
+    Goldilocks::store_avx(a, a_);
 
     ASSERT_EQ(Goldilocks::toU64(c[0] * c[0]), Goldilocks::toU64(a[0]));
     ASSERT_EQ(Goldilocks::toU64(c[1] * c[1]), Goldilocks::toU64(a[1]));
@@ -481,9 +543,9 @@ TEST(GOLDILOCKS_TEST, dot_avx)
     __m256i a1_;
     __m256i a2_;
 
-    Goldilocks::load_a(a0_, &(a[0]));
-    Goldilocks::load_a(a1_, &(a[4]));
-    Goldilocks::load_a(a2_, &(a[8]));
+    Goldilocks::load_avx_a(a0_, &(a[0]));
+    Goldilocks::load_avx_a(a1_, &(a[4]));
+    Goldilocks::load_avx_a(a2_, &(a[8]));
 
     Goldilocks::Element dotp2 = Goldilocks::dot_avx(a0_, a1_, a2_, b);
     ASSERT_EQ(Goldilocks::toU64(dotp1), Goldilocks::toU64(dotp2));
@@ -548,12 +610,12 @@ TEST(GOLDILOCKS_TEST, mult_4x12avx)
     __m256i a1_;
     __m256i a2_;
 
-    Goldilocks::load(a0_, &(a[0]));
-    Goldilocks::load(a1_, &(a[4]));
-    Goldilocks::load(a2_, &(a[8]));
+    Goldilocks::load_avx(a0_, &(a[0]));
+    Goldilocks::load_avx(a1_, &(a[4]));
+    Goldilocks::load_avx(a2_, &(a[8]));
     __m256i b_;
     Goldilocks::mmult_4x12_avx(b_, a0_, a1_, a2_, &(Mat[0]));
-    Goldilocks::store(b2, b_);
+    Goldilocks::store_avx(b2, b_);
 
     ASSERT_EQ(Goldilocks::toU64(b1[0]), Goldilocks::toU64(b2[0]));
     ASSERT_EQ(Goldilocks::toU64(b1[1]), Goldilocks::toU64(b2[1]));
@@ -621,15 +683,15 @@ TEST(GOLDILOCKS_TEST, mmult_avx)
     __m256i a1_;
     __m256i a2_;
 
-    Goldilocks::load(a0_, &(a[0]));
-    Goldilocks::load(a1_, &(a[4]));
-    Goldilocks::load(a2_, &(a[8]));
+    Goldilocks::load_avx(a0_, &(a[0]));
+    Goldilocks::load_avx(a1_, &(a[4]));
+    Goldilocks::load_avx(a2_, &(a[8]));
 
     Goldilocks::mmult_avx(a0_, a1_, a2_, &(Mat[0]));
 
-    Goldilocks::store(&(a[0]), a0_);
-    Goldilocks::store(&(a[4]), a1_);
-    Goldilocks::store(&(a[8]), a2_);
+    Goldilocks::store_avx(&(a[0]), a0_);
+    Goldilocks::store_avx(&(a[4]), a1_);
+    Goldilocks::store_avx(&(a[8]), a2_);
 
     ASSERT_EQ(Goldilocks::toU64(b[0]), Goldilocks::toU64(a[0]));
     ASSERT_EQ(Goldilocks::toU64(b[1]), Goldilocks::toU64(a[1]));
@@ -705,15 +767,15 @@ TEST(GOLDILOCKS_TEST, mmult_avx_8)
     __m256i a1_;
     __m256i a2_;
 
-    Goldilocks::load(a0_, &(a[0]));
-    Goldilocks::load(a1_, &(a[4]));
-    Goldilocks::load(a2_, &(a[8]));
+    Goldilocks::load_avx(a0_, &(a[0]));
+    Goldilocks::load_avx(a1_, &(a[4]));
+    Goldilocks::load_avx(a2_, &(a[8]));
 
     Goldilocks::mmult_avx_8(a0_, a1_, a2_, &(Mat[0]));
 
-    Goldilocks::store(&(a[0]), a0_);
-    Goldilocks::store(&(a[4]), a1_);
-    Goldilocks::store(&(a[8]), a2_);
+    Goldilocks::store_avx(&(a[0]), a0_);
+    Goldilocks::store_avx(&(a[4]), a1_);
+    Goldilocks::store_avx(&(a[8]), a2_);
 
     ASSERT_EQ(Goldilocks::toU64(b[0]), Goldilocks::toU64(a[0]));
     ASSERT_EQ(Goldilocks::toU64(b[1]), Goldilocks::toU64(a[1]));

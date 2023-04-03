@@ -28,9 +28,9 @@ inline void PoseidonGoldilocks::pow7_avx(__m256i &st0, __m256i &st1, __m256i &st
 inline void PoseidonGoldilocks::add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C_[SPONGE_WIDTH])
 {
     __m256i c0, c1, c2;
-    Goldilocks::load(c0, &(C_[0]));
-    Goldilocks::load(c1, &(C_[4]));
-    Goldilocks::load(c2, &(C_[8]));
+    Goldilocks::load_avx(c0, &(C_[0]));
+    Goldilocks::load_avx(c1, &(C_[4]));
+    Goldilocks::load_avx(c2, &(C_[8]));
     Goldilocks::add_avx(st0, st0, c0);
     Goldilocks::add_avx(st1, st1, c1);
     Goldilocks::add_avx(st2, st2, c2);
@@ -39,9 +39,9 @@ inline void PoseidonGoldilocks::add_avx(__m256i &st0, __m256i &st1, __m256i &st2
 inline void PoseidonGoldilocks::add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C_a[SPONGE_WIDTH])
 {
     __m256i c0, c1, c2;
-    Goldilocks::load_a(c0, &(C_a[0]));
-    Goldilocks::load_a(c1, &(C_a[4]));
-    Goldilocks::load_a(c2, &(C_a[8]));
+    Goldilocks::load_avx_a(c0, &(C_a[0]));
+    Goldilocks::load_avx_a(c1, &(C_a[4]));
+    Goldilocks::load_avx_a(c2, &(C_a[8]));
     Goldilocks::add_avx(st0, st0, c0);
     Goldilocks::add_avx(st1, st1, c1);
     Goldilocks::add_avx(st2, st2, c2);
@@ -49,9 +49,9 @@ inline void PoseidonGoldilocks::add_avx_a(__m256i &st0, __m256i &st1, __m256i &s
 inline void PoseidonGoldilocks::add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C_small[SPONGE_WIDTH])
 {
     __m256i c0, c1, c2;
-    Goldilocks::load(c0, &(C_small[0]));
-    Goldilocks::load(c1, &(C_small[4]));
-    Goldilocks::load(c2, &(C_small[8]));
+    Goldilocks::load_avx(c0, &(C_small[0]));
+    Goldilocks::load_avx(c1, &(C_small[4]));
+    Goldilocks::load_avx(c2, &(C_small[8]));
 
     Goldilocks::add_avx_b_small(st0, st0, c0);
     Goldilocks::add_avx_b_small(st1, st1, c1);

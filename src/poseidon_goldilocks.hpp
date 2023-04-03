@@ -3,7 +3,6 @@
 
 #include "poseidon_goldilocks_constants.hpp"
 #include "goldilocks_base_field.hpp"
-#include "goldilocks_base_field_avx.hpp"
 #include <immintrin.h>
 
 #define RATE 8
