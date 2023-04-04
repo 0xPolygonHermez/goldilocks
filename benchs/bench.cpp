@@ -396,7 +396,7 @@ static void NTT_BENCH(benchmark::State &state)
         a[offset + 1] = Goldilocks::one();
         for (uint64_t i = 2; i < FFT_SIZE; i++)
         {
-            a[i] = a[i - 1] + a[i - 2];
+            a[offset + i] = a[offset + i - 1] + a[offset + i - 2];
         }
     }
     for (auto _ : state)
