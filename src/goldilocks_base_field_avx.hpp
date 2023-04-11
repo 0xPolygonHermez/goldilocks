@@ -316,7 +316,8 @@ inline void Goldilocks::square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i
 {
 
     // Obtain a_h
-    __m256i a_h = _mm256_srli_epi64(a, 32);
+    //__m256i a_h = _mm256_srli_epi64(a, 32);
+    __m256i a_h = _mm256_castps_si256(_mm256_movehdup_ps(_mm256_castsi256_ps(a)));
 
     // c = (a_h+a_l)*(b_h*a_l)=a_h*a_h+2*a_h*a_l+a_l*a_l=c_hh+2*c_hl+c_ll
     // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l
@@ -325,29 +326,30 @@ inline void Goldilocks::square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i
     __m256i c_ll = _mm256_mul_epu32(a, a);
 
     // Bignum addition
-    // Ranges: c_hh[127:64], c_lh[96:33], 2*c_lh[97:34],c_ll[64:0]
-    //         c_ll_h[64:]
+    // Ranges: c_hh[127:64], c_lh[95:32], 2*c_lh[96:33],c_ll[64:0]
+    //         c_ll_h[63:33]
     // parts that intersect must be added
 
     // LOW PART:
-    // 1: c_l = c_ll + c_lh_c (31 bits)
+    // 1: r0 = c_lh + c_ll_h (31 bits)
     // Does not overflow c_lh <= (2^32-1)*(2^32-1)=2^64-2*2^32+1
-    //                          c_ll_h <= 2^31-1
-    //                          r0 <= 2^64-2^33+2^31
+    //                   c_ll_h <= 2^31-1
+    //                   r0 <= 2^64-2^33+2^31
     __m256i c_ll_h = _mm256_srli_epi64(c_ll, 33); // yes 33, low part of 2*c_lh is [31:0]
-    __m256i r0 = _mm256_add_epi64(c_lh, c_ll_h);  // rick, this can be a fast sum
-    // 2: c_l = r0_l | c_ll_l
+    __m256i r0 = _mm256_add_epi64(c_lh, c_ll_h);
+
+    // 2: c_l = r0_l (31 bits) | c_ll_l (33 bits)
     __m256i r0_l = _mm256_slli_epi64(r0, 33);
     __m256i c_ll_l = _mm256_and_si256(c_ll, sqmask);
     c_l = _mm256_add_epi64(r0_l, c_ll_l);
 
     // HIGH PART:
-    // 1: c_h = r0_h + c_hh
+    // 1: c_h = r0_h (33 bits) + c_hh (64 bits)
     // Does not overflow c_hh <= (2^32-1)*(2^32-1)=2^64-2*2^32+1
-    //                          r0 <= 2^64-2^33+2^31 => r0_h <= 2^33-2 (_h means 33 bits here!)
-    //                             Dem: r0_h=2^33-1 => r0 >= r0_h*2^31=2^64-2^31!!
+    //                   r0 <= 2^64-2^33+2^31 => r0_h <= 2^33-2 (_h means 33 bits here!)
+    //                   Dem: r0_h=2^33-1 => r0 >= r0_h*2^31=2^64-2^31!!
     //                                  contradiction with what we saw above
-    //                          c_hh + c0_h <= 2^64-2^33+1+2^33-2 <= 2^64-1
+    //                   c_hh + c0_h <= 2^64-2^33+1+2^33-2 <= 2^64-1
     __m256i r0_h = _mm256_srli_epi64(r0, 31);
     c_h = _mm256_add_epi64(c_hh, r0_h);
 }

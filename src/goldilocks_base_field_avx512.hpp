@@ -19,6 +19,7 @@
 
 const __m512i P8 = _mm512_set_epi64(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME);
 const __m512i P8_n = _mm512_set_epi64(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);
+const __m512i sqmask8 = _mm512_set_epi64(0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF);
 
 inline void Goldilocks::load_avx512(__m512i &a, const Goldilocks::Element *a8)
 {
@@ -159,5 +160,52 @@ inline void Goldilocks::reduce_avx512_128_64(__m512i &c, const __m512i &c_h, con
     sub_avx512_b_c(c1, c_l, c_hh);
     __m512i c2 = _mm512_mul_epu32(c_h, P8_n); // c_hl*P_n (only 32bits of c_h useds)
     add_avx512_b_c(c, c1, c2);
+}
+
+inline void Goldilocks::square_avx512(__m512i &c, __m512i &a)
+{
+    __m512i c_h, c_l;
+    square_avx512_128(c_h, c_l, a);
+    reduce_avx512_128_64(c, c_h, c_l);
+}
+
+inline void Goldilocks::square_avx512_128(__m512i &c_h, __m512i &c_l, const __m512i &a)
+{
+    // Obtain a_h
+    __m512i a_h = _mm512_castps_si512(_mm512_movehdup_ps(_mm512_castsi512_ps(a)));
+
+    // c = (a_h+a_l)*(b_h*a_l)=a_h*a_h+2*a_h*a_l+a_l*a_l=c_hh+2*c_hl+c_ll
+    // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l
+    __m512i c_hh = _mm512_mul_epu32(a_h, a_h);
+    __m512i c_lh = _mm512_mul_epu32(a, a_h); // used as 2^c_lh
+    __m512i c_ll = _mm512_mul_epu32(a, a);
+
+    // Bignum addition
+    // Ranges: c_hh[127:64], c_lh[95:32], 2*c_lh[96:33],c_ll[63:0]
+    //         c_ll_h[63:33]
+    // parts that intersect must be added
+
+    // LOW PART:
+    // 1: r0 = c_lh + c_ll_h (31 bits)
+    // Does not overflow c_lh <= (2^32-1)*(2^32-1)=2^64-2*2^32+1
+    //                   c_ll_h <= 2^31-1
+    //                   r0 <= 2^64-2^33+2^31
+    __m512i c_ll_h = _mm512_srli_epi64(c_ll, 33); // yes 33, low part of 2*c_lh is [31:0]
+    __m512i r0 = _mm512_add_epi64(c_lh, c_ll_h);
+
+    // 2: c_l = r0_l (31 bits) | c_ll_l (33 bits)
+    __m512i r0_l = _mm512_slli_epi64(r0, 33);
+    __m512i c_ll_l = _mm512_and_si512(c_ll, sqmask8);
+    c_l = _mm512_add_epi64(r0_l, c_ll_l);
+
+    // HIGH PART:
+    // 1: c_h = r0_h (33 bits) + c_hh (64 bits)
+    // Does not overflow c_hh <= (2^32-1)*(2^32-1)=2^64-2*2^32+1
+    //                   r0 <s= 2^64-2^33+2^31 => r0_h <= 2^33-2 (_h means 33 bits here!)
+    //                   Dem: r0_h=2^33-1 => r0 >= r0_h*2^31=2^64-2^31!!
+    //                                  contradiction with what we saw above
+    //                   c_hh + c0_h <= 2^64-2^33+1+2^33-2 <= 2^64-1
+    __m512i r0_h = _mm512_srli_epi64(r0, 31);
+    c_h = _mm512_add_epi64(c_hh, r0_h);
 }
 #endif

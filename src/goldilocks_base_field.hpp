@@ -311,6 +311,9 @@ public:
     // static void mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a, const __m256i &b);
     static void reduce_avx512_128_64(__m512i &c, const __m512i &c_h, const __m512i &c_l);
     // static void reduce_96_64(__m256i &c, const __m256i &c_h, const __m256i &c_l);
+
+    static void square_avx512(__m512i &c, __m512i &a);
+    static void square_avx512_128(__m512i &c_h, __m512i &c_l, const __m512i &a);
 };
 
 /*
