@@ -1047,7 +1047,7 @@ namespace PoseidonGoldilocksConstants
         0xf96fb39adc4baaf6,
         0x7f9a7555c60fc6c7,
         0xccaa5446d71fe6a5};
-    inline constexpr static Goldilocks::Element C2[236] alignas(32) = {
+    inline constexpr static Goldilocks::Element C2[236] alignas(64) = {
         0xb585f766f2144405,
         0xb585f766f2144405,
         0x7746a55f43921ad7,
@@ -1867,7 +1867,7 @@ namespace PoseidonGoldilocksConstants
         0x22,
         0x14,
         0x11};
-    inline constexpr static Goldilocks::Element M2_[288] alignas(32) = {
+    inline constexpr static Goldilocks::Element M2_[288] alignas(64) = {
         0x19,
         0x19,
         0xf,
@@ -2737,7 +2737,7 @@ namespace PoseidonGoldilocksConstants
         0x7a5cf5b7b922e946,
         0x819f2c14a8366b1f,
         0x817bd8a7869ed1b5};
-    inline constexpr static Goldilocks::Element P2_[288] alignas(32) = {
+    inline constexpr static Goldilocks::Element P2_[288] alignas(64) = {
         0x19,
         0x19,
         0xf,
@@ -3534,7 +3534,7 @@ namespace PoseidonGoldilocksConstants
         0x10,
         0x29,
         0xf};
-    inline constexpr static Goldilocks::Element S2[1014] alignas(32) = {
+    inline constexpr static Goldilocks::Element S2[1014] alignas(64) = {
         0x19,
         0x19,
         0x3d999c961b7c63b0,

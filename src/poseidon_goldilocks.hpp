@@ -9,6 +9,7 @@
 #define CAPACITY 4
 #define HASH_SIZE 4
 #define SPONGE_WIDTH (RATE + CAPACITY)
+#define SPONGE_WIDTH_2 2 * (RATE + CAPACITY)
 #define HALF_N_FULL_ROUNDS 4
 #define N_FULL_ROUNDS_TOTAL (2 * HALF_N_FULL_ROUNDS)
 #define N_PARTIAL_ROUNDS 22
@@ -21,10 +22,16 @@ private:
     inline void static pow7(Goldilocks::Element &x);
     inline void static pow7_(Goldilocks::Element *x);
     inline void static pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2);
+    inline void static pow7_avx512(__m512i &st0, __m512i &st1, __m512i &st2);
+
     inline void static add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static add_avx512(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH_2]);
     inline void static add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static add_avx512_a(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH_2]);
     inline void static add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static add_avx512_small(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH_2]);
+
     inline void static pow7add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static mvp_(Goldilocks::Element *state, const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH]);
     inline Goldilocks::Element static dot_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
@@ -50,7 +57,6 @@ inline void PoseidonGoldilocks::pow7(Goldilocks::Element &x)
     Goldilocks::Element x4 = x2 * x2;
     x = x3 * x4;
 };
-
 inline void PoseidonGoldilocks::pow7_(Goldilocks::Element *x)
 {
     Goldilocks::Element x2[SPONGE_WIDTH], x3[SPONGE_WIDTH], x4[SPONGE_WIDTH];
@@ -90,7 +96,6 @@ inline void PoseidonGoldilocks::pow7add_(Goldilocks::Element *x, const Goldilock
         x[i] = x[i] + C[i];
     }
 };
-
 inline Goldilocks::Element PoseidonGoldilocks::dot_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH])
 {
     Goldilocks::Element s0 = x[0] * C[0];
@@ -117,5 +122,8 @@ inline void PoseidonGoldilocks::mvp_(Goldilocks::Element *state, const Goldilock
         }
     }
 };
+
 #include "poseidon_goldilocks_avx.hpp"
+#include "poseidon_goldilocks_avx512.hpp"
+
 #endif

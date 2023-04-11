@@ -296,6 +296,7 @@ public:
         AVX512 operations
     */
     static void load_avx512(__m512i &a, const Goldilocks::Element *a8);
+    static void load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a);
     static void store_avx512(Goldilocks::Element *a8, const __m512i &a);
     static void toCanonical_avx512(__m512i &a_c, const __m512i &a);
 
