@@ -1374,6 +1374,7 @@ TEST(GOLDILOCKS_TEST, merkle_tree_seq)
 
     free(tree);
 }
+
 TEST(GOLDILOCKS_TEST, ntt)
 {
     Goldilocks::Element *a = (Goldilocks::Element *)malloc(FFT_SIZE * sizeof(Goldilocks::Element));
