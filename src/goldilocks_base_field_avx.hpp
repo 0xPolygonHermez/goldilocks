@@ -18,8 +18,6 @@
 // 3. (unsigned) a < (unsigned) b iff (signed) a_s < (singed) b_s (AVX2 does not support unsingend 64-bit comparisons)
 // 4. a_s + b = (a+b)_s. Dem: a+(1<<63)+b = a+b+(1<<63)
 
-#define GOLDILOCKS_PRIME_NEG 0xFFFFFFFF
-#define MSB_ 0x8000000000000000 // Most Significant Bit
 #define AVX_SIZE_ 4
 
 const __m256i MSB = _mm256_set_epi64x(MSB_, MSB_, MSB_, MSB_);
@@ -181,7 +179,7 @@ inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
 {
     __m256i c_h, c_l;
     mult_avx_128(c_h, c_l, a, b);
-    reduce_128_64(c, c_h, c_l);
+    reduce_avx_128_64(c, c_h, c_l);
 }
 
 // We assume coeficients of M_8 can be expressed with 8 bits (<256)
@@ -189,7 +187,7 @@ inline void Goldilocks::mult_avx_8(__m256i &c, const __m256i &a, const __m256i &
 {
     __m256i c_h, c_l;
     mult_avx_72(c_h, c_l, a, b_8);
-    reduce_96_64(c, c_h, c_l);
+    reduce_avx_96_64(c, c_h, c_l);
 }
 
 // The 128 bits of the result are stored in c_h[64:0]| c_l[64:0]
@@ -230,11 +228,17 @@ inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &
     c_l = _mm256_blend_epi32(c_ll, r1_l, 0xaa);
 
     // HIGH PART: c_h = c_hh + r0_h + r1_h
-    // 1: r2 = r0_h + c_hh //does not overflow
+    // 1: r2 = r0_h + c_hh
+    //    does not overflow: c_hh <= (2^32-1)*(2^32-1)=2^64-2*2^32+1
+    //                       r0_h <= 2^32-1
+    //                       r0_h + c_hh <= 2^64-2^32
     __m256i r0_h = _mm256_srli_epi64(r0, 32);
     __m256i r2 = _mm256_add_epi64(c_hh, r0_h);
 
     // 2: c_h = r3 + r1_h
+    //    does not overflow: r2 <= 2^64-2^32
+    //                       r1_h <= 2^32-1
+    //                       r2 + r1_h <= 2^64-1
     __m256i r1_h = _mm256_srli_epi64(r1, 32);
     c_h = _mm256_add_epi64(r2, r1_h);
 }
@@ -273,10 +277,15 @@ inline void Goldilocks::mult_avx_72(__m256i &c_h, __m256i &c_l, const __m256i &a
     c_h = _mm256_srli_epi64(r0, 32);
 }
 
+// notes:
 // 2^64 = P+P_n => [2^64]=[P_n]
-// c % P = [c] = [c_h*1^64+c_l] = [c_h*P_n+c_l] = [c_hh*2^32*P_n+c_hl*P_n+c_l] =
+// P = 2^64-2^32+1
+// P_n = 2^32-1
+// 2^32*P_n = 2^32*(2^32-1) = 2^64-2^32 = P-1
+// process:
+// c % P = [c] = [c_h*2^64+c_l] = [c_h*P_n+c_l] = [c_hh*2^32*P_n+c_hl*P_n+c_l] =
 //             = [c_hh(P-1) +c_hl*P_n+c_l] = [c_l-c_hh+c_hl*P_n]
-inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
+inline void Goldilocks::reduce_avx_128_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
 {
     __m256i c_hh = _mm256_srli_epi64(c_h, 32);
     __m256i c1_s, c_ls, c_s;
@@ -290,7 +299,7 @@ inline void Goldilocks::reduce_128_64(__m256i &c, const __m256i &c_h, const __m2
 // 2^64 = P+P_n => [2^64]=[P_n]
 // c % P = [c] = [c_h*1^64+c_l] = [c_h*P_n+c_l] = [c_hh*2^32*P_n+c_hl*P_n+c_l] =
 //             = [c_hl*P_n+c_l] = [c_l+c_hl*P_n]
-inline void Goldilocks::reduce_96_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
+inline void Goldilocks::reduce_avx_96_64(__m256i &c, const __m256i &c_h, const __m256i &c_l)
 {
     __m256i c2 = _mm256_mul_epu32(c_h, P_n); // c_hl*P_n (only 32bits of c_h useds)
     add_avx_b_small(c, c_l, c2);
@@ -300,7 +309,7 @@ inline void Goldilocks::square_avx(__m256i &c, __m256i &a)
 {
     __m256i c_h, c_l;
     square_avx_128(c_h, c_l, a);
-    reduce_128_64(c, c_h, c_l);
+    reduce_avx_128_64(c, c_h, c_l);
 }
 
 inline void Goldilocks::square_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &a)
@@ -440,7 +449,7 @@ inline void Goldilocks::spmv_4x12_avx_8(__m256i &c, const __m256i &a0, const __m
     aux_h = _mm256_add_epi64(c0_h, c1_h); // do with epi32?
     c_h = _mm256_add_epi64(aux_h, c2_h);
 
-    reduce_96_64(c, c_h, c_l);
+    reduce_avx_96_64(c, c_h, c_l);
 }
 
 // Dense matrix-vector product

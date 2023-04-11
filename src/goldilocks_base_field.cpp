@@ -1,4 +1,6 @@
 #include "goldilocks_base_field.hpp"
+#include "goldilocks_base_field_tools.hpp"
+#include "goldilocks_base_field_scalar.hpp"
 
 const Goldilocks::Element Goldilocks::ZR = {(uint64_t)0x0000000000000000LL};
 const Goldilocks::Element Goldilocks::Q = {(uint64_t)0xFFFFFFFF00000001LL};
