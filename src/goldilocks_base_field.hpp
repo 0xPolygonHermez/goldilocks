@@ -298,6 +298,7 @@ public:
     static void load_avx512(__m512i &a, const Goldilocks::Element *a8);
     static void load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a);
     static void store_avx512(Goldilocks::Element *a8, const __m512i &a);
+    static void store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a);
     static void toCanonical_avx512(__m512i &a_c, const __m512i &a);
 
     static void add_avx512(__m512i &c, const __m512i &a, const __m512i &b);
@@ -315,6 +316,12 @@ public:
 
     static void square_avx512(__m512i &c, __m512i &a);
     static void square_avx512_128(__m512i &c_h, __m512i &c_l, const __m512i &a);
+
+    static void dot_avx512(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[24]);
+    static void dot_avx512_a(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_a[24]);
+
+    static void spmv_4x12_avx512(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[24]);
+    static void spmv_4x12_avx512_a(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_a[24]);
 };
 
 /*

@@ -36,6 +36,11 @@ inline void Goldilocks::store_avx512(Goldilocks::Element *a8, const __m512i &a)
     _mm512_storeu_si512((__m512i *)a8, a);
 }
 
+inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a)
+{
+    _mm512_store_si512((__m512i *)a8_a, a);
+}
+
 // Obtain cannonical representative of a,
 // We assume a <= a_c+P
 inline void Goldilocks::toCanonical_avx512(__m512i &a_c, const __m512i &a)
@@ -213,4 +218,69 @@ inline void Goldilocks::square_avx512_128(__m512i &c_h, __m512i &c_l, const __m5
     __m512i r0_h = _mm512_srli_epi64(r0, 31);
     c_h = _mm512_add_epi64(c_hh, r0_h);
 }
+
+inline void Goldilocks::dot_avx512(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[24])
+{
+    __m512i c_;
+    spmv_4x12_avx512(c_, a0, a1, a2, b);
+    Goldilocks::Element cc[8];
+    store_avx512(cc, c_);
+    c[0] = (cc[0] + cc[1]) + (cc[2] + cc[3]);
+    c[1] = (cc[4] + cc[5]) + (cc[6] + cc[7]);
+}
+
+// We assume b_a aligned on a 32-byte boundary
+inline void Goldilocks::dot_avx512_a(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_a[24])
+{
+    __m512i c_;
+    spmv_4x12_avx512_a(c_, a0, a1, a2, b_a);
+    alignas(64) Goldilocks::Element cc[8];
+    store_avx512_a(cc, c_);
+    c[0] = (cc[0] + cc[1]) + (cc[2] + cc[3]);
+    c[1] = (cc[4] + cc[5]) + (cc[6] + cc[7]);
+}
+
+// Sparse matrix-vector product (8x24 sparce matrix formed of three diagonal blocks os size 8x8)
+// c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<8 0<=j<3
+inline void Goldilocks::spmv_4x12_avx512(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b[24])
+{
+
+    // load b into avx registers, latter
+    __m512i b0, b1, b2;
+    load_avx512(b0, &(b[0]));
+    load_avx512(b1, &(b[8]));
+    load_avx512(b2, &(b[16]));
+
+    __m512i c0, c1, c2;
+    mult_avx512(c0, a0, b0);
+    mult_avx512(c1, a1, b1);
+    mult_avx512(c2, a2, b2);
+
+    __m512i c_;
+    add_avx512_b_c(c_, c0, c1);
+    add_avx512_b_c(c, c_, c2);
+}
+
+// Sparse matrix-vector product (8x24 sparce matrix formed of three diagonal blocks os size 8x8)
+// c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
+// We assume b_a aligned on a 64-byte boundary
+inline void Goldilocks::spmv_4x12_avx512_a(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b_a[24])
+{
+
+    // load b into avx registers, latter
+    __m512i b0, b1, b2;
+    load_avx512_a(b0, &(b_a[0]));
+    load_avx512_a(b1, &(b_a[8]));
+    load_avx512_a(b2, &(b_a[16]));
+
+    __m512i c0, c1, c2;
+    mult_avx512(c0, a0, b0);
+    mult_avx512(c1, a1, b1);
+    mult_avx512(c2, a2, b2);
+
+    __m512i c_;
+    add_avx512_b_c(c_, c0, c1);
+    add_avx512_b_c(c, c_, c2);
+}
+
 #endif

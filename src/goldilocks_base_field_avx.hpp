@@ -373,7 +373,7 @@ inline Goldilocks::Element Goldilocks::dot_avx_a(const __m256i &a0, const __m256
     return (c[0] + c[1]) + (c[2] + c[3]);
 }
 
-// Sparse matrix-vector product (4x12 sparce matrix formed of four diagonal blocs 4x5 stored in a0...a3)
+// Sparse matrix-vector product (4x12 sparce matrix formed of three diagonal blocks of size 4x4)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
 inline void Goldilocks::spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b[12])
 {
@@ -394,7 +394,7 @@ inline void Goldilocks::spmv_4x12_avx(__m256i &c, const __m256i &a0, const __m25
     add_avx(c, c_, c2);
 }
 
-// Sparse matrix-vector product (4x12 sparce matrix formed of four diagonal blocs 4x5 stored in a0...a3)
+// Sparse matrix-vector product (4x12 sparce matrix formed of three diagonal blocks of size 4x4)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
 // We assume b_a aligned on a 32-byte boundary
 inline void Goldilocks::spmv_4x12_avx_a(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b_a[12])
