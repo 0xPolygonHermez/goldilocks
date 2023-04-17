@@ -547,9 +547,9 @@ inline void Goldilocks::mmult_avx(__m256i &a0, __m256i &a1, __m256i &a2, const G
     Goldilocks::mmult_avx_4x12(b0, a0, a1, a2, &(M[0]));
     Goldilocks::mmult_avx_4x12(b1, a0, a1, a2, &(M[48]));
     Goldilocks::mmult_avx_4x12(b2, a0, a1, a2, &(M[96]));
-    _mm256_store_si256(&a0, b0);
-    _mm256_store_si256(&a1, b1);
-    _mm256_store_si256(&a2, b2);
+    a0 = b0;
+    a1 = b1;
+    a2 = b2;
 }
 // we assume that M_a aligned on a 32-byte boundary
 inline void Goldilocks::mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_a[144])
@@ -558,9 +558,9 @@ inline void Goldilocks::mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const
     Goldilocks::mmult_avx_4x12_a(b0, a0, a1, a2, &(M_a[0]));
     Goldilocks::mmult_avx_4x12_a(b1, a0, a1, a2, &(M_a[48]));
     Goldilocks::mmult_avx_4x12_a(b2, a0, a1, a2, &(M_a[96]));
-    _mm256_store_si256(&a0, b0);
-    _mm256_store_si256(&a1, b1);
-    _mm256_store_si256(&a2, b2);
+    a0 = b0;
+    a1 = b1;
+    a2 = b2;
 }
 // We assume coeficients of M_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_8[144])
@@ -569,9 +569,9 @@ inline void Goldilocks::mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const
     Goldilocks::mmult_avx_4x12_8(b0, a0, a1, a2, &(M_8[0]));
     Goldilocks::mmult_avx_4x12_8(b1, a0, a1, a2, &(M_8[48]));
     Goldilocks::mmult_avx_4x12_8(b2, a0, a1, a2, &(M_8[96]));
-    _mm256_store_si256(&a0, b0);
-    _mm256_store_si256(&a1, b1);
-    _mm256_store_si256(&a2, b2);
+    a0 = b0;
+    a1 = b1;
+    a2 = b2;
 }
 
 /*

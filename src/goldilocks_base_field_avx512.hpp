@@ -457,4 +457,37 @@ inline void Goldilocks::mmult_avx512_4x12_8(__m512i &b, const __m512i &a0, const
     add_avx512_b_c(sum1, c2, c3);
     add_avx512_b_c(b, sum0, sum1);
 }
+
+inline void Goldilocks::mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M[288])
+{
+    __m512i b0, b1, b2;
+    Goldilocks::mmult_avx512_4x12(b0, a0, a1, a2, &(M[0]));
+    Goldilocks::mmult_avx512_4x12(b1, a0, a1, a2, &(M[96]));
+    Goldilocks::mmult_avx512_4x12(b2, a0, a1, a2, &(M[192]));
+    a0 = b0;
+    a1 = b1;
+    a2 = b2;
+}
+// we assume that M_a aligned on a 32-byte boundary
+inline void Goldilocks::mmult_avx512_a(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M_a[288])
+{
+    __m512i b0, b1, b2;
+    Goldilocks::mmult_avx512_4x12_a(b0, a0, a1, a2, &(M_a[0]));
+    Goldilocks::mmult_avx512_4x12_a(b1, a0, a1, a2, &(M_a[96]));
+    Goldilocks::mmult_avx512_4x12_a(b2, a0, a1, a2, &(M_a[192]));
+    a0 = b0;
+    a1 = b1;
+    a2 = b2;
+}
+// We assume coeficients of M_8 can be expressed with 8 bits (<256)
+inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M_8[288])
+{
+    __m512i b0, b1, b2;
+    Goldilocks::mmult_avx512_4x12_8(b0, a0, a1, a2, &(M_8[0]));
+    Goldilocks::mmult_avx512_4x12_8(b1, a0, a1, a2, &(M_8[96]));
+    Goldilocks::mmult_avx512_4x12_8(b2, a0, a1, a2, &(M_8[192]));
+    a0 = b0;
+    a1 = b1;
+    a2 = b2;
+}
 #endif
