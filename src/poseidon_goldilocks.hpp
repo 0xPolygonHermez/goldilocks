@@ -9,7 +9,6 @@
 #define CAPACITY 4
 #define HASH_SIZE 4
 #define SPONGE_WIDTH (RATE + CAPACITY)
-#define SPONGE_WIDTH_2 2 * (RATE + CAPACITY)
 #define HALF_N_FULL_ROUNDS 4
 #define N_FULL_ROUNDS_TOTAL (2 * HALF_N_FULL_ROUNDS)
 #define N_PARTIAL_ROUNDS 22
@@ -26,11 +25,11 @@ private:
 
     inline void static add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx512(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH_2]);
+    inline void static add_avx512(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx512_a(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH_2]);
+    inline void static add_avx512_a(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx512_small(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH_2]);
+    inline void static add_avx512_small(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
 
     inline void static pow7add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static mvp_(Goldilocks::Element *state, const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH]);
@@ -41,8 +40,10 @@ public:
     void static hash_full_result_seq_old(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH]);
     void static hash_full_result_seq(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash_full_result(Goldilocks::Element *, const Goldilocks::Element *);
+    void static hash_full_result_avx512(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash_seq(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static hash(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
+    void static hash_avx512(Goldilocks::Element (&state)[2 * CAPACITY], const Goldilocks::Element (&input)[2 * SPONGE_WIDTH]);
     void static linear_hash_seq(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
     void static linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
     void static merkletree_seq(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t dim = 1);

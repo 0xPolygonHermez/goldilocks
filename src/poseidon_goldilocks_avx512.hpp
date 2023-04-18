@@ -25,33 +25,21 @@ inline void PoseidonGoldilocks::pow7_avx512(__m512i &st0, __m512i &st1, __m512i 
     Goldilocks::mult_avx512(st2, pw3_2, pw4_2);
 };
 
-inline void PoseidonGoldilocks::add_avx512(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C_[SPONGE_WIDTH_2])
+inline void PoseidonGoldilocks::add_avx512(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C_[SPONGE_WIDTH])
 {
-    __m512i c0, c1, c2;
-    Goldilocks::load_avx512(c0, &(C_[0]));
-    Goldilocks::load_avx512(c1, &(C_[8]));
-    Goldilocks::load_avx512(c2, &(C_[16]));
+    __m512i c0 = _mm512_set4_epi64(C_[3].fe, C_[2].fe, C_[1].fe, C_[0].fe);
+    __m512i c1 = _mm512_set4_epi64(C_[7].fe, C_[6].fe, C_[5].fe, C_[4].fe);
+    __m512i c2 = _mm512_set4_epi64(C_[11].fe, C_[10].fe, C_[9].fe, C_[8].fe);
     Goldilocks::add_avx512(st0, st0, c0);
     Goldilocks::add_avx512(st1, st1, c1);
     Goldilocks::add_avx512(st2, st2, c2);
 }
-// Assuming C_a is aligned
-inline void PoseidonGoldilocks::add_avx512_a(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C_a[SPONGE_WIDTH_2])
+
+inline void PoseidonGoldilocks::add_avx512_small(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C_small[SPONGE_WIDTH])
 {
-    __m512i c0, c1, c2;
-    Goldilocks::load_avx512_a(c0, &(C_a[0]));
-    Goldilocks::load_avx512_a(c1, &(C_a[8]));
-    Goldilocks::load_avx512_a(c2, &(C_a[16]));
-    Goldilocks::add_avx512(st0, st0, c0);
-    Goldilocks::add_avx512(st1, st1, c1);
-    Goldilocks::add_avx512(st2, st2, c2);
-}
-inline void PoseidonGoldilocks::add_avx512_small(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C_small[SPONGE_WIDTH_2])
-{
-    __m512i c0, c1, c2;
-    Goldilocks::load_avx512(c0, &(C_small[0]));
-    Goldilocks::load_avx512(c1, &(C_small[8]));
-    Goldilocks::load_avx512(c2, &(C_small[16]));
+    __m512i c0 = _mm512_set4_epi64(C_small[3].fe, C_small[2].fe, C_small[1].fe, C_small[0].fe);
+    __m512i c1 = _mm512_set4_epi64(C_small[7].fe, C_small[6].fe, C_small[5].fe, C_small[4].fe);
+    __m512i c2 = _mm512_set4_epi64(C_small[11].fe, C_small[10].fe, C_small[9].fe, C_small[8].fe);
 
     Goldilocks::add_avx512_b_c(st0, st0, c0);
     Goldilocks::add_avx512_b_c(st1, st1, c1);

@@ -317,20 +317,16 @@ public:
     static void square_avx512(__m512i &c, __m512i &a);
     static void square_avx512_128(__m512i &c_h, __m512i &c_l, const __m512i &a);
 
-    static void dot_avx512(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[24]);
-    static void dot_avx512_a(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_a[24]);
+    static void dot_avx512(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[12]);
 
-    static void spmv_avx512_4x12(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[24]);
-    static void spmv_avx512_4x12_a(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_a[24]);
-    static void spmv_avx512_4x12_8(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_8[24]);
+    static void spmv_avx512_4x12(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[12]);
+    static void spmv_avx512_4x12_8(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_8[12]);
 
-    static void mmult_avx512_4x12(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element M[96]);
-    static void mmult_avx512_4x12_a(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element M_a[96]);
-    static void mmult_avx512_4x12_8(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element M_8[96]);
+    static void mmult_avx512_4x12(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element M[48]);
+    static void mmult_avx512_4x12_8(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element M_8[48]);
 
-    static void mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Element M[288]);
-    static void mmult_avx512_a(__m512i &a0, __m512i &a1, __m512i &a2, const Element M_a[288]);
-    static void mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Element M_8[288]);
+    static void mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Element M[144]);
+    static void mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Element M_8[144]);
 };
 
 /*

@@ -88,6 +88,7 @@ inline void Goldilocks::sub_avx512(__m512i &c, const __m512i &a, const __m512i &
     __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, b_c, a);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8);
 }
+
 inline void Goldilocks::sub_avx512_b_c(__m512i &c, const __m512i &a, const __m512i &b_c)
 {
     const __m512i c0 = _mm512_sub_epi64(a, b_c);
@@ -102,6 +103,7 @@ inline void Goldilocks::mult_avx512(__m512i &c, const __m512i &a, const __m512i 
     mult_avx512_128(c_h, c_l, a, b);
     reduce_avx512_128_64(c, c_h, c_l);
 }
+
 // We assume coeficients of b_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::mult_avx512_8(__m512i &c, const __m512i &a, const __m512i &b_8)
 {
@@ -274,7 +276,7 @@ inline void Goldilocks::square_avx512_128(__m512i &c_h, __m512i &c_l, const __m5
 }
 
 // Data for two arrays of 12 compoments is interleaved: b1=[b[0..3]|b[8..11]|b[16..18]], b2=[b[4..7]|b[12..15]|b[19..23]], first half of a0,a1,a2 is operated with b1, second half with b2.
-inline void Goldilocks::dot_avx512(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[24])
+inline void Goldilocks::dot_avx512(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[12])
 {
     __m512i c_;
     spmv_avx512_4x12(c_, a0, a1, a2, b);
@@ -284,28 +286,16 @@ inline void Goldilocks::dot_avx512(Element c[2], const __m512i &a0, const __m512
     c[1] = (cc[4] + cc[5]) + (cc[6] + cc[7]);
 }
 
-// We assume b_a aligned on a 32-byte boundary
-inline void Goldilocks::dot_avx512_a(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b_a[24])
-{
-    __m512i c_;
-    spmv_avx512_4x12_a(c_, a0, a1, a2, b_a);
-    alignas(64) Goldilocks::Element cc[8];
-    store_avx512_a(cc, c_);
-    c[0] = (cc[0] + cc[1]) + (cc[2] + cc[3]);
-    c[1] = (cc[4] + cc[5]) + (cc[6] + cc[7]);
-}
-
 // Sparse matrix-vector product (8x24 sparce matrix formed of three diagonal blocks os size 8x8)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<8 0<=j<3
 // Data for two arrays of 12 compoments is interleaved: b1=[b[0..3]|b[8..11]|b[16..18]], b2=[b[4..7]|b[12..15]|b[19..23]], first half of a0,a1,a2 is operated with b1, second half with b2.
-inline void Goldilocks::spmv_avx512_4x12(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b[24])
+inline void Goldilocks::spmv_avx512_4x12(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b[12])
 {
 
     // load b into avx registers, latter
-    __m512i b0, b1, b2;
-    load_avx512(b0, &(b[0]));
-    load_avx512(b1, &(b[8]));
-    load_avx512(b2, &(b[16]));
+    __m512i b0 = _mm512_set4_epi64(b[3].fe, b[2].fe, b[1].fe, b[0].fe);
+    __m512i b1 = _mm512_set4_epi64(b[7].fe, b[6].fe, b[5].fe, b[4].fe);
+    __m512i b2 = _mm512_set4_epi64(b[11].fe, b[10].fe, b[9].fe, b[8].fe);
 
     __m512i c0, c1, c2;
     mult_avx512(c0, a0, b0);
@@ -320,36 +310,13 @@ inline void Goldilocks::spmv_avx512_4x12(__m512i &c, const __m512i &a0, const __
 // Sparse matrix-vector product (8x24 sparce matrix formed of three diagonal blocks os size 8x8)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
 // We assume b_a aligned on a 64-byte boundary
-inline void Goldilocks::spmv_avx512_4x12_a(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b_a[24])
-{
-
-    // load b into avx registers, latter
-    __m512i b0, b1, b2;
-    load_avx512_a(b0, &(b_a[0]));
-    load_avx512_a(b1, &(b_a[8]));
-    load_avx512_a(b2, &(b_a[16]));
-
-    __m512i c0, c1, c2;
-    mult_avx512(c0, a0, b0);
-    mult_avx512(c1, a1, b1);
-    mult_avx512(c2, a2, b2);
-
-    __m512i c_;
-    add_avx512_b_c(c_, c0, c1);
-    add_avx512_b_c(c, c_, c2);
-}
-
-// Sparse matrix-vector product (8x24 sparce matrix formed of three diagonal blocks os size 8x8)
-// c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
-// We assume b_a aligned on a 64-byte boundary
-inline void Goldilocks::spmv_avx512_4x12_8(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b_a[24])
+inline void Goldilocks::spmv_avx512_4x12_8(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b[12])
 {
 
     // load b into avx registers
-    __m512i b0, b1, b2;
-    load_avx512_a(b0, &(b_a[0]));
-    load_avx512_a(b1, &(b_a[8]));
-    load_avx512_a(b2, &(b_a[16]));
+    __m512i b0 = _mm512_set4_epi64(b[3].fe, b[2].fe, b[1].fe, b[0].fe);
+    __m512i b1 = _mm512_set4_epi64(b[7].fe, b[6].fe, b[5].fe, b[4].fe);
+    __m512i b2 = _mm512_set4_epi64(b[11].fe, b[10].fe, b[9].fe, b[8].fe);
 
     __m512i c0_h, c1_h, c2_h;
     __m512i c0_l, c1_l, c2_l;
@@ -369,14 +336,14 @@ inline void Goldilocks::spmv_avx512_4x12_8(__m512i &c, const __m512i &a0, const 
 }
 
 // Dense matrix-vector product
-inline void Goldilocks::mmult_avx512_4x12(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element M[96])
+inline void Goldilocks::mmult_avx512_4x12(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element M[48])
 {
     // Generate matrix 4x4
     __m512i r0, r1, r2, r3;
     Goldilocks::spmv_avx512_4x12(r0, a0, a1, a2, &(M[0]));
-    Goldilocks::spmv_avx512_4x12(r1, a0, a1, a2, &(M[24]));
-    Goldilocks::spmv_avx512_4x12(r2, a0, a1, a2, &(M[48]));
-    Goldilocks::spmv_avx512_4x12(r3, a0, a1, a2, &(M[72]));
+    Goldilocks::spmv_avx512_4x12(r1, a0, a1, a2, &(M[12]));
+    Goldilocks::spmv_avx512_4x12(r2, a0, a1, a2, &(M[24]));
+    Goldilocks::spmv_avx512_4x12(r3, a0, a1, a2, &(M[36]));
 
     __m512i indx1 = _mm512_set_epi64(13, 12, 5, 4, 9, 8, 1, 0);
     __m512i indx2 = _mm512_set_epi64(15, 14, 7, 6, 11, 10, 3, 2);
@@ -399,44 +366,14 @@ inline void Goldilocks::mmult_avx512_4x12(__m512i &b, const __m512i &a0, const _
 }
 
 // Dense matrix-vector product
-inline void Goldilocks::mmult_avx512_4x12_a(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element M[96])
-{
-    // Generate matrix 4x4
-    __m512i r0, r1, r2, r3;
-    Goldilocks::spmv_avx512_4x12_a(r0, a0, a1, a2, &(M[0]));
-    Goldilocks::spmv_avx512_4x12_a(r1, a0, a1, a2, &(M[24]));
-    Goldilocks::spmv_avx512_4x12_a(r2, a0, a1, a2, &(M[48]));
-    Goldilocks::spmv_avx512_4x12_a(r3, a0, a1, a2, &(M[72]));
-
-    __m512i indx1 = _mm512_set_epi64(13, 12, 5, 4, 9, 8, 1, 0);
-    __m512i indx2 = _mm512_set_epi64(15, 14, 7, 6, 11, 10, 3, 2);
-
-    __m512i t0 = _mm512_permutex2var_epi64(r0, indx1, r2);
-    __m512i t1 = _mm512_permutex2var_epi64(r1, indx1, r3);
-    __m512i t2 = _mm512_permutex2var_epi64(r0, indx2, r2);
-    __m512i t3 = _mm512_permutex2var_epi64(r1, indx2, r3);
-
-    __m512i c0 = _mm512_castpd_si512(_mm512_unpacklo_pd(_mm512_castsi512_pd(t0), _mm512_castsi512_pd(t1)));
-    __m512i c1 = _mm512_castpd_si512(_mm512_unpackhi_pd(_mm512_castsi512_pd(t0), _mm512_castsi512_pd(t1)));
-    __m512i c2 = _mm512_castpd_si512(_mm512_unpacklo_pd(_mm512_castsi512_pd(t2), _mm512_castsi512_pd(t3)));
-    __m512i c3 = _mm512_castpd_si512(_mm512_unpackhi_pd(_mm512_castsi512_pd(t2), _mm512_castsi512_pd(t3)));
-
-    // Add columns to obtain result
-    __m512i sum0, sum1;
-    add_avx512_b_c(sum0, c0, c1);
-    add_avx512_b_c(sum1, c2, c3);
-    add_avx512_b_c(b, sum0, sum1);
-}
-
-// Dense matrix-vector product
-inline void Goldilocks::mmult_avx512_4x12_8(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element M[96])
+inline void Goldilocks::mmult_avx512_4x12_8(__m512i &b, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element M[48])
 {
     // Generate matrix 4x4
     __m512i r0, r1, r2, r3;
     Goldilocks::spmv_avx512_4x12_8(r0, a0, a1, a2, &(M[0]));
-    Goldilocks::spmv_avx512_4x12_8(r1, a0, a1, a2, &(M[24]));
-    Goldilocks::spmv_avx512_4x12_8(r2, a0, a1, a2, &(M[48]));
-    Goldilocks::spmv_avx512_4x12_8(r3, a0, a1, a2, &(M[72]));
+    Goldilocks::spmv_avx512_4x12_8(r1, a0, a1, a2, &(M[12]));
+    Goldilocks::spmv_avx512_4x12_8(r2, a0, a1, a2, &(M[24]));
+    Goldilocks::spmv_avx512_4x12_8(r3, a0, a1, a2, &(M[36]));
 
     __m512i indx1 = _mm512_set_epi64(13, 12, 5, 4, 9, 8, 1, 0);
     __m512i indx2 = _mm512_set_epi64(15, 14, 7, 6, 11, 10, 3, 2);
@@ -458,34 +395,24 @@ inline void Goldilocks::mmult_avx512_4x12_8(__m512i &b, const __m512i &a0, const
     add_avx512_b_c(b, sum0, sum1);
 }
 
-inline void Goldilocks::mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M[288])
+inline void Goldilocks::mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M[144])
 {
     __m512i b0, b1, b2;
     Goldilocks::mmult_avx512_4x12(b0, a0, a1, a2, &(M[0]));
-    Goldilocks::mmult_avx512_4x12(b1, a0, a1, a2, &(M[96]));
-    Goldilocks::mmult_avx512_4x12(b2, a0, a1, a2, &(M[192]));
+    Goldilocks::mmult_avx512_4x12(b1, a0, a1, a2, &(M[48]));
+    Goldilocks::mmult_avx512_4x12(b2, a0, a1, a2, &(M[96]));
     a0 = b0;
     a1 = b1;
     a2 = b2;
 }
-// we assume that M_a aligned on a 32-byte boundary
-inline void Goldilocks::mmult_avx512_a(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M_a[288])
-{
-    __m512i b0, b1, b2;
-    Goldilocks::mmult_avx512_4x12_a(b0, a0, a1, a2, &(M_a[0]));
-    Goldilocks::mmult_avx512_4x12_a(b1, a0, a1, a2, &(M_a[96]));
-    Goldilocks::mmult_avx512_4x12_a(b2, a0, a1, a2, &(M_a[192]));
-    a0 = b0;
-    a1 = b1;
-    a2 = b2;
-}
+
 // We assume coeficients of M_8 can be expressed with 8 bits (<256)
-inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M_8[288])
+inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M_8[144])
 {
     __m512i b0, b1, b2;
     Goldilocks::mmult_avx512_4x12_8(b0, a0, a1, a2, &(M_8[0]));
-    Goldilocks::mmult_avx512_4x12_8(b1, a0, a1, a2, &(M_8[96]));
-    Goldilocks::mmult_avx512_4x12_8(b2, a0, a1, a2, &(M_8[192]));
+    Goldilocks::mmult_avx512_4x12_8(b1, a0, a1, a2, &(M_8[48]));
+    Goldilocks::mmult_avx512_4x12_8(b2, a0, a1, a2, &(M_8[96]));
     a0 = b0;
     a1 = b1;
     a2 = b2;
