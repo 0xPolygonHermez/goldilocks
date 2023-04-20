@@ -284,6 +284,7 @@ void PoseidonGoldilocks::linear_hash_seq(Goldilocks::Element *output, Goldilocks
     if (size <= CAPACITY)
     {
         std::memcpy(output, input, size * sizeof(Goldilocks::Element));
+        std::memset(&output[size], 0, (CAPACITY - size) * sizeof(Goldilocks::Element));
         return; // no need to hash
     }
     while (remaining)
@@ -411,7 +412,7 @@ void PoseidonGoldilocks::merkletree_seq(Goldilocks::Element *tree, Goldilocks::E
     }
 
     Goldilocks::Element *cursor = tree;
-    memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
+    // memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
 
 #pragma omp parallel for
     for (uint64_t i = 0; i < num_rows; i++)
@@ -446,7 +447,7 @@ void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks::Eleme
         return;
     }
     Goldilocks::Element *cursor = tree;
-    memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
+    // memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
 
 #pragma omp parallel for
     for (uint64_t i = 0; i < num_rows; i++)
@@ -481,7 +482,7 @@ void PoseidonGoldilocks::merkletree_avx512(Goldilocks::Element *tree, Goldilocks
         return;
     }
     Goldilocks::Element *cursor = tree;
-    memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
+    // memset(cursor, 0, num_rows * CAPACITY * sizeof(Goldilocks::Element));
 
 #pragma omp parallel for
     for (uint64_t i = 0; i < num_rows; i += 2)
