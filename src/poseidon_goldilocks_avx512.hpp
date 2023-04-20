@@ -5,6 +5,13 @@
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
 
+inline void PoseidonGoldilocks::hash_avx512(Goldilocks::Element (&state)[2 * CAPACITY], Goldilocks::Element const (&input)[2 * SPONGE_WIDTH])
+{
+    Goldilocks::Element aux[2 * SPONGE_WIDTH];
+    hash_full_result_avx512(aux, input);
+    std::memcpy(state, aux, 2 * CAPACITY * sizeof(Goldilocks::Element));
+}
+
 inline void PoseidonGoldilocks::pow7_avx512(__m512i &st0, __m512i &st1, __m512i &st2)
 {
     __m512i pw2_0, pw2_1, pw2_2;

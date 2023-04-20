@@ -5,6 +5,13 @@
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
 
+inline void PoseidonGoldilocks::hash(Goldilocks::Element (&state)[CAPACITY], Goldilocks::Element const (&input)[SPONGE_WIDTH])
+{
+    Goldilocks::Element aux[SPONGE_WIDTH];
+    hash_full_result(aux, input);
+    std::memcpy(state, aux, CAPACITY * sizeof(Goldilocks::Element));
+}
+
 inline void PoseidonGoldilocks::pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2)
 {
     __m256i pw2_0, pw2_1, pw2_2;
