@@ -37,7 +37,6 @@ private:
     inline void static prod_(Goldilocks::Element *x, const Goldilocks::Element alpha, const Goldilocks::Element C[SPONGE_WIDTH]);
 
 public:
-    void static hash_full_result_seq_old(Goldilocks::Element (&state)[SPONGE_WIDTH], Goldilocks::Element const (&input)[SPONGE_WIDTH]);
     void static hash_full_result_seq(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash_full_result(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash_full_result_avx512(Goldilocks::Element *, const Goldilocks::Element *);
