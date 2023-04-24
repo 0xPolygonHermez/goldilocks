@@ -2647,3 +2647,4 @@ int main(int argc, char **argv)
 }
 
 // Build command: g++ tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2 -mavx512f -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//')
+// Intel compilation: icpx tests / tests.cpp src/*.cpp -o test -lgtest -lgmp  -pthread -fopenmp -mavx2 -mavx512f -g

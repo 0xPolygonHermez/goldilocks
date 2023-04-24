@@ -828,4 +828,8 @@ BENCHMARK(EXTENDEDPOL_BENCH)
 #endif
 BENCHMARK_MAIN();
 
-// Build command: g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -O3 -o bench && ./bench
+// Build command: g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -mavx512f -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -O3 -o bench && ./bench
+
+// intel: icpx - std = c++ 17 - Wall - march = native - O3 - qopenmp - qopenmp - simd - mavx512f - mavx2 - axCORE - AVX512, CORE - AVX2 - ipo - qopt - zmm - usage = high benchs / bench.cpp src/*.cpp -lbenchmark -lgmp -o bench
+
+//  run: ./bench --benchmark_filter=POSEIDON

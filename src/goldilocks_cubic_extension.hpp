@@ -1284,7 +1284,7 @@ public:
     // ======== MUL ========
     static inline void mul(Element *result, Element *a, Element *b)
     {
-        mul(result, a, b);
+        mul(*result, *a, *b);
     }
     static inline void mul(Element &result, Element &a, Element &b)
     {
