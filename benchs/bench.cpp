@@ -425,7 +425,7 @@ static void MERKLETREE_BENCH(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree_seq(tree, cols, NCOLS_HASH, NROWS_HASH);
+        PoseidonGoldilocks::merkletree_seq(tree, cols, NCOLS_HASH, NROWS_HASH, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
@@ -472,7 +472,7 @@ static void MERKLETREE_BENCH_AVX(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree(tree, cols, NCOLS_HASH, NROWS_HASH);
+        PoseidonGoldilocks::merkletree(tree, cols, NCOLS_HASH, NROWS_HASH, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
@@ -519,7 +519,7 @@ static void MERKLETREE_BENCH_AVX512(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree_avx512(tree, cols, NCOLS_HASH, NROWS_HASH);
+        PoseidonGoldilocks::merkletree_avx512(tree, cols, NCOLS_HASH, NROWS_HASH, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
@@ -567,7 +567,7 @@ static void MERKLETREE_BATCH_BENCH(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree_batch_seq(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4);
+        PoseidonGoldilocks::merkletree_batch_seq(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
@@ -614,7 +614,7 @@ static void MERKLETREE_BATCH_BENCH_AVX(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree_batch(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4);
+        PoseidonGoldilocks::merkletree_batch(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
@@ -661,7 +661,7 @@ static void MERKLETREE_BATCH_BENCH_AVX512(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4);
+        PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
