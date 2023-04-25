@@ -275,13 +275,12 @@ void PoseidonGoldilocks::linear_hash_avx512(Goldilocks::Element *output, Goldilo
         }
 
         uint64_t n = (remaining < RATE) ? remaining : RATE;
-        memset(state + n, 0, (RATE - n) * sizeof(Goldilocks::Element));
-        memset(state + n + RATE, 0, (RATE - n) * sizeof(Goldilocks::Element));
+        memset(state, 0, 2 * RATE * sizeof(Goldilocks::Element));
 
         if (n <= 4)
         {
             std::memcpy(state, input + (size - remaining), n * sizeof(Goldilocks::Element));
-            std::memcpy(state + 4, input + n + (size - remaining), n * sizeof(Goldilocks::Element));
+            std::memcpy(state + 4, input + size + (size - remaining), n * sizeof(Goldilocks::Element));
         }
         else
         {
@@ -546,10 +545,10 @@ void PoseidonGoldilocks::merkletree_batch_avx512(Goldilocks::Element *tree, Gold
             uint64_t nn = batch_size;
             if (j == nbatches - 1)
                 nn = nlastb;
-            Goldilocks::Element buff1[2 * batch_size * dim];
+            Goldilocks::Element buff1[2 * nn * dim];
             Goldilocks::Element buff2[2 * CAPACITY];
             std::memcpy(&buff1[0], &input[i * num_cols * dim + j * batch_size * dim], dim * nn * sizeof(Goldilocks::Element));
-            std::memcpy(&buff1[batch_size * dim], &input[(i + 1) * num_cols * dim + j * batch_size * dim], dim * nn * sizeof(Goldilocks::Element));
+            std::memcpy(&buff1[nn * dim], &input[(i + 1) * num_cols * dim + j * batch_size * dim], dim * nn * sizeof(Goldilocks::Element));
             linear_hash_avx512(buff2, buff1, nn * dim);
             memcpy(&buff0[j * CAPACITY], buff2, CAPACITY * sizeof(Goldilocks::Element));
             memcpy(&buff0[(j + nbatches) * CAPACITY], &buff2[CAPACITY], CAPACITY * sizeof(Goldilocks::Element));
