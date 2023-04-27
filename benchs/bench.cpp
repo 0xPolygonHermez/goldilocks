@@ -81,7 +81,7 @@ static void POSEIDON_BENCH_FULL_AVX(benchmark::State &state)
 #pragma omp parallel for num_threads(state.range(0)) schedule(static)
         for (uint64_t i = 0; i < NUM_HASHES; i++)
         {
-            PoseidonGoldilocks::hash_full_result((Goldilocks::Element(&)[SPONGE_WIDTH])result[i * SPONGE_WIDTH], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
+            PoseidonGoldilocks::hash_full_result_avx((Goldilocks::Element(&)[SPONGE_WIDTH])result[i * SPONGE_WIDTH], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
         }
     }
     // Check poseidon results poseidon ( 0 1 1 2 3 5 8 13 21 34 55 89 )
@@ -205,7 +205,7 @@ static void POSEIDON_BENCH_AVX(benchmark::State &state)
 #pragma omp parallel for num_threads(state.range(0)) schedule(static)
         for (uint64_t i = 0; i < NUM_HASHES; i++)
         {
-            PoseidonGoldilocks::hash((Goldilocks::Element(&)[CAPACITY])result[i * CAPACITY], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
+            PoseidonGoldilocks::hash_avx((Goldilocks::Element(&)[CAPACITY])result[i * CAPACITY], (Goldilocks::Element(&)[SPONGE_WIDTH])fibonacci[i * SPONGE_WIDTH]);
         }
     }
     // Check poseidon results poseidon ( 0 1 1 2 3 5 8 13 21 34 55 89 )
@@ -341,7 +341,7 @@ static void LINEAR_HASH_BENCH_AVX(benchmark::State &state)
 #pragma omp parallel for num_threads(state.range(0)) schedule(static)
         for (uint64_t i = 0; i < NROWS_HASH; i++)
         {
-            PoseidonGoldilocks::linear_hash(&result[i * HASH_SIZE], &cols[i * NCOLS_HASH], NCOLS_HASH);
+            PoseidonGoldilocks::linear_hash_avx(&result[i * HASH_SIZE], &cols[i * NCOLS_HASH], NCOLS_HASH);
         }
     }
 
@@ -472,7 +472,7 @@ static void MERKLETREE_BENCH_AVX(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree(tree, cols, NCOLS_HASH, NROWS_HASH, state.range(0));
+        PoseidonGoldilocks::merkletree_avx(tree, cols, NCOLS_HASH, NROWS_HASH, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
@@ -614,7 +614,7 @@ static void MERKLETREE_BATCH_BENCH_AVX(benchmark::State &state)
     // Benchmark
     for (auto _ : state)
     {
-        PoseidonGoldilocks::merkletree_batch(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4, state.range(0));
+        PoseidonGoldilocks::merkletree_batch_avx(tree, cols, NCOLS_HASH, NROWS_HASH, (NCOLS_HASH + 3) / 4, state.range(0));
     }
     Goldilocks::Element root[4];
     MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
