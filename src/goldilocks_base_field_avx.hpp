@@ -363,8 +363,8 @@ inline Goldilocks::Element Goldilocks::dot_avx(const __m256i &a0, const __m256i 
 {
     __m256i c_;
     spmv_avx_4x12(c_, a0, a1, a2, b);
-    alignas(32) Goldilocks::Element c[4];
-    store_avx_a(c, c_);
+    Goldilocks::Element c[4];
+    store_avx(c, c_);
     return (c[0] + c[1]) + (c[2] + c[3]);
 }
 
@@ -430,9 +430,9 @@ inline void Goldilocks::spmv_avx_4x12_8(__m256i &c, const __m256i &a0, const __m
 
     // load b into avx registers, latter
     __m256i b0, b1, b2;
-    load_avx_a(b0, &(b_8[0]));
-    load_avx_a(b1, &(b_8[4]));
-    load_avx_a(b2, &(b_8[8]));
+    load_avx(b0, &(b_8[0]));
+    load_avx(b1, &(b_8[4]));
+    load_avx(b2, &(b_8[8]));
 
     /* __m256i c0, c1, c2;
      mult_avx_8(c0, a0, b0);
