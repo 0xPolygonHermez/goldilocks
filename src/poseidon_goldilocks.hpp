@@ -20,42 +20,44 @@ class PoseidonGoldilocks
 private:
     inline void static pow7(Goldilocks::Element &x);
     inline void static pow7_(Goldilocks::Element *x);
-    inline void static pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2);
-    inline void static pow7_avx512(__m512i &st0, __m512i &st1, __m512i &st2);
-
     inline void static add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx512(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx512_a(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-    inline void static add_avx512_small(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
-
     inline void static pow7add_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static mvp_(Goldilocks::Element *state, const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH]);
     inline Goldilocks::Element static dot_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static prod_(Goldilocks::Element *x, const Goldilocks::Element alpha, const Goldilocks::Element C[SPONGE_WIDTH]);
 
+    inline void static add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2);
+    inline void static add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+
+#ifdef __AVX512__
+    inline void static pow7_avx512(__m512i &st0, __m512i &st1, __m512i &st2);
+    inline void static add_avx512(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static add_avx512_a(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static add_avx512_small(__m512i &st0, __m512i &st1, __m512i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+#endif
+
 public:
     void static hash_full_result_seq(Goldilocks::Element *, const Goldilocks::Element *);
-    void static hash_full_result_avx(Goldilocks::Element *, const Goldilocks::Element *);
-    void static hash_full_result_avx512(Goldilocks::Element *, const Goldilocks::Element *);
-
-    void static hash_seq(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
-    void static hash_avx(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
-    void static hash_avx512(Goldilocks::Element (&state)[2 * CAPACITY], const Goldilocks::Element (&input)[2 * SPONGE_WIDTH]);
-
     void static linear_hash_seq(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
-    void static linear_hash_avx(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
-    void static linear_hash_avx512(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
-
     void static merkletree_seq(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
-    void static merkletree_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
-    void static merkletree_avx512(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
-
+    void static hash_seq(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static merkletree_batch_seq(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1);
+
+    void static hash_full_result_avx(Goldilocks::Element *, const Goldilocks::Element *);
+    void static hash_avx(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
+    void static linear_hash_avx(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
+    void static merkletree_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
     void static merkletree_batch_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1);
+
+#ifdef __AVX512__
+    void static hash_full_result_avx512(Goldilocks::Element *, const Goldilocks::Element *);
+    void static hash_avx512(Goldilocks::Element (&state)[2 * CAPACITY], const Goldilocks::Element (&input)[2 * SPONGE_WIDTH]);
+    void static linear_hash_avx512(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
+    void static merkletree_avx512(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
     void static merkletree_batch_avx512(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1);
+#endif
 };
 
 inline void PoseidonGoldilocks::pow7(Goldilocks::Element &x)
@@ -139,6 +141,8 @@ inline void PoseidonGoldilocks::hash_seq(Goldilocks::Element (&state)[CAPACITY],
 }
 
 #include "poseidon_goldilocks_avx.hpp"
-#include "poseidon_goldilocks_avx512.hpp"
 
+#ifdef __AVX512__
+#include "poseidon_goldilocks_avx512.hpp"
+#endif
 #endif

@@ -1,6 +1,6 @@
 #ifndef POSEIDON_GOLDILOCKS_AVX512
 #define POSEIDON_GOLDILOCKS_AVX512
-
+#ifdef __AVX512__
 #include "poseidon_goldilocks.hpp"
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
@@ -52,4 +52,5 @@ inline void PoseidonGoldilocks::add_avx512_small(__m512i &st0, __m512i &st1, __m
     Goldilocks::add_avx512_b_c(st1, st1, c1);
     Goldilocks::add_avx512_b_c(st2, st2, c2);
 }
+#endif
 #endif

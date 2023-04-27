@@ -97,6 +97,7 @@ static void POSEIDON_BENCH_FULL_AVX(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#ifdef __AVX512__
 static void POSEIDON_BENCH_FULL_AVX512(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
@@ -143,6 +144,7 @@ static void POSEIDON_BENCH_FULL_AVX512(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#endif
 
 static void POSEIDON_BENCH(benchmark::State &state)
 {
@@ -222,6 +224,7 @@ static void POSEIDON_BENCH_AVX(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#ifdef __AVX512__
 static void POSEIDON_BENCH_AVX512(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
@@ -269,6 +272,7 @@ static void POSEIDON_BENCH_AVX512(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#endif
 
 static void LINEAR_HASH_BENCH(benchmark::State &state)
 {
@@ -354,6 +358,7 @@ static void LINEAR_HASH_BENCH_AVX(benchmark::State &state)
     delete[] cols;
     delete[] result;
 }
+#ifdef __AVX512__
 static void LINEAR_HASH_BENCH_AVX512(benchmark::State &state)
 {
     Goldilocks::Element *cols = new Goldilocks::Element[(uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH];
@@ -396,6 +401,7 @@ static void LINEAR_HASH_BENCH_AVX512(benchmark::State &state)
     delete[] cols;
     delete[] result;
 }
+#endif
 
 static void MERKLETREE_BENCH(benchmark::State &state)
 {
@@ -491,6 +497,7 @@ static void MERKLETREE_BENCH_AVX(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#ifdef __AVX512__
 static void MERKLETREE_BENCH_AVX512(benchmark::State &state)
 {
     Goldilocks::Element *cols = new Goldilocks::Element[(uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH];
@@ -538,6 +545,7 @@ static void MERKLETREE_BENCH_AVX512(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#endif
 
 static void MERKLETREE_BATCH_BENCH(benchmark::State &state)
 {
@@ -633,6 +641,7 @@ static void MERKLETREE_BATCH_BENCH_AVX(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#ifdef __AVX512__
 static void MERKLETREE_BATCH_BENCH_AVX512(benchmark::State &state)
 {
     Goldilocks::Element *cols = new Goldilocks::Element[(uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH];
@@ -680,6 +689,7 @@ static void MERKLETREE_BATCH_BENCH_AVX512(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#endif
 
 static void NTT_BENCH(benchmark::State &state)
 {
@@ -886,10 +896,12 @@ BENCHMARK(POSEIDON_BENCH_FULL_AVX)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX512__
 BENCHMARK(POSEIDON_BENCH_FULL_AVX512)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 BENCHMARK(POSEIDON_BENCH)
     ->Unit(benchmark::kMicrosecond)
@@ -901,10 +913,12 @@ BENCHMARK(POSEIDON_BENCH_AVX)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX512__
 BENCHMARK(POSEIDON_BENCH_AVX512)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 BENCHMARK(LINEAR_HASH_BENCH)
     ->Unit(benchmark::kMicrosecond)
@@ -916,10 +930,12 @@ BENCHMARK(LINEAR_HASH_BENCH_AVX)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX512__
 BENCHMARK(LINEAR_HASH_BENCH_AVX512)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 BENCHMARK(MERKLETREE_BENCH)
     ->Unit(benchmark::kMicrosecond)
@@ -931,10 +947,12 @@ BENCHMARK(MERKLETREE_BENCH_AVX)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX512__
 BENCHMARK(MERKLETREE_BENCH_AVX512)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 BENCHMARK(MERKLETREE_BATCH_BENCH)
     ->Unit(benchmark::kMicrosecond)
@@ -946,10 +964,12 @@ BENCHMARK(MERKLETREE_BATCH_BENCH_AVX)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX512__
 BENCHMARK(MERKLETREE_BATCH_BENCH_AVX512)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 BENCHMARK(NTT_BENCH)
     ->Unit(benchmark::kSecond)
@@ -978,8 +998,19 @@ BENCHMARK(EXTENDEDPOL_BENCH)
 
 BENCHMARK_MAIN();
 
-// Build command: g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -mavx512f -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -O3 -o bench && ./bench
+// Build commands AVX:
 
-// intel: icpx -std=c++17 -Wall -march=native -O3 -qopenmp -qopenmp-simd -mavx512f -mavx2 -axCORE-AVX512,CORE-AVX2 -ipo -qopt-zmm-usage=high benchs/bench.cpp src/*.cpp -lbenchmark -lgmp -o bench
+// g++:
+//   g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -O3 -o bench
+//  Intel:
+//  icpx -std=c++17 -Wall -march=native -O3 -qopenmp -qopenmp-simd -mavx2 -ipo -qopt-zmm-usage=high benchs/bench.cpp src/*.cpp -lbenchmark -lgmp -o bench
 
-//  run: ./bench --benchmark_filter=POSEIDON
+// Build commands AVX512:
+
+// g++:
+// g++ benchs/bench.cpp src/* -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -mavx512f -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -O3 -o bench -D__AVX512__
+//  Intel:
+//  icpx -std=c++17 -Wall -march=native -O3 -qopenmp -qopenmp-simd -mavx512f -mavx2 -axCORE-AVX512,CORE-AVX2 -ipo -qopt-zmm-usage=high benchs/bench.cpp src/*.cpp -lbenchmark -lgmp -o bench -D__AVX512__
+
+//  RUN:
+// ./bench --benchmark_filter=POSEIDON

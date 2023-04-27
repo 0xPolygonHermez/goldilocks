@@ -1,5 +1,6 @@
 #ifndef GOLDILOCKS_AVX512
 #define GOLDILOCKS_AVX512
+#ifdef __AVX512__
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
 
@@ -417,4 +418,5 @@ inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, co
     a1 = b1;
     a2 = b2;
 }
+#endif
 #endif

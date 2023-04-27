@@ -295,6 +295,7 @@ public:
     /*
         AVX512 operations
     */
+#ifdef __AVX512__
     static void load_avx512(__m512i &a, const Goldilocks::Element *a8);
     static void load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a);
     static void store_avx512(Goldilocks::Element *a8, const __m512i &a);
@@ -327,6 +328,7 @@ public:
 
     static void mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Element M[144]);
     static void mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Element M_8[144]);
+#endif
 };
 
 /*
@@ -344,6 +346,8 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_scalar.hpp"
 #include "goldilocks_base_field_batch.hpp"
 #include "goldilocks_base_field_avx.hpp"
+#ifdef __AVX512__
 #include "goldilocks_base_field_avx512.hpp"
+#endif
 
 #endif // GOLDILOCKS_BASE
