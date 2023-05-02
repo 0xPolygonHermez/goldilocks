@@ -1531,7 +1531,7 @@ TEST(GOLDILOCKS_TEST, poseidon_avx)
         fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
     }
 
-    PoseidonGoldilocks::hash_avx(result, fibonacci);
+    PoseidonGoldilocks::hash(result, fibonacci);
 
     ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
     ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
@@ -1541,7 +1541,7 @@ TEST(GOLDILOCKS_TEST, poseidon_avx)
     Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
     Goldilocks::Element result0[CAPACITY];
 
-    PoseidonGoldilocks::hash_avx(result0, zero);
+    PoseidonGoldilocks::hash(result0, zero);
 
     ASSERT_EQ(Goldilocks::toU64(result0[0]), 0X3C18A9786CB0B359);
     ASSERT_EQ(Goldilocks::toU64(result0[1]), 0XC4055E3364A246C3);
@@ -1580,8 +1580,8 @@ TEST(GOLDILOCKS_TEST, poseidon_avx512)
     }
 
     PoseidonGoldilocks::hash_avx512(result, input);
-    PoseidonGoldilocks::hash_avx(result0, fibonacci);
-    PoseidonGoldilocks::hash_avx(result1, zero);
+    PoseidonGoldilocks::hash(result0, fibonacci);
+    PoseidonGoldilocks::hash(result1, zero);
 
     ASSERT_EQ(Goldilocks::toU64(result[0]), Goldilocks::toU64(result0[0]));
     ASSERT_EQ(Goldilocks::toU64(result[1]), Goldilocks::toU64(result0[1]));
@@ -1655,7 +1655,7 @@ TEST(GOLDILOCKS_TEST, poseidon_full_avx)
         fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
     }
 
-    PoseidonGoldilocks::hash_full_result_avx(result, fibonacci);
+    PoseidonGoldilocks::hash_full_result(result, fibonacci);
 
     ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
     ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
@@ -1673,7 +1673,7 @@ TEST(GOLDILOCKS_TEST, poseidon_full_avx)
     Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
     Goldilocks::Element result0[SPONGE_WIDTH];
 
-    PoseidonGoldilocks::hash_full_result_avx(result0, zero);
+    PoseidonGoldilocks::hash_full_result(result0, zero);
 
     ASSERT_EQ(Goldilocks::toU64(result0[0]), 0X3C18A9786CB0B359);
     ASSERT_EQ(Goldilocks::toU64(result0[1]), 0XC4055E3364A246C3);
@@ -1777,7 +1777,7 @@ TEST(GOLDILOCKS_TEST, linear_hash_avx)
         fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
     }
 
-    PoseidonGoldilocks::linear_hash_avx(result, fibonacci, NCOLS_HASH);
+    PoseidonGoldilocks::linear_hash(result, fibonacci, NCOLS_HASH);
 
     ASSERT_EQ(Goldilocks::toU64(result[0]), 0XB214FEA22C79AE3C);
     ASSERT_EQ(Goldilocks::toU64(result[1]), 0X49DA61DEED54466A);
@@ -2675,7 +2675,7 @@ int main(int argc, char **argv)
 // Build commands AVX:
 
 // g++:
-//  tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//')
+//  g++ tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//')
 //  Intel:
 //  icpx tests/tests.cpp src/*.cpp -o test -lgtest -lgmp  -pthread -fopenmp -mavx2
 
