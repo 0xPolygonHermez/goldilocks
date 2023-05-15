@@ -44,8 +44,7 @@ inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i 
 // We assume a <= a_c+P
 inline void Goldilocks::toCanonical_avx512(__m512i &a_c, const __m512i &a)
 {
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpge_epu64_mask(mask, a, P8);
+    __mmask8 result_mask = _mm512_cmpge_epu64_mask(a, P8);
     a_c = _mm512_mask_add_epi64(a, result_mask, a, P8_n);
 }
 
@@ -60,8 +59,7 @@ inline void Goldilocks::add_avx512(__m512i &c, const __m512i &a, const __m512i &
 
     // correction if overflow (iff a_c > a_c+b )
     // if correction is necessari, note that as a_c+b <= P+2^64-1, a_c+b-P <= 2^64-1
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, a_c, c0);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(a_c, c0);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8_n);
 }
 
@@ -69,8 +67,7 @@ inline void Goldilocks::add_avx512(__m512i &c, const __m512i &a, const __m512i &
 inline void Goldilocks::add_avx512_b_c(__m512i &c, const __m512i &a, const __m512i &b_c)
 {
     const __m512i c0 = _mm512_add_epi64(a, b_c);
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, a, c0);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(a, c0);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8_n);
 }
 
@@ -83,16 +80,14 @@ inline void Goldilocks::sub_avx512(__m512i &c, const __m512i &a, const __m512i &
     // correction if underflow (iff a < b_c)
     // if correction is necessari:
     // P > b_c > a =>  {(a-b_c) < 0 and  P+(a-b_c)< P } => 0  < (P-b_c)+a < P
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, b_c, a);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(b_c, a);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8);
 }
 
 inline void Goldilocks::sub_avx512_b_c(__m512i &c, const __m512i &a, const __m512i &b_c)
 {
     const __m512i c0 = _mm512_sub_epi64(a, b_c);
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, b_c, a);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(b_c, a);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8);
 }
 
@@ -239,7 +234,7 @@ inline void Goldilocks::square_avx512_128(__m512i &c_h, __m512i &c_l, const __m5
     // Obtain a_h
     __m512i a_h = _mm512_castps_si512(_mm512_movehdup_ps(_mm512_castsi512_ps(a)));
 
-    // c = (a_h+a_l)*(b_h*a_l)=a_h*a_h+2*a_h*a_l+a_l*a_l=c_hh+2*c_hl+c_ll
+    // c = (a_h+a_l)*(a_h*a_l)=a_h*a_h+2*a_h*a_l+a_l*a_l=c_hh+2*c_hl+c_ll
     // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l
     __m512i c_hh = _mm512_mul_epu32(a_h, a_h);
     __m512i c_lh = _mm512_mul_epu32(a, a_h); // used as 2^c_lh
