@@ -282,8 +282,7 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
         if (extension <= 1)
         {
             assert(offset_cols == 0 && ncols == ncols_all); // single block
-            Goldilocks::Element tmp[ncols];
-#pragma omp parallel for schedule(static) private(tmp)
+#pragma omp parallel for schedule(static)
             for (u_int64_t i = 0; i < size; i++)
             {
                 u_int64_t r = BR(i, domainSize);
@@ -291,6 +290,7 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, Goldilocks::El
                 u_int64_t offset_i = i * ncols;
                 if (r < i)
                 {
+                    Goldilocks::Element tmp[ncols];
                     std::memcpy(&tmp[0], &src[offset_r], ncols * sizeof(Goldilocks::Element));
                     std::memcpy(&dst[offset_r], &src[offset_i], ncols * sizeof(Goldilocks::Element));
                     std::memcpy(&dst[offset_i], &tmp[0], ncols * sizeof(Goldilocks::Element));

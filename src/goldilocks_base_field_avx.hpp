@@ -18,8 +18,6 @@
 // 3. (unsigned) a < (unsigned) b iff (signed) a_s < (singed) b_s (AVX2 does not support unsingend 64-bit comparisons)
 // 4. a_s + b = (a+b)_s. Dem: a+(1<<63)+b = a+b+(1<<63)
 
-#define AVX_SIZE_ 4
-
 const __m256i MSB = _mm256_set_epi64x(MSB_, MSB_, MSB_, MSB_);
 const __m256i P = _mm256_set_epi64x(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME);
 const __m256i P_n = _mm256_set_epi64x(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);

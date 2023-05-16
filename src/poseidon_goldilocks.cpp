@@ -284,7 +284,6 @@ void PoseidonGoldilocks::merkletree_avx(Goldilocks::Element *tree, Goldilocks::E
     uint64_t pending = num_rows;
     uint64_t nextN = floor((pending - 1) / 2) + 1;
     uint64_t nextIndex = 0;
-
     while (pending > 1)
     {
 #pragma omp parallel for num_threads(nThreads)

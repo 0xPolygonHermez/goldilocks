@@ -16,8 +16,6 @@
 // 1.  a + b overflows iff (a + b) < a (AVX does not suport carry, this is the way to check)
 // 2.  a - b underflows iff (a - b) > a (AVX does not suport carry, this is the way to check)
 
-#define AVX512_SIZE_ 8
-
 const __m512i P8 = _mm512_set_epi64(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME);
 const __m512i P8_n = _mm512_set_epi64(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);
 const __m512i sqmask8 = _mm512_set_epi64(0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF);
@@ -46,8 +44,7 @@ inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i 
 // We assume a <= a_c+P
 inline void Goldilocks::toCanonical_avx512(__m512i &a_c, const __m512i &a)
 {
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpge_epu64_mask(mask, a, P8);
+    __mmask8 result_mask = _mm512_cmpge_epu64_mask(a, P8);
     a_c = _mm512_mask_add_epi64(a, result_mask, a, P8_n);
 }
 
@@ -62,8 +59,7 @@ inline void Goldilocks::add_avx512(__m512i &c, const __m512i &a, const __m512i &
 
     // correction if overflow (iff a_c > a_c+b )
     // if correction is necessari, note that as a_c+b <= P+2^64-1, a_c+b-P <= 2^64-1
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, a_c, c0);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(a_c, c0);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8_n);
 }
 
@@ -71,8 +67,7 @@ inline void Goldilocks::add_avx512(__m512i &c, const __m512i &a, const __m512i &
 inline void Goldilocks::add_avx512_b_c(__m512i &c, const __m512i &a, const __m512i &b_c)
 {
     const __m512i c0 = _mm512_add_epi64(a, b_c);
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, a, c0);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(a, c0);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8_n);
 }
 
@@ -85,16 +80,14 @@ inline void Goldilocks::sub_avx512(__m512i &c, const __m512i &a, const __m512i &
     // correction if underflow (iff a < b_c)
     // if correction is necessari:
     // P > b_c > a =>  {(a-b_c) < 0 and  P+(a-b_c)< P } => 0  < (P-b_c)+a < P
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, b_c, a);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(b_c, a);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8);
 }
 
 inline void Goldilocks::sub_avx512_b_c(__m512i &c, const __m512i &a, const __m512i &b_c)
 {
     const __m512i c0 = _mm512_sub_epi64(a, b_c);
-    __mmask8 mask = -1; // all elements will be compared
-    __mmask8 result_mask = _mm512_mask_cmpgt_epu64_mask(mask, b_c, a);
+    __mmask8 result_mask = _mm512_cmpgt_epu64_mask(b_c, a);
     c = _mm512_mask_add_epi64(c0, result_mask, c0, P8);
 }
 
@@ -241,7 +234,7 @@ inline void Goldilocks::square_avx512_128(__m512i &c_h, __m512i &c_l, const __m5
     // Obtain a_h
     __m512i a_h = _mm512_castps_si512(_mm512_movehdup_ps(_mm512_castsi512_ps(a)));
 
-    // c = (a_h+a_l)*(b_h*a_l)=a_h*a_h+2*a_h*a_l+a_l*a_l=c_hh+2*c_hl+c_ll
+    // c = (a_h+a_l)*(a_h*a_l)=a_h*a_h+2*a_h*a_l+a_l*a_l=c_hh+2*c_hl+c_ll
     // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l
     __m512i c_hh = _mm512_mul_epu32(a_h, a_h);
     __m512i c_lh = _mm512_mul_epu32(a, a_h); // used as 2^c_lh
@@ -418,5 +411,1016 @@ inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, co
     a1 = b1;
     a2 = b2;
 }
+
+/*
+    Implementations for expressions:
+*/
+
+/*
+inline void Goldilocks::copy_avx(Element *dst, const Element &src)
+{
+    // Does not make sense to vectorize yet
+    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
+    {
+        dst[i].fe = src.fe;
+    }
+}
+
+inline void Goldilocks::copy_avx(Element *dst, const Element *src)
+{
+    // Does not make sense to vectorize yet
+    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
+    {
+        dst[i].fe = src[i].fe;
+    }
+}
+
+inline void Goldilocks::copy_avx(Element *dst, const Element *src, uint64_t stride)
+{
+    // Does not make sense to vectorize yet
+    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
+    {
+        dst[i].fe = src[i * stride].fe;
+    }
+}
+
+inline void Goldilocks::copy_avx(Element *dst, const Element *src, uint64_t stride[AVX512_SIZE_])
+{
+    // Does not make sense to vectorize yet
+    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
+    {
+        dst[i].fe = src[stride[i]].fe;
+    }
+}*/
+
+inline void Goldilocks::copy_avx512(__m512i &dst_, const Element &src)
+{
+    Element dst[AVX512_SIZE_];
+    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
+    {
+        dst[i].fe = src.fe;
+    }
+    load_avx512(dst_, dst);
+}
+
+inline void Goldilocks::copy_avx512(__m512i &dst_, const __m512i &src_)
+{
+    dst_ = src_;
+}
+
+inline void Goldilocks::copy_avx512(__m512i &dst_, const Element *src, uint64_t stride)
+{
+    Element dst[AVX512_SIZE_];
+    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
+    {
+        dst[i].fe = src[i * stride].fe;
+    }
+    load_avx512(dst_, dst);
+}
+
+inline void Goldilocks::copy_avx512(__m512i &dst_, const Element *src, uint64_t stride[AVX512_SIZE_])
+{
+    Element dst[AVX512_SIZE_];
+    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
+    {
+        dst[i].fe = src[stride[i]].fe;
+    }
+    load_avx512(dst_, dst);
+};
+
+inline void Goldilocks::copy_avx512(Element *dst, uint64_t stride, const __m512i &src_)
+{
+    Element src[AVX512_SIZE_];
+    Goldilocks::store_avx512(src, src_);
+    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
+    {
+        dst[i * stride] = src[i];
+    }
+}
+
+inline void Goldilocks::copy_avx512(Element *dst, uint64_t stride[AVX512_SIZE_], const __m512i &src_)
+{
+    Element src[AVX512_SIZE_];
+    Goldilocks::store_avx512(src, src_);
+    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
+    {
+        dst[stride[i]].fe = src[i].fe;
+    }
+}
+/*
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element *b8)
+{
+    __m256i a_, b_, c_;
+    load_avx512(a_, a8);
+    load_avx512(b_, b8);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element *b8, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element *b8, const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[offset_b[k]];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element b)
+{
+    Element bb[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    __m256i a_, b_, c_;
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element b, uint64_t offset_a)
+{
+    Element bb[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+        bb[k] = b8[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+        bb[k] = b8[offset_b[k]];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::add_avx(Element *c8, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}*/
+
+inline void Goldilocks::add_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[k * offset_b];
+    }
+    __m512i b_;
+    load_avx512(b_, bb);
+    add_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::add_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const __m512i &b_)
+{
+    __m512i c_;
+    add_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+}
+
+inline void Goldilocks::add_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const Element *b, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b[k * offset_b];
+    }
+    __m512i b_, c_;
+    load_avx512(b_, bb);
+    add_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+}
+
+inline void Goldilocks::add_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_)
+{
+    __m512i c_;
+    add_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+}
+
+inline void Goldilocks::add_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b)
+{
+    Element b8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        b8[k] = b[k * offset_b];
+    }
+    __m512i b_, c_;
+    load_avx512(b_, b8);
+    add_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+}
+
+inline void Goldilocks::add_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b[AVX512_SIZE_])
+{
+    Element b8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        b8[k] = b[offset_b[k]];
+    }
+    __m512i b_, c_;
+    load_avx512(b_, b8);
+    add_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+}
+
+inline void Goldilocks::add_avx512(__m512i &c_, const __m512i &a_, const Element *b8, const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[offset_b[k]];
+    }
+    __m512i b_;
+    load_avx512(b_, bb);
+    add_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::add_avx512(__m512i &c_, const __m512i &a_, const Element b)
+{
+    Element bb[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    __m512i b_;
+    load_avx512(b_, bb); // rick: millor un set que un load
+    add_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::add_avx512(__m512i &c_, const Element *a8, const Element b, uint64_t offset_a)
+{
+    Element bb[AVX512_SIZE_] = {b, b, b, b, b, b, b, b}; // rick: millor un set que un load
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::add_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+        bb[k] = b8[k * offset_b];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::add_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+        bb[k] = b8[offset_b[k]];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::add_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_])
+{
+
+    Element bb[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    add_avx512(c_, a_, b_);
+};
+/*
+inline void Goldilocks::sub_avx512(Goldilocks::Element *c8, const Goldilocks::Element *a8, const Goldilocks::Element *b8)
+{
+    __m256i a_, b_, c_;
+    load_avx512(a_, a8);
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+        bb[k] = b8[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element *a8, const Element b)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element b8[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    load_avx512(a_, a8);
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element a, const Element *b8)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element a8[AVX512_SIZE_] = {a, a, a, a,a,a,a,a};
+    load_avx512(a_, a8);
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element *a8, const Element b, uint64_t offset_a)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element b8[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+    }
+    load_avx512(a_, aa);
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element a, const Element *b8, uint64_t offset_b)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element a8[AVX512_SIZE_], bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k].fe = b8[k * offset_b].fe;
+        a8[k].fe = a.fe;
+    }
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+        bb[k] = b8[offset_b[k]];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element a, const Element *b8, const uint64_t offset_b[AVX512_SIZE_])
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element a8[AVX512_SIZE_], bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k].fe = b8[offset_b[k]].fe;
+        a8[k].fe = a.fe;
+    }
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+
+inline void Goldilocks::sub_avx512(Element *c8, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_])
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element b8[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+    }
+    load_avx512(a_, aa);
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+    store_avx512(c8, c_);
+}*/
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+        bb[k] = b8[k * offset_b];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[k * offset_b];
+    }
+    __m512i b_;
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t offset_a)
+{
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+    }
+    __m512i a_;
+    load_avx512(a_, aa);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const __m512i &a_, const Element b)
+{
+    __m512i b_;
+    Goldilocks::Element b8[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element a, const __m512i &b_)
+{
+    __m512i a_;
+    Goldilocks::Element a8[AVX512_SIZE_] = {a, a, a, a, a, a, a, a};
+    load_avx512(a_, a8);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element *a8, const Element b, uint64_t offset_a)
+{
+    __m512i a_, b_;
+    Goldilocks::Element b8[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+    }
+    load_avx512(a_, aa);
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element a, const Element *b8, uint64_t offset_b)
+{
+    __m512i a_, b_;
+    Goldilocks::Element a8[AVX512_SIZE_], bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[k * offset_b];
+        a8[k] = a;
+    }
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+        bb[k] = b8[offset_b[k]];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element a, const Element *b8, const uint64_t offset_b[AVX512_SIZE_])
+{
+    __m512i a_, b_;
+    Goldilocks::Element a8[AVX512_SIZE_], bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[offset_b[k]];
+        a8[k] = a;
+    }
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_])
+{
+    __m512i a_, b_;
+    Goldilocks::Element b8[AVX512_SIZE_] = {b, b, b, b, b, b, b, b};
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+    }
+    load_avx512(a_, aa);
+    load_avx512(b_, b8);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[offset_b[k]];
+    }
+    __m512i b_;
+    load_avx512(b_, bb);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t offset_a[AVX512_SIZE_])
+{
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+    }
+    __m512i a_;
+    load_avx512(a_, aa);
+    sub_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::sub_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const __m512i &b_)
+{
+    __m512i c_;
+    sub_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+}
+
+inline void Goldilocks::sub_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_)
+{
+    __m512i c_;
+    sub_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+}
+inline void Goldilocks::sub_avx512(Element *c, uint64_t offset_c, const Element a, const __m512i &b_)
+{
+    __m512i a_, c_;
+    Goldilocks::Element a8[AVX512_SIZE_] = {a, a, a, a, a, a, a, a};
+    load_avx512(a_, a8);
+    sub_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+}
+
+inline void Goldilocks::sub_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const Element a, const __m512i &b_)
+{
+    __m512i a_, c_;
+    Goldilocks::Element a8[AVX512_SIZE_] = {a, a, a, a, a, a, a, a};
+    load_avx512(a_, a8);
+    sub_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+}
+/*
+inline void Goldilocks::mul_avx512(Element *c8, const Element *a8, const Element *b8)
+{
+    __m256i a_, b_, c_;
+    load_avx512(a_, a8);
+    load_avx512(b_, b8);
+    mult_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::mul_avx512(Element *c8, const Element a, const Element *b8)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element a8[AVX512_SIZE_] = {a, a, a, a, a, a, a, a};
+    load_avx512(a_, a8);
+    load_avx512(b_, b8);
+    mult_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::mul_avx512(Element *c8, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+        bb[k] = b8[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    mult_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::mul_avx512(Element *c8, const Element a, const Element *b8, uint64_t offset_b)
+{
+    __m256i a_, b_, c_;
+    Goldilocks::Element a8[AVX512_SIZE_], bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k].fe = b8[k * offset_b].fe;
+        a8[k].fe = a.fe;
+    }
+    load_avx512(a_, a8);
+    load_avx512(b_, bb);
+    mult_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+};
+
+inline void Goldilocks::mul_avx512(Element *c8, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+        bb[k] = b8[offset_b[k]];
+    }
+    __m256i a_, b_, c_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    mult_avx(c_, a_, b_);
+    store_avx512(c8, c_);
+}
+*/
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const Element a, const __m512i &b_)
+{
+    __m512i a_;
+    Goldilocks::Element a8[AVX512_SIZE_] = {a, a, a, a, a, a, a, a};
+    load_avx512(a_, a8);
+    mult_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+        bb[k] = b8[k * offset_b];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    mult_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b)
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[k * offset_b];
+    }
+    __m512i b_;
+    load_avx512(b_, bb);
+    mult_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t offset_a)
+{
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[k * offset_a];
+    }
+    __m512i a_;
+    load_avx512(a_, aa);
+    mult_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const Element a, const Element *b8, uint64_t offset_b)
+{
+    __m512i a_, b_;
+    Goldilocks::Element aa[AVX512_SIZE_], bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k].fe = b8[k * offset_b].fe;
+        aa[k].fe = a.fe;
+    }
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    mult_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+        bb[k] = b8[offset_b[k]];
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    mult_avx512(c_, a_, b_);
+};
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const __m512i &a_, const Element *b8, const uint64_t offset_b[AVX512_SIZE_])
+{
+    Element bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        bb[k] = b8[offset_b[k]];
+    }
+    __m512i b_;
+    load_avx512(b_, bb);
+    mult_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const Element *a8, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_])
+{
+    Element aa[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+    }
+    __m512i a_;
+    load_avx512(a_, aa);
+    mult_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_])
+{
+    Element a8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        a8[k] = a[offset_a[k]];
+    }
+    __m512i a_, c_;
+    load_avx512(a_, a8);
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+};
+
+inline void Goldilocks::mul_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_])
+{
+    Element aa[AVX512_SIZE_], bb[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        aa[k] = a8[offset_a[k]];
+        bb[k] = b;
+    }
+    __m512i a_, b_;
+    load_avx512(a_, aa);
+    load_avx512(b_, bb);
+    mult_avx512(c_, a_, b_);
+}
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const __m512i &b_)
+{
+    __m512i c_;
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+};
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c, const Element *a, const __m512i &b_, uint64_t offset_a)
+{
+    Element a8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        a8[k] = a[k * offset_a];
+    }
+    __m512i a_, c_;
+    load_avx512(a_, a8);
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+};
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const Element *b, uint64_t offset_b)
+{
+
+    Element b8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        b8[k] = b[k * offset_b];
+    }
+    __m512i b_, c_;
+    load_avx512(b_, b8);
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+};
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c, const Element *a, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_])
+{
+    Element a8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        a8[k] = a[offset_a[k]];
+    }
+    __m512i a_, c_;
+    load_avx512(a_, a8);
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[k * offset_c] = c8[k];
+    }
+};
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_)
+{
+    __m512i c_;
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+};
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a, const __m512i &b_, uint64_t offset_a)
+{
+    Element a8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        a8[k] = a[k * offset_a];
+    }
+    __m512i a_, c_;
+    load_avx512(a_, a8);
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+};
+
+inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b)
+{
+    Element b8[AVX512_SIZE_];
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        b8[k] = b[k * offset_b];
+    }
+    __m512i b_, c_;
+    load_avx512(b_, b8);
+    mult_avx512(c_, a_, b_);
+    Element c8[AVX512_SIZE_];
+    store_avx512(c8, c_);
+    for (uint64_t k = 0; k < AVX512_SIZE_; ++k)
+    {
+        c[offset_c[k]] = c8[k];
+    }
+};
+
 #endif
 #endif
