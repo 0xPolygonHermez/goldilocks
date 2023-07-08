@@ -152,9 +152,13 @@ inline uint64_t Goldilocks::toU64(const Element &in1)
 inline void Goldilocks::toU64(uint64_t &result, const Element &in1)
 {
 #if USE_MONTGOMERY == 1
-    result = Goldilocks::from_montgomery(in1.fe) % GOLDILOCKS_PRIME;
+    result = Goldilocks::from_montgomery(in1.fe);
+    if( result >= GOLDILOCKS_PRIME )
+        result -= GOLDILOCKS_PRIME;
 #else
-    result = in1.fe % GOLDILOCKS_PRIME;
+    result = in1.fe;
+    if( result >= GOLDILOCKS_PRIME )
+        result -= GOLDILOCKS_PRIME;
 #endif
 };
 
