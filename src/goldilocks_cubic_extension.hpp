@@ -5,6 +5,7 @@
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
 #include <cassert>
+#include <vector>
 
 #define FIELD_EXTENSION 3
 
