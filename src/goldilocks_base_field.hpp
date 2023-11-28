@@ -423,8 +423,11 @@ public:
     Operator Overloading
 */
 inline Goldilocks::Element operator+(const Goldilocks::Element &in1, const Goldilocks::Element &in2) { return Goldilocks::add(in1, in2); }
+inline Goldilocks::Element operator+(const Goldilocks::Element &in1, const uint64_t &in2           ) { return Goldilocks::add(in1, Goldilocks::fromU64(in2)); }
 inline Goldilocks::Element operator*(const Goldilocks::Element &in1, const Goldilocks::Element &in2) { return Goldilocks::mul(in1, in2); }
+inline Goldilocks::Element operator*(const uint64_t &in1,            const Goldilocks::Element &in2) { return Goldilocks::mul(Goldilocks::fromU64(in1), in2); }
 inline Goldilocks::Element operator-(const Goldilocks::Element &in1, const Goldilocks::Element &in2) { return Goldilocks::sub(in1, in2); }
+inline Goldilocks::Element operator-(const Goldilocks::Element &in1, const uint64_t &in2           ) { return Goldilocks::sub(in1, Goldilocks::fromU64(in2)); }
 inline Goldilocks::Element operator/(const Goldilocks::Element &in1, const Goldilocks::Element &in2) { return Goldilocks::div(in1, in2); }
 inline bool operator==(const Goldilocks::Element &in1, const Goldilocks::Element &in2) { return Goldilocks::equal(in1, in2); }
 inline Goldilocks::Element operator-(const Goldilocks::Element &in1) { return Goldilocks::neg(in1); }
