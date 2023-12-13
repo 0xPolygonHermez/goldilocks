@@ -225,6 +225,7 @@ public:
     static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_b[4]);
     static void add_avx(Element *c4, const Element *a4, const Element b);
     static void add_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
+    static void add_avx(Element *c4, uint64_t offset_c, const Element *a4, uint64_t offset_a, const Element *b4,  uint64_t offset_b);
     static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
     static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
     static void add_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);

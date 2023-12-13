@@ -753,6 +753,28 @@ inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b
     store_avx(c4, c_);
 }
 
+inline void Goldilocks::add_avx(Element *c4, uint64_t offset_c, const Element *a4, uint64_t offset_a, const Element *b4,  uint64_t offset_b)
+{
+    Element bb[4];
+    Element aa[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        aa[k] = a4[k * offset_a];
+        bb[k] = b4[k * offset_b];
+    }
+    __m256i a_, b_, c_;
+    load_avx(a_, aa);
+    load_avx(b_, bb);
+    add_avx(c_, a_, b_);
+
+    Element cc[4];
+    store_avx(cc, c_);
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        c4[k * offset_c] = cc[k];
+    }
+}
+
 inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4])
 {
     Element bb[4];
