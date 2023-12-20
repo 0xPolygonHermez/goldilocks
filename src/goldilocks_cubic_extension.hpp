@@ -2925,6 +2925,63 @@ public:
         Goldilocks::sub_avx(c_[2], B_, G_);
     };
 
+    static inline void mul_avx(Goldilocks::Element *c, uint64_t stride_c, Goldilocks::Element *a, Goldilocks3::Element_avx &b_, uint64_t stride_a)
+    {
+
+        Goldilocks::Element a0[4], a1[4], a2[4];
+        __m256i a0_, a1_, a2_;
+
+        // redistribute data:
+        for (uint64_t k = 0; k < AVX_SIZE_; ++k)
+        {
+            a0[k] = a[k * stride_a];
+            a1[k] = a[k * stride_a + 1];
+            a2[k] = a[k * stride_a + 2];
+        }
+        Goldilocks::load_avx(a0_, a0);
+        Goldilocks::load_avx(a1_, a1);
+        Goldilocks::load_avx(a2_, a2);
+
+        __m256i aux0_, aux1_, aux2_;
+        __m256i A_, B_, C_, D_, E_, F_, G_;
+        __m256i auxr_;
+
+        Goldilocks::add_avx(A_, a0_, a1_);
+        Goldilocks::add_avx(B_, a0_, a2_);
+        Goldilocks::add_avx(C_, a1_, a2_);
+        Goldilocks::add_avx(aux0_, b_[0], b_[1]);
+        Goldilocks::add_avx(aux1_, b_[0], b_[2]);
+        Goldilocks::add_avx(aux2_, b_[1], b_[2]);
+        Goldilocks::mult_avx(A_, A_, aux0_);
+        Goldilocks::mult_avx(B_, B_, aux1_);
+        Goldilocks::mult_avx(C_, C_, aux2_);
+        Goldilocks::mult_avx(D_, a0_, b_[0]);
+        Goldilocks::mult_avx(E_, a1_, b_[1]);
+        Goldilocks::mult_avx(F_, a2_, b_[2]);
+        Goldilocks::sub_avx(G_, D_, E_);
+
+        __m256i c0_, c1_, c2_;
+
+        Goldilocks::add_avx(c0_, C_, G_);
+        Goldilocks::sub_avx(c0_, c0_, F_);
+        Goldilocks::add_avx(c1_, A_, C_);
+        Goldilocks::add_avx(auxr_, E_, E_);
+        Goldilocks::add_avx(auxr_, auxr_, D_);
+        Goldilocks::sub_avx(c1_, c1_, auxr_);
+        Goldilocks::sub_avx(c2_, B_, G_);
+
+        Goldilocks::Element c0[4], c1[4], c2[4];
+        Goldilocks::store_avx(c0, c0_);
+        Goldilocks::store_avx(c1, c1_);
+        Goldilocks::store_avx(c2, c2_);
+        for (uint64_t k = 0; k < AVX_SIZE_; ++k)
+        {
+            c[k * stride_c] = c0[k];
+            c[k * stride_c + 1] = c1[k];
+            c[k * stride_c + 2] = c2[k];
+        }
+    };
+
     static inline void mul_avx(Goldilocks::Element *c, uint64_t stride_c, Goldilocks3::Element_avx &a_, Goldilocks3::Element_avx &b_)
     {
 

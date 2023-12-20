@@ -260,6 +260,7 @@ public:
     static void sub_avx(__m256i &c_, const Element a, const __m256i &b_);
     static void sub_avx(__m256i &c_, const Element *a4, const Element b, uint64_t offset_a);
     static void sub_avx(__m256i &c_, const Element a, const Element *b4, uint64_t offset_b);
+    static void sub_avx(__m256i &c_, const Element *a4, uint64_t offset_a, const __m256i &b_);
     static void sub_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
     static void sub_avx(__m256i &c_, const Element a, const Element *b4, const uint64_t offset_b[4]);
     static void sub_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
@@ -296,6 +297,7 @@ public:
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, uint64_t offset_a);
     static void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
+    static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a, const Element *b, const uint64_t offset_a[4], const uint64_t offset_b[4]);
     
 
     /*
