@@ -1,6 +1,7 @@
 #include <benchmark/benchmark.h>
 #include <iostream>
 
+#include "../src/goldilocks_cubic_extension.hpp"
 #include "../src/goldilocks_base_field.hpp"
 #include "../src/poseidon_goldilocks.hpp"
 #include "../src/poseidon_goldilocks_avx.hpp"
@@ -22,6 +23,46 @@
 #define NPHASES_NTT 2
 #define NPHASES_LDE 2
 #define NBLOCKS 1
+
+static void escape(void *p) {
+    asm volatile("" : : "g"(p): "memory");
+}
+
+static void BENCH_ADD_AVX(benchmark::State &state) {
+    __m256i a_;
+    __m256i b_;
+
+    // Benchmark
+    for (auto _ : state)
+    {
+         Goldilocks::add_avx(a_, a_, b_);
+         escape(&a_);
+    }
+}
+
+static void BENCH_MUL_AVX(benchmark::State &state) {
+    Goldilocks::Element a_ = Goldilocks::fromU64(9);
+    Goldilocks::Element b_ = Goldilocks::fromU64(10);
+
+    // Benchmark
+    for (auto _ : state)
+    {
+        Goldilocks::mul_avx(&a_, &a_, &b_);
+        escape(&a_);
+    }
+}
+
+static void BENCH_MUL33C_AVX(benchmark::State &state) {
+    Goldilocks::Element a_[12];
+    Goldilocks::Element b_[12];
+
+    // Benchmark
+    for (auto _ : state)
+    {
+        Goldilocks3::mul33c_avx(a_, a_, b_);
+        escape(a_);
+    }
+}
 
 static void POSEIDON_BENCH_FULL(benchmark::State &state)
 {
@@ -885,6 +926,18 @@ static void EXTENDEDPOL_BENCH(benchmark::State &state)
     free(b);
     free(c);
 }
+
+BENCHMARK(BENCH_ADD_AVX)
+    ->Unit(benchmark::kNanosecond)
+    ->UseRealTime();
+
+BENCHMARK(BENCH_MUL_AVX)
+    ->Unit(benchmark::kNanosecond)
+    ->UseRealTime();
+
+BENCHMARK(BENCH_MUL33C_AVX)
+    ->Unit(benchmark::kNanosecond)
+    ->UseRealTime();
 
 BENCHMARK(POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
