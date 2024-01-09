@@ -1385,6 +1385,14 @@ inline void Goldilocks::mul_avx(__m256i &c_, const Element a, const __m256i &b_)
     mult_avx(c_, a_, b_);
 };
 
+inline void Goldilocks::mul_avx(__m256i &c_, const __m256i &a_, const Element b)
+{
+    __m256i b_;
+    Goldilocks::Element b4[4] = {b, b, b, b};
+    load_avx(b_, b4);
+    mult_avx(c_, a_, b_);
+};
+
 inline void Goldilocks::mul_avx(__m256i &c_, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b)
 {
     Element bb[4];
@@ -1580,6 +1588,30 @@ inline void Goldilocks::mul_avx(Element *c, uint64_t offset_c, const __m256i &a_
 };
 
 inline void Goldilocks::mul_avx(Element *c, uint64_t offset_c, const Element *a, uint64_t offset_a, const Element *b, uint64_t offset_b)
+{
+    Element b4[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        b4[k] = b[k * offset_b];
+    }
+    Element a4[4];
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        a4[k] = a[k * offset_a];
+    }
+    __m256i a_, b_, c_;
+    load_avx(a_, a4);
+    load_avx(b_, b4);
+    mult_avx(c_, a_, b_);
+    Element c4[4];
+    store_avx(c4, c_);
+    for (uint64_t k = 0; k < 4; ++k)
+    {
+        c[k * offset_c] = c4[k];
+    }
+};
+
+inline void Goldilocks::mul_avx(Element *c, uint64_t offset_c, const Element *a, const Element *b, uint64_t offset_a, uint64_t offset_b)
 {
     Element b4[4];
     for (uint64_t k = 0; k < 4; ++k)
