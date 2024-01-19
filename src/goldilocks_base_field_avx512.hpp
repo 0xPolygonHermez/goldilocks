@@ -13,8 +13,8 @@
 // _8 variable can be expressed in 8 bits (<256)
 
 // OBSERVATIONS:
-// 1.  a + b overflows iff (a + b) < a (AVX does not suport carry, this is the way to check)
-// 2.  a - b underflows iff (a - b) > a (AVX does not suport carry, this is the way to check)
+// 1.  a + b overflows iff (a + b) < a (AVX does not support carry, this is the way to check)
+// 2.  a - b underflows iff (a - b) > a (AVX does not support carry, this is the way to check)
 
 const __m512i P8 = _mm512_set_epi64(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME);
 const __m512i P8_n = _mm512_set_epi64(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);
@@ -40,7 +40,7 @@ inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i 
     _mm512_store_si512((__m512i *)a8_a, a);
 }
 
-// Obtain cannonical representative of a,
+// Obtain canonical representative of a,
 // We assume a <= a_c+P
 inline void Goldilocks::toCanonical_avx512(__m512i &a_c, const __m512i &a)
 {
@@ -98,7 +98,7 @@ inline void Goldilocks::mult_avx512(__m512i &c, const __m512i &a, const __m512i 
     reduce_avx512_128_64(c, c_h, c_l);
 }
 
-// We assume coeficients of b_8 can be expressed with 8 bits (<256)
+// We assume coefficients of b_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::mult_avx512_8(__m512i &c, const __m512i &a, const __m512i &b_8)
 {
     __m512i c_h, c_l;
@@ -269,7 +269,7 @@ inline void Goldilocks::square_avx512_128(__m512i &c_h, __m512i &c_l, const __m5
     c_h = _mm512_add_epi64(c_hh, r0_h);
 }
 
-// Data for two arrays of 12 compoments is interleaved: b1=[b[0..3]|b[8..11]|b[16..18]], b2=[b[4..7]|b[12..15]|b[19..23]], first half of a0,a1,a2 is operated with b1, second half with b2.
+// Data for two arrays of 12 components is interleaved: b1=[b[0..3]|b[8..11]|b[16..18]], b2=[b[4..7]|b[12..15]|b[19..23]], first half of a0,a1,a2 is operated with b1, second half with b2.
 inline void Goldilocks::dot_avx512(Element c[2], const __m512i &a0, const __m512i &a1, const __m512i &a2, const Element b[12])
 {
     __m512i c_;
@@ -282,7 +282,7 @@ inline void Goldilocks::dot_avx512(Element c[2], const __m512i &a0, const __m512
 
 // Sparse matrix-vector product (8x24 sparce matrix formed of three diagonal blocks os size 8x8)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<8 0<=j<3
-// Data for two arrays of 12 compoments is interleaved: b1=[b[0..3]|b[8..11]|b[16..18]], b2=[b[4..7]|b[12..15]|b[19..23]], first half of a0,a1,a2 is operated with b1, second half with b2.
+// Data for two arrays of 12 components is interleaved: b1=[b[0..3]|b[8..11]|b[16..18]], b2=[b[4..7]|b[12..15]|b[19..23]], first half of a0,a1,a2 is operated with b1, second half with b2.
 inline void Goldilocks::spmv_avx512_4x12(__m512i &c, const __m512i &a0, const __m512i &a1, const __m512i &a2, const Goldilocks::Element b[12])
 {
 
@@ -400,7 +400,7 @@ inline void Goldilocks::mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, cons
     a2 = b2;
 }
 
-// We assume coeficients of M_8 can be expressed with 8 bits (<256)
+// We assume coefficients of M_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Goldilocks::Element M_8[144])
 {
     __m512i b0, b1, b2;
