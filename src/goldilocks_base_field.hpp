@@ -165,10 +165,17 @@ public:
         AVX operations
     */
     static void set_avx(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
-    static void load_avx(__m256i &a, const Goldilocks::Element *a4);
+    static void load_avx(__m256i &a_, const Goldilocks::Element *a4);
+    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t stride_a);
+    static void load_avx(__m256i &a_, const Goldilocks::Element &a);
+    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t stride_a[4]);
     static void load_avx_a(__m256i &a, const Goldilocks::Element *a4_a);
+
     static void store_avx(Goldilocks::Element *a4, const __m256i &a);
+    static void store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t stride_a);
+    static void store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t stride_a[4]);
     static void store_avx_a(Goldilocks::Element *a4_a, const __m256i &a);
+
     static void shift_avx(__m256i &a_s, const __m256i &a);
     static void toCanonical_avx(__m256i &a_c, const __m256i &a);
     static void toCanonical_avx_s(__m256i &a_sc, const __m256i &a_s);
@@ -221,84 +228,83 @@ public:
     static void copy_avx(Element *dst, uint64_t stride[4], const __m256i &src_);
 
     static void add_avx(Element *c4, const Element *a4, const Element *b4);
-    static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_b);
-    static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_b[4]);
+    static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_b);
+    static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_b[4]);
     static void add_avx(Element *c4, const Element *a4, const Element b);
-    static void add_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
-    static void add_avx(Element *c4, uint64_t offset_c, const Element *a4, uint64_t offset_a, const Element *b4,  uint64_t offset_b);
-    static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
-    static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    static void add_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);
+    static void add_avx(Element *c4, const Element *a4, const Element b, uint64_t stride_a);
+    static void add_avx(Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const Element *b4, uint64_t stride_b);
+    static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
+    static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
+    static void add_avx(Element *c4, const Element *a4, const Element b, const uint64_t stride_a[4]);
 
-    static void add_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t offset_b);
-    static void add_avx(__m256i &c_, const __m256i &a_, const Element *b4, const uint64_t offset_b[4]);
+    static void add_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t stride_b);
+    static void add_avx(__m256i &c_, const __m256i &a_, const Element *b4, const uint64_t stride_b[4]);
     static void add_avx(__m256i &c_, const __m256i &a_, const Element b);
-    static void add_avx(__m256i &c_, const Element *a4, const Element b, uint64_t offset_a);
-    static void add_avx(__m256i &c_, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
-    static void add_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    static void add_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
-    static void add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
-    static void add_avx(Element *c, uint64_t offset_c, const __m256i &a_, const Element *b4, uint64_t offset_b);
-    static void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
-    static void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
-    static void add_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b[4]);
+    static void add_avx(__m256i &c_, const Element *a4, const Element b, uint64_t stride_a);
+    static void add_avx(__m256i &c_, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
+    static void add_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
+    static void add_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t stride_a[4]);
+    static void add_avx(Element *c, uint64_t stride_c, const __m256i &a_, const __m256i &b_);
+    static void add_avx(Element *c, uint64_t stride_c, const __m256i &a_, const Element *b4, uint64_t stride_b);
+    static void add_avx(Element *c, const uint64_t stride_c[4], const __m256i &a_, const __m256i &b_);
+    static void add_avx(Element *c, const uint64_t stride_c[4], const __m256i &a_, const Element *b, uint64_t stride_b);
+    static void add_avx(Element *c, const uint64_t stride_c[4], const __m256i &a_, const Element *b, uint64_t stride_b[4]);
 
     static void sub_avx(Element *c4, const Element *a4, const Element *b4);
-    static void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
+    static void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
     static void sub_avx(Element *c4, const Element *a4, const Element b);
     static void sub_avx(Element *c4, const Element a, const Element *b4);
-    static void sub_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
-    static void sub_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
-    static void sub_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    static void sub_avx(Element *c4, const Element a, const Element *b4, const uint64_t offset_b[4]);
-    static void sub_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);
+    static void sub_avx(Element *c4, const Element *a4, const Element b, uint64_t stride_a);
+    static void sub_avx(Element *c4, const Element a, const Element *b4, uint64_t stride_b);
+    static void sub_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
+    static void sub_avx(Element *c4, const Element a, const Element *b4, const uint64_t stride_b[4]);
+    static void sub_avx(Element *c4, const Element *a4, const Element b, const uint64_t stride_a[4]);
 
-    static void sub_avx(__m256i &c_, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
-    static void sub_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t offset_b);
-    static void sub_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t offset_a);
+    static void sub_avx(__m256i &c_, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
+    static void sub_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t stride_b);
+    static void sub_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t stride_a);
     static void sub_avx(__m256i &c_, const __m256i &a_, const Element b);
     static void sub_avx(__m256i &c_, const Element a, const __m256i &b_);
-    static void sub_avx(__m256i &c_, const Element *a4, const Element b, uint64_t offset_a);
-    static void sub_avx(__m256i &c_, const Element a, const Element *b4, uint64_t offset_b);
-    static void sub_avx(__m256i &c_, const Element *a4, uint64_t offset_a, const __m256i &b_);
-    static void sub_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    static void sub_avx(__m256i &c_, const Element a, const Element *b4, const uint64_t offset_b[4]);
-    static void sub_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
-    static void sub_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t offset_b[4]);
-    static void sub_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t offset_a[4]);
+    static void sub_avx(__m256i &c_, const Element *a4, const Element b, uint64_t stride_a);
+    static void sub_avx(__m256i &c_, const Element a, const Element *b4, uint64_t stride_b);
+    static void sub_avx(__m256i &c_, const Element *a4, uint64_t stride_a, const __m256i &b_);
+    static void sub_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
+    static void sub_avx(__m256i &c_, const Element a, const Element *b4, const uint64_t stride_b[4]);
+    static void sub_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t stride_a[4]);
+    static void sub_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t stride_b[4]);
+    static void sub_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t stride_a[4]);
 
-    static void sub_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
-    static void sub_avx(Element *c, const uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
-    static void sub_avx(Element *c, uint64_t offset_c, const Element a, const __m256i &b_);
-    static void sub_avx(Element *c, const uint64_t offset_c[4], const Element a, const __m256i &b_);
+    static void sub_avx(Element *c, uint64_t stride_c, const __m256i &a_, const __m256i &b_);
+    static void sub_avx(Element *c, const uint64_t stride_c[4], const __m256i &a_, const __m256i &b_);
+    static void sub_avx(Element *c, uint64_t stride_c, const Element a, const __m256i &b_);
+    static void sub_avx(Element *c, const uint64_t stride_c[4], const Element a, const __m256i &b_);
 
     static void mul_avx(Element *c4, const Element *a4, const Element *b4);
     static void mul_avx(Element *c4, const Element a, const Element *b4);
-    static void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
-    static void mul_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
-    static void mul_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
+    static void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
+    static void mul_avx(Element *c4, const Element a, const Element *b4, uint64_t stride_b);
+    static void mul_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
 
     static void mul_avx(__m256i &c_, const Element a, const __m256i &b_);
-    static void mul_avx(__m256i &c_, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
-    static void mul_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t offset_b);
-    static void mul_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t offset_a);
-    static void mul_avx(__m256i &c_, const Element a, const Element *b4, uint64_t offset_b);
-    static void mul_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    static void mul_avx(__m256i &c_, const __m256i &a_, const Element *b4, const uint64_t offset_b[4]);
-    static void mul_avx(__m256i &c_, const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
-    static void mul_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t offset_a[4]);
+    static void mul_avx(__m256i &c_, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
+    static void mul_avx(__m256i &c_, const __m256i &a_, const Element *b4, uint64_t stride_b);
+    static void mul_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t stride_a);
+    static void mul_avx(__m256i &c_, const Element a, const Element *b4, uint64_t stride_b);
+    static void mul_avx(__m256i &c_, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
+    static void mul_avx(__m256i &c_, const __m256i &a_, const Element *b4, const uint64_t stride_b[4]);
+    static void mul_avx(__m256i &c_, const Element *a4, const __m256i &b_, const uint64_t stride_a[4]);
+    static void mul_avx(__m256i &c_, const Element *a4, const Element b, const uint64_t stride_a[4]);
 
-    static void mul_avx(Element *c, uint64_t offset_c, const Element *a, uint64_t offset_a, const Element *b, uint64_t offset_b);
-    static void mul_avx(Element *c, uint64_t offset_c, const __m256i &a_, const __m256i &b_);
-    static void mul_avx(Element *c, uint64_t offset_c, const Element *a4, const __m256i &b_, uint64_t offset_a);
-    static void mul_avx(Element *c, uint64_t offset_c, const __m256i &a_, const Element *b, uint64_t offset_b);
-    static void mul_avx(Element *c, uint64_t offset_c, const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
-    static void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const __m256i &b_);
-    static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, uint64_t offset_a);
-    static void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
-    static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
-    static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a, const Element *b, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    
+    static void mul_avx(Element *c, uint64_t stride_c, const Element *a, uint64_t stride_a, const Element *b, uint64_t stride_b);
+    static void mul_avx(Element *c, uint64_t stride_c, const __m256i &a_, const __m256i &b_);
+    static void mul_avx(Element *c, uint64_t stride_c, const Element *a4, const __m256i &b_, uint64_t stride_a);
+    static void mul_avx(Element *c, uint64_t stride_c, const __m256i &a_, const Element *b, uint64_t stride_b);
+    static void mul_avx(Element *c, uint64_t stride_c, const Element *a4, const __m256i &b_, const uint64_t stride_a[4]);
+    static void mul_avx(Element *c, uint64_t stride_c[4], const __m256i &a_, const __m256i &b_);
+    static void mul_avx(Element *c, uint64_t stride_c[4], const Element *a4, const __m256i &b_, uint64_t stride_a);
+    static void mul_avx(Element *c, uint64_t stride_c[4], const __m256i &a_, const Element *b, uint64_t stride_b);
+    static void mul_avx(Element *c, uint64_t stride_c[4], const Element *a4, const __m256i &b_, const uint64_t stride_a[4]);
+    static void mul_avx(Element *c, uint64_t stride_c[4], const Element *a, const Element *b, const uint64_t stride_a[4], const uint64_t stride_b[4]);
 
     /*
         AVX512 operations
@@ -349,80 +355,105 @@ public:
     static void copy_avx512(Element *dst, uint64_t stride[AVX512_SIZE_], const __m512i &src_);
 
     // static void add_avx(Element *c4, const Element *a4, const Element *b4);
-    // static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_b);
-    // static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_b[4]);
+    // static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_b);
+    // static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_b[4]);
     // static void add_avx(Element *c4, const Element *a4, const Element b);
-    // static void add_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
-    // static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
-    // static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    // static void add_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);
+    // static void add_avx(Element *c4, const Element *a4, const Element b, uint64_t stride_a);
+    // static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
+    // static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
+    // static void add_avx(Element *c4, const Element *a4, const Element b, const uint64_t stride_a[4]);
 
-    static void add_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b);
-    static void add_avx512(__m512i &c_, const __m512i &a_, const Element *b8, const uint64_t offset_b[AVX512_SIZE_]);
+    static void add_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t stride_b);
+    static void add_avx512(__m512i &c_, const __m512i &a_, const Element *b8, const uint64_t stride_b[AVX512_SIZE_]);
     static void add_avx512(__m512i &c_, const __m512i &a_, const Element b);
-    static void add_avx512(__m512i &c_, const Element *a8, const Element b, uint64_t offset_a);
-    static void add_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b);
-    static void add_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_]);
-    static void add_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_]);
-    static void add_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const __m512i &b_);
-    static void add_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const Element *b8, uint64_t offset_b);
-    static void add_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_);
-    static void add_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b);
-    static void add_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b[AVX512_SIZE_]);
+    static void add_avx512(__m512i &c_, const Element *a8, const Element b, uint64_t stride_a);
+    static void add_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t stride_a, uint64_t stride_b);
+    static void add_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t stride_a[AVX512_SIZE_], const uint64_t stride_b[AVX512_SIZE_]);
+    static void add_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t stride_a[AVX512_SIZE_]);
+    static void add_avx512(Element *c, uint64_t stride_c, const __m512i &a_, const __m512i &b_);
+    static void add_avx512(Element *c, uint64_t stride_c, const __m512i &a_, const Element *b8, uint64_t stride_b);
+    static void add_avx512(Element *c, const uint64_t stride_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_);
+    static void add_avx512(Element *c, const uint64_t stride_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t stride_b);
+    static void add_avx512(Element *c, const uint64_t stride_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t stride_b[AVX512_SIZE_]);
 
     // static void sub_avx(Element *c4, const Element *a4, const Element *b4);
-    // static void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
+    // static void sub_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
     // static void sub_avx(Element *c4, const Element *a4, const Element b);
     // static void sub_avx(Element *c4, const Element a, const Element *b4);
-    // static void sub_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
-    // static void sub_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
-    // static void sub_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    // static void sub_avx(Element *c4, const Element a, const Element *b4, const uint64_t offset_b[4]);
-    // static void sub_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);
+    // static void sub_avx(Element *c4, const Element *a4, const Element b, uint64_t stride_a);
+    // static void sub_avx(Element *c4, const Element a, const Element *b4, uint64_t stride_b);
+    // static void sub_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
+    // static void sub_avx(Element *c4, const Element a, const Element *b4, const uint64_t stride_b[4]);
+    // static void sub_avx(Element *c4, const Element *a4, const Element b, const uint64_t stride_a[4]);
 
-    static void sub_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b);
-    static void sub_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b);
-    static void sub_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t offset_a);
+    static void sub_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t stride_a, uint64_t stride_b);
+    static void sub_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t stride_b);
+    static void sub_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t stride_a);
     static void sub_avx512(__m512i &c_, const __m512i &a_, const Element b);
     static void sub_avx512(__m512i &c_, const Element a, const __m512i &b_);
-    static void sub_avx512(__m512i &c_, const Element *a8, const Element b, uint64_t offset_a);
-    static void sub_avx512(__m512i &c_, const Element a, const Element *b8, uint64_t offset_b);
-    static void sub_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[4]);
-    static void sub_avx512(__m512i &c_, const Element a, const Element *b8, const uint64_t offset_b[AVX512_SIZE_]);
-    static void sub_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_]);
-    static void sub_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b[AVX512_SIZE_]);
-    static void sub_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t offset_a[AVX512_SIZE_]);
+    static void sub_avx512(__m512i &c_, const Element *a8, const Element b, uint64_t stride_a);
+    static void sub_avx512(__m512i &c_, const Element a, const Element *b8, uint64_t stride_b);
+    static void sub_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t stride_a[AVX512_SIZE_], const uint64_t stride_b[4]);
+    static void sub_avx512(__m512i &c_, const Element a, const Element *b8, const uint64_t stride_b[AVX512_SIZE_]);
+    static void sub_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t stride_a[AVX512_SIZE_]);
+    static void sub_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t stride_b[AVX512_SIZE_]);
+    static void sub_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t stride_a[AVX512_SIZE_]);
 
-    static void sub_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const __m512i &b_);
-    static void sub_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_);
-    static void sub_avx512(Element *c, uint64_t offset_c, const Element a, const __m512i &b_);
-    static void sub_avx512(Element *c, const uint64_t offset_c[AVX512_SIZE_], const Element a, const __m512i &b_);
+    static void sub_avx512(Element *c, uint64_t stride_c, const __m512i &a_, const __m512i &b_);
+    static void sub_avx512(Element *c, const uint64_t stride_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_);
+    static void sub_avx512(Element *c, uint64_t stride_c, const Element a, const __m512i &b_);
+    static void sub_avx512(Element *c, const uint64_t stride_c[AVX512_SIZE_], const Element a, const __m512i &b_);
 
     // static void mul_avx(Element *c4, const Element *a4, const Element *b4);
     // static void mul_avx(Element *c4, const Element a, const Element *b4);
-    // static void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
-    // static void mul_avx(Element *c4, const Element a, const Element *b4, uint64_t offset_b);
-    // static void mul_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
+    // static void mul_avx(Element *c4, const Element *a4, const Element *b4, uint64_t stride_a, uint64_t stride_b);
+    // static void mul_avx(Element *c4, const Element a, const Element *b4, uint64_t stride_b);
+    // static void mul_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t stride_a[4], const uint64_t stride_b[4]);
 
     static void mul_avx512(__m512i &c_, const Element a, const __m512i &b_);
-    static void mul_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t offset_a, uint64_t offset_b);
-    static void mul_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t offset_b);
-    static void mul_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t offset_a);
-    static void mul_avx512(__m512i &c_, const Element a, const Element *b8, uint64_t offset_b);
-    static void mul_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t offset_a[AVX512_SIZE_], const uint64_t offset_b[AVX512_SIZE_]);
-    static void mul_avx512(__m512i &c_, const __m512i &a_, const Element *b8, const uint64_t offset_b[AVX512_SIZE_]);
-    static void mul_avx512(__m512i &c_, const Element *a8, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_]);
-    static void mul_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t offset_a[AVX512_SIZE_]);
+    static void mul_avx512(__m512i &c_, const Element *a8, const Element *b8, uint64_t stride_a, uint64_t stride_b);
+    static void mul_avx512(__m512i &c_, const __m512i &a_, const Element *b8, uint64_t stride_b);
+    static void mul_avx512(__m512i &c_, const Element *a8, const __m512i &b_, uint64_t stride_a);
+    static void mul_avx512(__m512i &c_, const Element a, const Element *b8, uint64_t stride_b);
+    static void mul_avx512(__m512i &c_, const Element *a8, const Element *b8, const uint64_t stride_a[AVX512_SIZE_], const uint64_t stride_b[AVX512_SIZE_]);
+    static void mul_avx512(__m512i &c_, const __m512i &a_, const Element *b8, const uint64_t stride_b[AVX512_SIZE_]);
+    static void mul_avx512(__m512i &c_, const Element *a8, const __m512i &b_, const uint64_t stride_a[AVX512_SIZE_]);
+    static void mul_avx512(__m512i &c_, const Element *a8, const Element b, const uint64_t stride_a[AVX512_SIZE_]);
 
-    static void mul_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const __m512i &b_);
-    static void mul_avx512(Element *c, uint64_t offset_c, const Element *a8, const __m512i &b_, uint64_t offset_a);
-    static void mul_avx512(Element *c, uint64_t offset_c, const __m512i &a_, const Element *b, uint64_t offset_b);
-    static void mul_avx512(Element *c, uint64_t offset_c, const Element *a8, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_]);
-    static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_);
-    static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, uint64_t offset_a);
-    static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b);
-    static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_]);
+    static void mul_avx512(Element *c, uint64_t stride_c, const __m512i &a_, const __m512i &b_);
+    static void mul_avx512(Element *c, uint64_t stride_c, const Element *a8, const __m512i &b_, uint64_t stride_a);
+    static void mul_avx512(Element *c, uint64_t stride_c, const __m512i &a_, const Element *b, uint64_t stride_b);
+    static void mul_avx512(Element *c, uint64_t stride_c, const Element *a8, const __m512i &b_, const uint64_t stride_a[AVX512_SIZE_]);
+    static void mul_avx512(Element *c, uint64_t stride_c[AVX512_SIZE_], const __m512i &a_, const __m512i &b_);
+    static void mul_avx512(Element *c, uint64_t stride_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, uint64_t stride_a);
+    static void mul_avx512(Element *c, uint64_t stride_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t stride_b);
+    static void mul_avx512(Element *c, uint64_t stride_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, const uint64_t stride_a[AVX512_SIZE_]);
 #endif
+
+    // Operands Element* or __m256i&
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const Element *b4, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const __m256i &b_);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const __m256i &a_, const Element *b4, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, uint64_t stride_a, const Element *b4, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const __m256i &a_, const __m256i &b_);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, uint64_t stride_a, const __m256i &b_);
+    static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const Element *b4, const uint64_t stride_b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const __m256i &b_);
+
+    // Argument b being Element& (constant for all 4 lanes)
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const Element &b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const __m256i &a_, const Element &b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, uint64_t stride_a, const Element &b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const Element &b);
+
+    // Argument a being Element& (only to be uses with op=SUB)
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element &a, const Element *b, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element &a, const __m256i &b_);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element &a, const Element *b, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element &a, const __m256i &b_);
+
+    // generic option to be used in first and last block of rows: allways operated with Element*
+    static void op_avx(uint64_t op, Element *c4, const Element *a4, const Element *b4, uint64_t stride_c[4], uint64_t stride_a[4], uint64_t stride_b[4]);
 };
 
 /*

@@ -2,6 +2,7 @@
 #define GOLDILOCKS_AVX
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
+#include <cassert>
 
 // NOTATION:
 // _c value is in canonical form
@@ -29,9 +30,34 @@ inline void Goldilocks::set_avx(__m256i &a, const Goldilocks::Element &a0, const
     a = _mm256_set_epi64x(a3.fe, a2.fe, a1.fe, a0.fe);
 }
 
-inline void Goldilocks::load_avx(__m256i &a, const Goldilocks::Element *a4)
+inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element *a4)
 {
-    a = _mm256_loadu_si256((__m256i *)(a4));
+    a_ = _mm256_loadu_si256((__m256i *)(a4));
+}
+
+inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t offset_a)
+{
+    Goldilocks::Element a4_[4];
+
+    a4_[0] = a4[0];
+    a4_[1] = a4[offset_a];
+    a4_[2] = a4[offset_a << 1];
+    a4_[3] = a4[(offset_a << 1) + offset_a];
+    a_ = _mm256_loadu_si256((__m256i *)(a4_));
+}
+
+inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element &a)
+{
+    a_ = _mm256_set1_epi64x(a.fe);
+}
+inline void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t offset_a[4])
+{
+    Goldilocks::Element a4_[4];
+    a4_[0] = a4[offset_a[0]];
+    a4_[1] = a4[offset_a[1]];
+    a4_[2] = a4[offset_a[2]];
+    a4_[3] = a4[offset_a[3]];
+    a_ = _mm256_loadu_si256((__m256i *)(a4_));
 }
 
 // We assume a4_a aligned on a 32-byte boundary
@@ -44,6 +70,15 @@ inline void Goldilocks::store_avx(Goldilocks::Element *a4, const __m256i &a)
 {
     _mm256_storeu_si256((__m256i *)a4, a);
 }
+inline void Goldilocks::store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t offset_a)
+{
+    Goldilocks::Element a4_[4];
+    _mm256_storeu_si256((__m256i *)a4_, a);
+    a4[0] = a4_[0];
+    a4[offset_a] = a4_[1];
+    a4[offset_a << 1] = a4_[2];
+    a4[(offset_a << 1) + offset_a] = a4_[3];
+}
 
 // We assume a4_a aligned on a 32-byte boundary
 inline void Goldilocks::store_avx_a(Goldilocks::Element *a4_a, const __m256i &a)
@@ -54,6 +89,16 @@ inline void Goldilocks::store_avx_a(Goldilocks::Element *a4_a, const __m256i &a)
 inline void Goldilocks::shift_avx(__m256i &a_s, const __m256i &a)
 {
     a_s = _mm256_xor_si256(a, MSB);
+}
+
+inline void store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t offset_a[4])
+{
+    Goldilocks::Element a4_[4];
+    _mm256_storeu_si256((__m256i *)a4_, a);
+    a4[offset_a[0]] = a4_[0];
+    a4[offset_a[1]] = a4_[1];
+    a4[offset_a[2]] = a4_[2];
+    a4[offset_a[3]] = a4_[3];
 }
 
 inline void Goldilocks::toCanonical_avx(__m256i &a_c, const __m256i &a)
@@ -753,7 +798,7 @@ inline void Goldilocks::add_avx(Element *c4, const Element *a4, const Element *b
     store_avx(c4, c_);
 }
 
-inline void Goldilocks::add_avx(Element *c4, uint64_t offset_c, const Element *a4, uint64_t offset_a, const Element *b4,  uint64_t offset_b)
+inline void Goldilocks::add_avx(Element *c4, uint64_t offset_c, const Element *a4, uint64_t offset_a, const Element *b4, uint64_t offset_b)
 {
     Element bb[4];
     Element aa[4];
@@ -1134,7 +1179,6 @@ inline void Goldilocks::sub_avx(__m256i &c_, const Element *a4, uint64_t offset_
     load_avx(a_, aa);
     sub_avx(c_, a_, b_);
 }
-
 
 inline void Goldilocks::sub_avx(__m256i &c_, const Element *a4, const __m256i &b_, uint64_t offset_a)
 {
@@ -1668,4 +1712,5 @@ inline void Goldilocks::mul_avx(Element *c, uint64_t offset_c[4], const __m256i 
         c[offset_c[k]] = c4[k];
     }
 };
+
 #endif
