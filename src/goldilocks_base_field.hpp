@@ -440,7 +440,7 @@ public:
     static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const Element *b4, const uint64_t stride_b);
     static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const __m256i &b_);
 
-    // Argument b being Element& (constant for all 4 lanes)
+    // Argument b being Element& (constant for all 4 lanes i.e. stride=0)
     static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const Element &b);
     static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const __m256i &a_, const Element &b);
     static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, uint64_t stride_a, const Element &b);
