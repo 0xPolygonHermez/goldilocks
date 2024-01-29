@@ -168,12 +168,12 @@ public:
     static void load_avx(__m256i &a_, const Goldilocks::Element *a4);
     static void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t stride_a);
     static void load_avx(__m256i &a_, const Goldilocks::Element &a);
-    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t stride_a[4]);
+    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t stride_a[4]);
     static void load_avx_a(__m256i &a, const Goldilocks::Element *a4_a);
 
     static void store_avx(Goldilocks::Element *a4, const __m256i &a);
     static void store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t stride_a);
-    static void store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t stride_a[4]);
+    static void store_avx(Goldilocks::Element *a4, const __m256i &a, const uint64_t stride_a[4]);
     static void store_avx_a(Goldilocks::Element *a4_a, const __m256i &a);
 
     static void shift_avx(__m256i &a_s, const __m256i &a);
@@ -453,7 +453,7 @@ public:
     static inline void op_avx(uint64_t op, __m256i &c_, const Element &a, const __m256i &b_);
 
     // generic option to be used in first and last block of rows: allways operated with Element*
-    static void op_avx(uint64_t op, Element *c4, const Element *a4, const Element *b4, uint64_t stride_c[4], uint64_t stride_a[4], uint64_t stride_b[4]);
+    static inline void op_avx(uint64_t op, Element *c4, const uint64_t offsets_c[4], const Element *a4, const uint64_t offsets_a[4], const Element *b4, const uint64_t offsets_b[4]);
 };
 
 /*

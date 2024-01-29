@@ -134,13 +134,13 @@ void Goldilocks::op_avx(uint64_t op, __m256i &c_, const Element &a, const __m256
 };
 
 // generic option to be used in first and last block of rows: allways operated with Element*
-void Goldilocks::op_avx(uint64_t op, Element *c4, const Element *a4, const Element *b4, uint64_t stride_c[4], uint64_t stride_a[4], uint64_t stride_b[4])
+void Goldilocks::op_avx(uint64_t op, Element *c4, const uint64_t offsets_c[4], const Element *a4, const uint64_t offsets_a[4], const Element *b4, const uint64_t offsets_b[4])
 {
     __m256i a_, b_, c_;
-    load_avx(a_, a4, stride_a);
-    load_avx(b_, b4, stride_b);
+    load_avx(a_, a4, offsets_a);
+    load_avx(b_, b4, offsets_b);
     op_avx(op, c_, a_, b_);
-    store_avx(c4, c_, stride_c);
+    store_avx(c4, c_, offsets_c);
 };
 
 #endif

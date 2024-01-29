@@ -50,7 +50,7 @@ inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element &a)
 {
     a_ = _mm256_set1_epi64x(a.fe);
 }
-inline void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t offset_a[4])
+inline void load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t offset_a[4])
 {
     Goldilocks::Element a4_[4];
     a4_[0] = a4[offset_a[0]];
@@ -91,7 +91,7 @@ inline void Goldilocks::shift_avx(__m256i &a_s, const __m256i &a)
     a_s = _mm256_xor_si256(a, MSB);
 }
 
-inline void store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t offset_a[4])
+inline void store_avx(Goldilocks::Element *a4, const __m256i &a, const uint64_t offset_a[4])
 {
     Goldilocks::Element a4_[4];
     _mm256_storeu_si256((__m256i *)a4_, a);
