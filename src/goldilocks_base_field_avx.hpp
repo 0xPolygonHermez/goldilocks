@@ -50,7 +50,7 @@ inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element &a)
 {
     a_ = _mm256_set1_epi64x(a.fe);
 }
-inline void load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t offset_a[4])
+inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t offset_a[4])
 {
     Goldilocks::Element a4_[4];
     a4_[0] = a4[offset_a[0]];
@@ -70,7 +70,7 @@ inline void Goldilocks::store_avx(Goldilocks::Element *a4, const __m256i &a)
 {
     _mm256_storeu_si256((__m256i *)a4, a);
 }
-inline void Goldilocks::store_avx(Goldilocks::Element *a4, const __m256i &a, uint64_t offset_a)
+inline void Goldilocks::store_avx(Goldilocks::Element *a4, const __m256i &a, const uint64_t offset_a)
 {
     Goldilocks::Element a4_[4];
     _mm256_storeu_si256((__m256i *)a4_, a);
@@ -91,7 +91,7 @@ inline void Goldilocks::shift_avx(__m256i &a_s, const __m256i &a)
     a_s = _mm256_xor_si256(a, MSB);
 }
 
-inline void store_avx(Goldilocks::Element *a4, const __m256i &a, const uint64_t offset_a[4])
+inline void Goldilocks::store_avx(Goldilocks::Element *a4, const __m256i &a, const uint64_t offset_a[4])
 {
     Goldilocks::Element a4_[4];
     _mm256_storeu_si256((__m256i *)a4_, a);
@@ -101,7 +101,7 @@ inline void store_avx(Goldilocks::Element *a4, const __m256i &a, const uint64_t 
     a4[offset_a[3]] = a4_[3];
 }
 
-inline void Goldilocks::toCanonical_avx(__m256i &a_c, const __m256i &a)
+inline void Goldilocks::Goldilocks::toCanonical_avx(__m256i &a_c, const __m256i &a)
 {
     __m256i a_s, a_sc;
     shift_avx(a_s, a);
@@ -628,6 +628,14 @@ inline void Goldilocks::copy_avx(Element *dst, const Element &src)
         dst[i].fe = src.fe;
     }
 }
+inline void Goldilocks::copy_avx(Element *c, uint64_t offset_c[4], const Element *a, uint64_t stride_a[4])
+{
+    // Does not make sense to vectorize yet
+    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
+    {
+        c[offset_c[i]].fe = a[stride_a[i]].fe;
+    }
+}
 
 inline void Goldilocks::copy_avx(Element *dst, const Element *src)
 {
@@ -644,6 +652,13 @@ inline void Goldilocks::copy_avx(Element *dst, const Element *src, uint64_t stri
     for (uint64_t i = 0; i < AVX_SIZE_; ++i)
     {
         dst[i].fe = src[i * stride].fe;
+    }
+}
+inline void Goldilocks::copy_avx(Element *c, const uint64_t stride_c, const Element &a)
+{
+    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
+    {
+        c[i * stride_c].fe = a.fe;
     }
 }
 
