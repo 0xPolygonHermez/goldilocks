@@ -70,7 +70,7 @@ inline void Goldilocks::store_avx(Goldilocks::Element *a4, const __m256i &a)
 {
     _mm256_storeu_si256((__m256i *)a4, a);
 }
-inline void Goldilocks::store_avx(Goldilocks::Element *a4, const uint64_t offset_a, const __m256i &a)
+inline void Goldilocks::store_avx(Goldilocks::Element *a4, uint64_t offset_a, const __m256i &a)
 {
     Goldilocks::Element a4_[4];
     _mm256_storeu_si256((__m256i *)a4_, a);

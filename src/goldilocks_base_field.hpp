@@ -169,12 +169,12 @@ public:
 
     static void load_avx(__m256i &a_, const Goldilocks::Element *a4);
     static void load_avx(__m256i &a_, const Goldilocks::Element &a);
-    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t stride_a);
+    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t stride_a);
     static void load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t stride_a[4]);
     static void load_avx_a(__m256i &a, const Goldilocks::Element *a4_a);
 
     static void store_avx(Goldilocks::Element *a4, const __m256i &a);
-    static void store_avx(Goldilocks::Element *a4, const uint64_t stride_a, const __m256i &a);
+    static void store_avx(Goldilocks::Element *a4, uint64_t stride_a, const __m256i &a);
     static void store_avx(Goldilocks::Element *a4, const uint64_t stride_a[4], const __m256i &a);
     static void store_avx_a(Goldilocks::Element *a4_a, const __m256i &a);
 
@@ -435,41 +435,41 @@ public:
 #endif
 
     // Operands Element* or __m256i&
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const Element *a4, const uint64_t stride_a, const Element *b4, const uint64_t stride_b);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const Element *a4, const uint64_t stride_a, const __m256i &b_);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const __m256i &a_, const Element *b4, const uint64_t stride_b);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const __m256i &a_, const __m256i &b_);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const Element *b4, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const __m256i &b_);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const __m256i &a_, const Element *b4, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const __m256i &a_, const __m256i &b_);
 
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element *a4, const uint64_t stride_a, const Element *b4, const uint64_t stride_b);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element *a4, const uint64_t stride_a, const __m256i &b_);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const __m256i &a_, const Element *b4, const uint64_t stride_b);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const __m256i &a_, const __m256i &b_);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, uint64_t stride_a, const Element *b4, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, uint64_t stride_a, const __m256i &b_);
+    static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const Element *b4, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const __m256i &b_);
 
     // Argument b being Element& (constant for all 4 lanes i.e. stride=0)
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const Element *a4, const uint64_t stride_a, const Element &b);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const __m256i &a_, const Element &b);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element *a4, const uint64_t stride_a, const Element &b);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const __m256i &a_, const Element &b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element *a4, uint64_t stride_a, const Element &b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const __m256i &a_, const Element &b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, uint64_t stride_a, const Element &b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const Element &b);
 
     // Argument a being Element& (only to be uses with op=SUB)
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const Element &a, const Element *b, const uint64_t stride_b);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const Element &a, const __m256i &b_);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element &a, const Element *b, const uint64_t stride_b);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element &a, const __m256i &b_);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element &a, const Element *b, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element &a, const __m256i &b_);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element &a, const Element *b, uint64_t stride_b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element &a, const __m256i &b_);
 
     // Argument a and b being Element&
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t stride_c, const Element &a, const Element &b);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element &a, const Element &b);
+    static inline void op_avx(uint64_t op, Element *c4, uint64_t stride_c, const Element &a, const Element &b);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element &a, const Element &b);
 
     // generic option to be used in first and last block of rows: allways operated with Element*
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t offsets_c[4], const Element *a4, const uint64_t offsets_a[4], const Element *b4, const uint64_t offsets_b[4]);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t offsets_c[4], const __m256i &a_, const Element *b4, const uint64_t offsets_b[4]);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t offsets_c[4], const Element *a4, const uint64_t offsets_a[4], const __m256i &b_);
-    static inline void op_avx(const uint64_t op, Element *c4, const uint64_t offsets_c[4], const __m256i &a_, const __m256i &b_);
+    static inline void op_avx(uint64_t op, Element *c4, const uint64_t offsets_c[4], const Element *a4, const uint64_t offsets_a[4], const Element *b4, const uint64_t offsets_b[4]);
+    static inline void op_avx(uint64_t op, Element *c4, const uint64_t offsets_c[4], const __m256i &a_, const Element *b4, const uint64_t offsets_b[4]);
+    static inline void op_avx(uint64_t op, Element *c4, const uint64_t offsets_c[4], const Element *a4, const uint64_t offsets_a[4], const __m256i &b_);
+    static inline void op_avx(uint64_t op, Element *c4, const uint64_t offsets_c[4], const __m256i &a_, const __m256i &b_);
 
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element *a4, const uint64_t offsets_a[4], const Element *b4, const uint64_t offsets_b[4]);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const Element *a4, const uint64_t offsets_a[4], const __m256i &b_);
-    static inline void op_avx(const uint64_t op, __m256i &c_, const __m256i &a_, const Element *b4, const uint64_t offsets_b[4]);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, const uint64_t offsets_a[4], const Element *b4, const uint64_t offsets_b[4]);
+    static inline void op_avx(uint64_t op, __m256i &c_, const Element *a4, const uint64_t offsets_a[4], const __m256i &b_);
+    static inline void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const Element *b4, const uint64_t offsets_b[4]);
 };
 
 /*
@@ -487,6 +487,7 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_scalar.hpp"
 #include "goldilocks_base_field_batch.hpp"
 #include "goldilocks_base_field_avx.hpp"
+#include "goldilocks_base_field_operations.hpp"
 #ifdef __AVX512__
 #include "goldilocks_base_field_avx512.hpp"
 #endif
