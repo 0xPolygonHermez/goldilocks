@@ -891,7 +891,6 @@ void Goldilocks3::sub31_4rows(Goldilocks::Element *c, uint64_t stride_c, const G
         c[k * stride_c + 2] = a[k * stride_a + 2];
     }
 }
-
 void Goldilocks3::sub31_4rows(Goldilocks::Element *c, uint64_t stride_c, const Goldilocks::Element *a, uint64_t stride_a, const Goldilocks::Element &b)
 {
     for (uint64_t k = 0; k < AVX_SIZE_; ++k)
@@ -916,8 +915,8 @@ void Goldilocks3::sub13_4rows(Goldilocks::Element *c, uint64_t stride_c, const G
     for (uint64_t k = 0; k < AVX_SIZE_; ++k)
     {
         c[k * stride_c] = a - b[k * stride_b];
-        c[k * stride_c + 1] = b[k * stride_b + 1];
-        c[k * stride_c + 2] = b[k * stride_b + 2];
+        c[k * stride_c + 1] = -b[k * stride_b + 1];
+        c[k * stride_c + 2] = -b[k * stride_b + 2];
     }
 }
 void Goldilocks3::mul13_4rows(Goldilocks3::Element_avx &c_, const __m256i &a_, const Goldilocks3::Element_avx &b_)
