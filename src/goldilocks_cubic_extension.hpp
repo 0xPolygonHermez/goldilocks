@@ -4477,27 +4477,6 @@ public:
     static inline void op_13_avx(const uint64_t op, Goldilocks3::Element_avx &c_, const Goldilocks::Element &a, const Goldilocks::Element *b, const uint64_t stride_b);
     static inline void op_13_avx(const uint64_t op, Goldilocks3::Element_avx &c_, const Goldilocks::Element &a, const Goldilocks3::Element_avx &b_);
 
-private:
-    static inline void add31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
-    static inline void add31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element &b);
-    static inline void add31_4rows(Goldilocks::Element *c, const uint64_t stride_c[4], const Goldilocks::Element *a, const uint64_t stride_a[4], const Goldilocks::Element *b, const uint64_t stride_b[4]);
-
-    static inline void add13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
-    static inline void add13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element &a, const Goldilocks::Element *b, const uint64_t stride_b);
-    static inline void add13_4rows(Goldilocks::Element *c, const uint64_t stride_c[4], const Goldilocks::Element *a, const uint64_t stride_a[4], const Goldilocks::Element *b, const uint64_t stride_b[4]);
-
-    static inline void sub31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
-    static inline void sub31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element &b);
-    static inline void sub31_4rows(Goldilocks::Element *c, const uint64_t stride_c[4], const Goldilocks::Element *a, const uint64_t stride_a[4], const Goldilocks::Element *b, const uint64_t stride_b[4]);
-
-    static inline void sub13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
-    static inline void sub13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element &a, const Goldilocks::Element *b, const uint64_t stride_b);
-    static inline void sub13_4rows(Goldilocks::Element *c, const uint64_t stride_c[4], const Goldilocks::Element *a, const uint64_t stride_a[4], const Goldilocks::Element *b, const uint64_t stride_b[4]);
-
-    static inline void mul13_4rows(Element_avx &c_, const __m256i &a_, const Element_avx &b_);
-    static inline void mul31_4rows(Element_avx &c_, const Element_avx &a_, const __m256i &b_);
-
-public:
     // Geneeric operations
     static inline void op_avx(uint64_t op, Goldilocks::Element *c4, const uint64_t stride_c[4], const Goldilocks::Element *a4, uint64_t const stride_a[4], const Goldilocks::Element *b4, const uint64_t stride_b[4]);
     static inline void op_avx(uint64_t op, Goldilocks::Element *c4, const uint64_t stride_c[4], const Goldilocks::Element *a4, uint64_t const stride_a[4], const Goldilocks3::Element_avx &b_);
@@ -4522,6 +4501,22 @@ public:
     static inline void op_13_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Goldilocks::Element *a4, const uint64_t stride_a[4], const Goldilocks::Element *b4, const uint64_t stride_b[4]);
     static inline void op_13_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Goldilocks::Element *a4, const uint64_t stride_a[4], const Goldilocks3::Element_avx &b_);
     static inline void op_13_avx(const uint64_t op, Goldilocks3::Element_avx &c_, const __m256i &a_, const Goldilocks::Element *b, const uint64_t offsets_b[4]);
+
+private:
+    static inline void add31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
+    static inline void add31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element &b);
+
+    static inline void add13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
+    static inline void add13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element &a, const Goldilocks::Element *b, const uint64_t stride_b);
+
+    static inline void sub31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
+    static inline void sub31_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element &b);
+
+    static inline void sub13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element *a, const uint64_t stride_a, const Goldilocks::Element *b, const uint64_t stride_b);
+    static inline void sub13_4rows(Goldilocks::Element *c, const uint64_t stride_c, const Goldilocks::Element &a, const Goldilocks::Element *b, const uint64_t stride_b);
+
+    static inline void mul13_4rows(Element_avx &c_, const __m256i &a_, const Element_avx &b_);
+    static inline void mul31_4rows(Element_avx &c_, const Element_avx &a_, const __m256i &b_);
 };
 
 #endif // GOLDILOCKS_F3
