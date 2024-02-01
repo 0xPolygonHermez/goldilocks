@@ -19,6 +19,9 @@ void Goldilocks3::op_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Goldil
     case 2:
         Goldilocks3::mul_avx(c_, a_, b_);
         break;
+    case 3:
+        Goldilocks3::sub_avx(c_, b_, a_);
+        break;
     default:
         assert(0);
         break;

@@ -21,6 +21,8 @@ void Goldilocks::op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const __m25
     case 2:
         mult_avx(c_, a_, b_);
         break;
+    case 3:
+        sub_avx(c_, b_, a_);
     default:
         assert(0);
         break;
