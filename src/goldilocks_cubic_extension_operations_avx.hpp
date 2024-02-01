@@ -95,6 +95,8 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
         mul31_4rows(c_, a_, b_);
         store_avx(c, stride_c, c_);
         break;
+    case 3:
+        sub13_4rows(c, stride_c, b, stride_b, a, stride_a);
     default:
         assert(0);
         break;
@@ -118,6 +120,8 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
         mul31_4rows(c_, a_, b_);
         store_avx(c, stride_c, c_);
         break;
+    case 3:
+        sub13_4rows(c, stride_c, b, a, stride_a);
     default:
         assert(0);
         break;
@@ -191,6 +195,9 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
         mul31_4rows(c_, a_, b_);
         store_avx(c, stride_c, c_);
         break;
+    case 3:
+        Goldilocks::store_avx(b, b_);
+        sub13_4rows(c, stride_c, b, 1, a, stride_a);
     default:
         assert(0);
         break;
@@ -247,6 +254,13 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
         mul31_4rows(c_, a_, b_);
         store_avx(c, stride_c, c_);
         break;
+    case 3:
+        Goldilocks::load_avx(b_, b, stride_b);
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
+        store_avx(c, stride_c, c_);
+        break;
     default:
         assert(0);
         break;
@@ -278,6 +292,13 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
         mul31_4rows(c_, a_, b_);
         store_avx(c, stride_c, c_);
         break;
+    case 3:
+        Goldilocks::load_avx(b_, b);
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
+        store_avx(c, stride_c, c_);
+        break;
     default:
         assert(0);
         break;
@@ -300,8 +321,8 @@ void Goldilocks3::op_13_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
     case 1:
         Goldilocks::load_avx(a_, a, stride_a);
         Goldilocks::sub_avx(c_[0], a_, b_[0]);
-        c_[1] = b_[1];
-        c_[2] = b_[2];
+        Goldilocks::sub_avx(c_[1], P, b_[1]);
+        Goldilocks::sub_avx(c_[2], P, b_[2]);
         store_avx(c, stride_c, c_);
         break;
     case 2:
@@ -330,8 +351,8 @@ void Goldilocks3::op_13_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
     case 1:
         Goldilocks::load_avx(a_, a);
         Goldilocks::sub_avx(c_[0], a_, b_[0]);
-        c_[1] = b_[1];
-        c_[2] = b_[2];
+        Goldilocks::sub_avx(c_[1], P, b_[1]);
+        Goldilocks::sub_avx(c_[2], P, b_[2]);
         store_avx(c, stride_c, c_);
         break;
     case 2:
@@ -367,6 +388,11 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Gol
     case 2:
         mul31_4rows(c_, a_, b_);
         break;
+    case 3:
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
+        break;
     default:
         assert(0);
         break;
@@ -393,6 +419,11 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Gol
         break;
     case 2:
         mul31_4rows(c_, a_, b_);
+        break;
+    case 3:
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
         break;
     default:
         assert(0);
@@ -476,6 +507,11 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks::Element *c, uint64_t stride
     case 2:
         mul31_4rows(c_, a_, b_);
         break;
+    case 3:
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
+        break;
     default:
         assert(0);
         break;
@@ -526,6 +562,11 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Ele
     case 2:
         mul31_4rows(c_, a_, b_);
         break;
+    case 3:
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
+        break;
     default:
         assert(0);
         break;
@@ -549,6 +590,11 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Ele
         break;
     case 2:
         mul31_4rows(c_, a_, b_);
+        break;
+    case 3:
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
         break;
     default:
         assert(0);
@@ -623,6 +669,11 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Gol
     case 2:
         mul31_4rows(c_, a_, b_);
         break;
+    case 3:
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
+        break;
     default:
         assert(0);
         break;
@@ -669,6 +720,11 @@ void Goldilocks3::op_31_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Ele
         break;
     case 2:
         mul31_4rows(c_, a_, b_);
+        break;
+    case 3:
+        Goldilocks::sub_avx(c_[0], b_, a_[0]);
+        Goldilocks::sub_avx(c_[1], P, a_[1]);
+        Goldilocks::sub_avx(c_[2], P, a_[2]);
         break;
     default:
         assert(0);
