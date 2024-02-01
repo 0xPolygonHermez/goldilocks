@@ -412,7 +412,7 @@ void Goldilocks3::op_13_avx(uint64_t op, Goldilocks3::Element_avx &c_, const Gol
         break;
     case 1:
         Goldilocks::Element c[12];
-        sub31_4rows(c, 3, a, stride_a, b, stride_b);
+        sub13_4rows(c, 3, a, stride_a, b, stride_b);
         load_avx(c_, c, 3);
         break;
     case 2:
@@ -683,8 +683,8 @@ void Goldilocks3::op_13_avx(uint64_t op, Goldilocks3::Element_avx &c_, const __m
         break;
     case 1:
         Goldilocks::sub_avx(c_[0], a_, b_[0]);
-        Goldilocks::sub_avx(c_[0], P, b_[1]);
-        Goldilocks::sub_avx(c_[0], P, b_[2]);
+        Goldilocks::sub_avx(c_[1], P, b_[1]);
+        Goldilocks::sub_avx(c_[2], P, b_[2]);
         break;
     case 2:
         mul13_4rows(c_, a_, b_);
