@@ -119,7 +119,7 @@ public:
         a[stride_a + 2] = a2[1];
         int ind = stride_a << 1;
         a[ind] = a0[2];
-        a[ind + 1] = a1[3];
+        a[ind + 1] = a1[2];
         a[ind + 2] = a2[2];
         ind = ind + stride_a;
         a[ind] = a0[3];
