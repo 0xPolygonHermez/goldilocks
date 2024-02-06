@@ -57,32 +57,23 @@ public:
     static inline void load_avx(Element_avx &a_, const Goldilocks::Element *a, uint64_t stride_a)
     {
         Goldilocks::Element a0[4], a1[4], a2[4];
-        if (stride_a > 0)
-        {
-            a0[0] = a[0];
-            a1[0] = a[1];
-            a2[0] = a[2];
-            a0[1] = a[stride_a];
-            a1[1] = a[stride_a + 1];
-            a2[1] = a[stride_a + 2];
-            int ind = stride_a << 1;
-            a0[2] = a[ind];
-            a1[2] = a[ind + 1];
-            a2[2] = a[ind + 2];
-            ind = ind + stride_a;
-            a0[3] = a[ind];
-            a1[3] = a[ind + 1];
-            a2[3] = a[ind + 2];
-            a_[0] = _mm256_loadu_si256((__m256i *)(a0));
-            a_[1] = _mm256_loadu_si256((__m256i *)(a1));
-            a_[2] = _mm256_loadu_si256((__m256i *)(a2));
-        }
-        else
-        {
-            a_[0] = _mm256_set1_epi64x(a[0].fe);
-            a_[1] = _mm256_set1_epi64x(a[1].fe);
-            a_[2] = _mm256_set1_epi64x(a[2].fe);
-        }
+        a0[0] = a[0];
+        a1[0] = a[1];
+        a2[0] = a[2];
+        a0[1] = a[stride_a];
+        a1[1] = a[stride_a + 1];
+        a2[1] = a[stride_a + 2];
+        int ind = stride_a << 1;
+        a0[2] = a[ind];
+        a1[2] = a[ind + 1];
+        a2[2] = a[ind + 2];
+        ind = ind + stride_a;
+        a0[3] = a[ind];
+        a1[3] = a[ind + 1];
+        a2[3] = a[ind + 2];
+        a_[0] = _mm256_loadu_si256((__m256i *)(a0));
+        a_[1] = _mm256_loadu_si256((__m256i *)(a1));
+        a_[2] = _mm256_loadu_si256((__m256i *)(a2));
     };
     static inline void load_avx(Element_avx &a_, const Goldilocks::Element *a, const uint64_t offsets_a[4])
     {
