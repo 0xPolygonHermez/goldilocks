@@ -157,6 +157,55 @@ public:
         a[offsets_a[3] + 2] = a2[3];
     };
 
+    static inline void mul_avx(Goldilocks3::Element_avx &c_, const Goldilocks3::Element_avx &a_, const Goldilocks3::Element_avx &challenge_, const Goldilocks3::Element_avx &challenge_ops_) {
+        __m256i A_, B_, C_, D_, E_, F_, G_;
+        __m256i auxr_;
+
+        Goldilocks::add_avx(A_, a_[0], a_[1]);
+        Goldilocks::add_avx(B_, a_[0], a_[2]);
+        Goldilocks::add_avx(C_, a_[1], a_[2]);
+        Goldilocks::mult_avx(A_, A_, challenge_ops_[0]);
+        Goldilocks::mult_avx(B_, B_, challenge_ops_[1]);
+        Goldilocks::mult_avx(C_, C_, challenge_ops_[2]);
+        Goldilocks::mult_avx(D_, a_[0], challenge_[0]);
+        Goldilocks::mult_avx(E_, a_[1], challenge_[1]);
+        Goldilocks::mult_avx(F_, a_[2], challenge_[2]);
+        Goldilocks::sub_avx(G_, D_, E_);
+
+        Goldilocks::add_avx(c_[0], C_, G_);
+        Goldilocks::sub_avx(c_[0], c_[0], F_);
+        Goldilocks::add_avx(c_[1], A_, C_);
+        Goldilocks::add_avx(auxr_, E_, E_);
+        Goldilocks::add_avx(auxr_, auxr_, D_);
+        Goldilocks::sub_avx(c_[1], c_[1], auxr_);
+        Goldilocks::sub_avx(c_[2], B_, G_);
+    };
+    
+    static inline void mul_avx(__m256i *c_, uint64_t stride_c, const __m256i *a_, uint64_t stride_a, const Goldilocks3::Element_avx &challenge_, const Goldilocks3::Element_avx &challenge_ops_) {
+        __m256i A_, B_, C_, D_, E_, F_, G_;
+        __m256i auxr_;
+
+        Goldilocks::add_avx(A_, a_[0], a_[stride_a]);
+        Goldilocks::add_avx(B_, a_[0], a_[2*stride_a]);
+        Goldilocks::add_avx(C_, a_[stride_a], a_[2*stride_a]);
+        Goldilocks::mult_avx(A_, A_, challenge_ops_[0]);
+        Goldilocks::mult_avx(B_, B_, challenge_ops_[1]);
+        Goldilocks::mult_avx(C_, C_, challenge_ops_[2]);
+        Goldilocks::mult_avx(D_, a_[0], challenge_[0]);
+        Goldilocks::mult_avx(E_, a_[stride_a], challenge_[1]);
+        Goldilocks::mult_avx(F_, a_[2*stride_a], challenge_[2]);
+        Goldilocks::sub_avx(G_, D_, E_);
+
+        Goldilocks::add_avx(c_[0], C_, G_);
+        Goldilocks::sub_avx(c_[0], c_[0], F_);
+        Goldilocks::add_avx(c_[stride_c], A_, C_);
+        Goldilocks::add_avx(auxr_, E_, E_);
+        Goldilocks::add_avx(auxr_, auxr_, D_);
+        Goldilocks::sub_avx(c_[stride_c], c_[stride_c], auxr_);
+        Goldilocks::sub_avx(c_[2*stride_c], B_, G_);
+    };
+
+
     static inline void copy(Element &dst, const Element &src)
     {
         for (uint64_t i = 0; i < FIELD_EXTENSION; i++)
