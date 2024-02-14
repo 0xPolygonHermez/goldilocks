@@ -244,10 +244,10 @@ inline void Goldilocks::mult_avx_128(__m256i &c_h, __m256i &c_l, const __m256i &
 
     // c = (a_h+a_l)*(b_h+b_l)=a_h*b_h+a_h*b_l+a_l*b_h+a_l*b_l=c_hh+c_hl+cl_h+c_ll
     // note: _mm256_mul_epu32 uses only the lower 32bits of each chunk so a=a_l and b=b_l
-    __m256i c_hh = _mm256_mul_epu32(a_h, b_h);
-    __m256i c_hl = _mm256_mul_epu32(a_h, b);
-    __m256i c_lh = _mm256_mul_epu32(a, b_h);
     __m256i c_ll = _mm256_mul_epu32(a, b);
+    __m256i c_lh = _mm256_mul_epu32(a, b_h);
+    __m256i c_hl = _mm256_mul_epu32(a_h, b);
+    __m256i c_hh = _mm256_mul_epu32(a_h, b_h);
 
     // Bignum addition
     // Ranges: c_hh[127:64], c_hl[95:32], c_lh[95:32], c_ll[63:0]
