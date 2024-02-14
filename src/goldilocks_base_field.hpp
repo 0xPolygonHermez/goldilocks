@@ -93,6 +93,7 @@ public:
 
     static Element add(const Element &in1, const Element &in2);
     static void add(Element &result, const Element &in1, const Element &in2);
+    static void add_no_double_carry(uint64_t &result, const uint64_t &in1, const uint64_t &in2);
     static Element inc(const Goldilocks::Element &fe);
 
     static Element sub(const Element &in1, const Element &in2);
@@ -101,6 +102,7 @@ public:
 
     static Element mul(const Element &in1, const Element &in2);
     static void mul(Element &result, const Element &in1, const Element &in2);
+    static void mul1(Element &result, const Element &in1, const Element &in2);
     static void mul2(Element &result, const Element &in1, const Element &in2);
 
     static Element square(const Element &in1);
