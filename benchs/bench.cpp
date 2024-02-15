@@ -39,8 +39,7 @@ static void ADD_OP_BENCH(benchmark::State &state)
             term1 = term2;
         }
     }
-    std::cout << Goldilocks::toU64(term2) << std::endl
-              << std::endl;
+    assert(Goldilocks::toU64(term2) == 9315693631868018522ULL);
 }
 
 static void SUB_OP_BENCH(benchmark::State &state)
@@ -59,8 +58,7 @@ static void SUB_OP_BENCH(benchmark::State &state)
             term1 = term2;
         }
     }
-    std::cout << Goldilocks::toU64(term2) << std::endl
-              << std::endl;
+    assert(Goldilocks::toU64(term2) == 17916187359919173389ULL);
 }
 static void MUL_OP_BENCH(benchmark::State &state)
 {
@@ -78,8 +76,7 @@ static void MUL_OP_BENCH(benchmark::State &state)
             term1 = term2;
         }
     }
-    std::cout << Goldilocks::toU64(term2) << std::endl
-              << std::endl;
+    assert(Goldilocks::toU64(term2) == 1922281271747280077ULL);
 }
 
 static void INV_OP_BENCH(benchmark::State &state)
@@ -97,8 +94,7 @@ static void INV_OP_BENCH(benchmark::State &state)
             term1 = term0;
         }
     }
-    std::cout << Goldilocks::toU64(term1) << std::endl
-              << std::endl;
+    assert(Goldilocks::toU64(term0) == 3ULL);
 }
 
 static void ADD_OP_AVX_BENCH(benchmark::State &state)
