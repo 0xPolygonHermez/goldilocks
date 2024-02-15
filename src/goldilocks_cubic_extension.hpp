@@ -137,6 +137,28 @@ public:
         a[offsets_a[3] + 2] = a2[3];
     };
 
+    static inline void store_avx(Goldilocks::Element *a, const uint64_t offset_a, const __m256i *a_, uint64_t stride_a)
+    {
+        Goldilocks::Element a0[4], a1[4], a2[4];
+        _mm256_storeu_si256((__m256i *)a0, a_[0]);
+        _mm256_storeu_si256((__m256i *)a1, a_[stride_a]);
+        _mm256_storeu_si256((__m256i *)a2, a_[2*stride_a]);
+        a[0] = a0[0];
+        a[1] = a1[0];
+        a[2] = a2[0];
+        a[offset_a] = a0[1];
+        a[offset_a + 1] = a1[1];
+        a[offset_a + 2] = a2[1];
+        int ind = offset_a << 1;
+        a[ind] = a0[2];
+        a[ind + 1] = a1[2];
+        a[ind + 2] = a2[2];
+        ind = ind + offset_a;
+        a[ind] = a0[3];
+        a[ind + 1] = a1[3];
+        a[ind + 2] = a2[3];
+    };
+
     static inline void store_avx(Goldilocks::Element *a, const uint64_t offsets_a[4], const __m256i *a_, uint64_t stride_a)
     {
         Goldilocks::Element a0[4], a1[4], a2[4];
