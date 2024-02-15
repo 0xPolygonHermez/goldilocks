@@ -228,7 +228,7 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
     aux1 = rl - rhh;
     if(rhh>rl){ //this branch is unlikely to be taken
         branch_hint(); 
-        rl-=0xFFFFFFFF;
+        aux1-=0xFFFFFFFF;
     }
     uint64_t aux = 0xFFFFFFFF* rhl;
     add_no_double_carry(result.fe, aux1, aux);
