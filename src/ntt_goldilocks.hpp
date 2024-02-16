@@ -99,7 +99,15 @@ public:
         uint64_t nRoots = 1LL << s;
 
         roots = (Goldilocks::Element *)malloc(nRoots * sizeof(Goldilocks::Element));
+        if(roots == NULL){
+            std::cerr << "Error allocating memory for roots" << std::endl;
+            exit(1);
+        }
         powTwoInv = (Goldilocks::Element *)malloc((s + 1) * sizeof(Goldilocks::Element));
+        if(powTwoInv == NULL){
+            std::cerr << "Error allocating memory for powTwoInv" << std::endl;
+            exit(1);
+        }
 
         roots[0] = Goldilocks::one();
         powTwoInv[0] = Goldilocks::one();

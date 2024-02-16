@@ -191,6 +191,10 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
     if (buffer == NULL)
     {
         aux = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols_alloc);
+        if(aux == NULL){
+            std::cerr << "Error: NTT_Goldilocks::NTT: Memory allocation failed" << std::endl;   
+            exit(1);
+        }
     }
     else
     {
@@ -199,6 +203,10 @@ void NTT_Goldilocks::NTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_i
     if (nblock > 1)
     {
         dst_ = (Goldilocks::Element *)malloc(sizeof(Goldilocks::Element) * size * ncols_alloc);
+        if(dst_ == NULL){
+            std::cerr << "Error: NTT_Goldilocks::NTT: Memory allocation failed" << std::endl;   
+            exit(1);
+        }
     }
     else
     {
@@ -331,6 +339,10 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
     if (buffer == NULL)
     {
         tmp = (Goldilocks::Element *)malloc(N_Extended * ncols * sizeof(Goldilocks::Element));
+        if(tmp == NULL){
+            std::cerr << "Error: NTT_Goldilocks::extendPol: Memory allocation failed" << std::endl;   
+            exit(1);
+        }
     }
     else
     {
