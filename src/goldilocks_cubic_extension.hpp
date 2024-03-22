@@ -615,6 +615,12 @@ public:
 
     // ======== OPERATIONS ========
 
+    static inline void copy_avx(__m256i *c_, uint64_t stride_c, const __m256i *a_, uint64_t stride_a) {
+        c_[0] = a_[0];
+        c_[stride_c] = a_[stride_a];
+        c_[2*stride_c] = a_[2*stride_a];
+    }
+
     static inline void op_avx(uint64_t op, __m256i *c_, uint64_t stride_c, const __m256i *a_, uint64_t stride_a, const __m256i *b_, uint64_t stride_b)
     {
         switch (op)
