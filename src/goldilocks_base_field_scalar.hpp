@@ -100,7 +100,10 @@ inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in
     return result;
 }
 
-inline void Goldilocks::mul(Element &result, const Element &in1, const Element &in2)
+/*
+* Stable version used until new optimization based on branch_hint was introduced (see mul function)
+*/
+inline void Goldilocks::mul1(Element &result, const Element &in1, const Element &in2)
 {
 #if USE_MONTGOMERY == 1
     __asm__("xor   %%r10, %%r10\n\t"
@@ -188,6 +191,48 @@ inline void Goldilocks::mul2(Element &result, const Element &in1, const Element 
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
+}
+
+inline void branch_hint() {
+        asm("nop"); 
+}
+inline void Goldilocks::add_no_double_carry(uint64_t &result, const uint64_t &in1, const uint64_t &in2)
+{
+    __asm__("xor   %%r10, %%r10\n\t"
+            "mov   %1, %0\n\t"
+            "add   %2, %0\n\t"
+            "cmovc %3, %%r10\n\t"
+            "add   %%r10, %0\n\t"
+            : "=&a"(result)
+            : "r"(in1), "r"(in2), "m"(CQ)
+            : "%r10");
+
+}
+/**
+ * Optimized version inspired in Plonky3 optimizations, using branch_hint hint the processor that the branch is unlikely to be taken
+ */
+
+inline void Goldilocks::mul(Element &result, const Element &in1, const Element &in2){
+
+   
+    uint64_t rh;
+    uint64_t rl;    
+   
+    __uint128_t res = static_cast<__uint128_t>(in1.fe) * static_cast<__uint128_t>(in2.fe);
+    rl = (uint64_t)res;
+    rh = (uint64_t)(res>>64);   
+    uint64_t rhh = rh >> 32;
+    uint64_t rhl = rh & 0xFFFFFFFF;
+    
+    uint64_t aux1;
+    aux1 = rl - rhh;
+    if(rhh>rl){ //this branch is unlikely to be taken
+        branch_hint(); 
+        aux1-=0xFFFFFFFF;
+    }
+    uint64_t aux = 0xFFFFFFFF* rhl;
+    add_no_double_carry(result.fe, aux1, aux);
+
 }
 
 inline Goldilocks::Element Goldilocks::square(const Element &in1) { return mul(in1, in1); };
