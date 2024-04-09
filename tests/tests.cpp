@@ -2324,8 +2324,20 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     {
         ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
     }
+    
+    // Option 5: same than 4 but with different src and dst buffers
+    for (int i = 0; i < NUM_REPS; i++)
+    {
+        gntt.NTT(dst, a, FFT_SIZE, NUM_COLUMNS, NULL, 3, 5);
+        gntt.INTT(a, dst, FFT_SIZE, NUM_COLUMNS, NULL, 4, 3);
+    }
 
-    // Option 5: out of range parameters
+    for (int i = 0; i < FFT_SIZE * NUM_COLUMNS; i++)
+    {
+        ASSERT_EQ(Goldilocks::toU64(a[i]), Goldilocks::toU64(initial[i]));
+    }
+
+    // Option 6: out of range parameters
     for (int i = 0; i < NUM_REPS; i++)
     {
         gntt.NTT(a, a, FFT_SIZE, NUM_COLUMNS, NULL, 3, 3000);
