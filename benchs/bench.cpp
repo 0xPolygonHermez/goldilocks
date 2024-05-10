@@ -886,6 +886,83 @@ static void EXTENDEDPOL_BENCH(benchmark::State &state)
     free(c);
 }
 
+#ifdef __USE_CUDA__
+static void MERKLETREE_BENCH_CUDA(benchmark::State &state)
+{
+    Goldilocks::Element *cols = new Goldilocks::Element[(uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH];
+
+    // Test vector: Fibonacci series on the columns and increase the initial values to the right,
+    // 1 2 3 4  5  6  ... NUM_COLS
+    // 1 2 3 4  5  6  ... NUM_COLS
+    // 2 4 6 8  10 12 ... NUM_COLS + NUM_COLS
+    // 3 6 9 12 15 18 ... NUM_COLS + NUM_COLS + NUM_COLS
+    for (uint64_t i = 0; i < NCOLS_HASH; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + NCOLS_HASH] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+    for (uint64_t j = 2; j < NROWS_HASH; j++)
+    {
+        for (uint64_t i = 0; i < NCOLS_HASH; i++)
+        {
+            cols[j * NCOLS_HASH + i] = cols[(j - 2) * NCOLS_HASH + i] + cols[(j - 1) * NCOLS_HASH + i];
+        }
+    }
+
+    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(NROWS_HASH);
+    Goldilocks::Element *tree = new Goldilocks::Element[numElementsTree];
+
+    // Benchmark
+    for (auto _ : state)
+    {
+        PoseidonGoldilocks::merkletree_cuda(tree, cols, NCOLS_HASH, NROWS_HASH, state.range(0));
+    }
+    Goldilocks::Element root[4];
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    // check results
+    assert(Goldilocks::toU64(root[0]) == 0Xc935fb33cd86c0b8);
+    assert(Goldilocks::toU64(root[1]) == 0X906753f66aa2791d);
+    assert(Goldilocks::toU64(root[2]) == 0X3f6163b1b58a6ed7);
+    assert(Goldilocks::toU64(root[3]) == 0Xbd575d9ed19d18c2);
+
+    // Rate = time to process 1 linear hash per core
+    // BytesProcessed = total bytes processed per second on every iteration
+    int threads_core = 2 * state.range(0) / omp_get_max_threads(); // we assume hyperthreading
+    state.counters["Rate"] = benchmark::Counter(threads_core * (((double)NROWS_HASH * (double)ceil((double)NCOLS_HASH / (double)RATE)) + log2(NROWS_HASH)) / state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
+    state.counters["BytesProcessed"] = benchmark::Counter((uint64_t)NROWS_HASH * (uint64_t)NCOLS_HASH * sizeof(Goldilocks::Element), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
+    delete[] cols;
+    delete[] tree;
+}
+static void NTT_BENCH_CUDA(benchmark::State &state)
+{
+    NTT_Goldilocks gntt(FFT_SIZE, state.range(0));
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc((uint64_t)FFT_SIZE * (uint64_t)NUM_COLUMNS * sizeof(Goldilocks::Element));
+
+#pragma omp parallel for
+    for (uint64_t k = 0; k < NUM_COLUMNS; k++)
+    {
+        uint64_t offset = k * FFT_SIZE;
+        a[offset] = Goldilocks::one();
+        a[offset + 1] = Goldilocks::one();
+        for (uint64_t i = 2; i < FFT_SIZE; i++)
+        {
+            a[offset + i] = a[offset + i - 1] + a[offset + i - 2];
+        }
+    }
+    for (auto _ : state)
+    {
+        for (u_int64_t i = 0; i < NUM_COLUMNS; i++)
+        {
+            u_int64_t offset = i * FFT_SIZE;
+            gntt.NTT_GPU(a + offset, a + offset, FFT_SIZE);
+        }
+    }
+    free(a);
+}
+#endif  // __USE_CUDA__
+
 BENCHMARK(POSEIDON_BENCH_FULL)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
@@ -995,6 +1072,18 @@ BENCHMARK(EXTENDEDPOL_BENCH)
     ->Unit(benchmark::kSecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+
+#ifdef __USE_CUDA__
+BENCHMARK(MERKLETREE_BENCH_CUDA)
+    ->Unit(benchmark::kMicrosecond)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
+    ->UseRealTime();
+
+BENCHMARK(NTT_BENCH_CUDA)
+    ->Unit(benchmark::kSecond)
+    ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
+    ->UseRealTime();
+#endif
 
 BENCHMARK_MAIN();
 
