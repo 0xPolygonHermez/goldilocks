@@ -416,6 +416,22 @@ inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, co
     Implementations for expressions:
 */
 
+inline void Goldilocks::copy_avx512(Element *dst, const Element &src)
+{
+    // Does not make sense to vectorize yet
+    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
+    {
+        dst[i].fe = src.fe;
+    }
+}
+inline void Goldilocks::copy_avx512(Element *dst, const Element *src)
+{
+    // Does not make sense to vectorize yet
+    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
+    {
+        dst[i].fe = src[i].fe;
+    }
+}
 inline void Goldilocks::copy_avx512(__m512i &dst_, const Element &src)
 {
     Element dst[AVX512_SIZE_];
@@ -431,5 +447,26 @@ inline void Goldilocks::copy_avx512(__m512i &dst_, const __m512i &src_)
     dst_ = src_;
 }
 
+inline void Goldilocks::op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const __m256i &b_)
+{
+    switch (op)
+    {
+    case 0:
+        add_avx512(c_, a_, b_);
+        break;
+    case 1:
+        sub_avx512(c_, a_, b_);
+        break;
+    case 2:
+        mult_avx512(c_, a_, b_);
+        break;
+    case 3:
+        sub_avx512(c_, b_, a_);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+};
 #endif
 #endif
