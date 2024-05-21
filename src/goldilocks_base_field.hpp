@@ -232,6 +232,14 @@ public:
     static void copy_avx512(__m512i &dst_, const __m512i &src_);
     
 #endif
+
+    /*
+        Pack operations
+    
+    */
+    inline void copy_pack(Element *dst, const Element &src, uint64_t size);
+    inline void copy_pack(Element *dst, const Element *src, uint64_t size);
+    inline void op_pack(uint64_t op, Element *c, const Element *a, const Element *b, uint64_t size);
 };
 
 /*
@@ -248,6 +256,7 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_tools.hpp"
 #include "goldilocks_base_field_scalar.hpp"
 #include "goldilocks_base_field_avx.hpp"
+#include "goldilocks_base_field_pack.hpp"
 #ifdef __AVX512__
 #include "goldilocks_base_field_avx512.hpp"
 #endif
