@@ -227,10 +227,12 @@ public:
     static void mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Element M[144]);
     static void mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Element M_8[144]);
 
-    
-    static void copy_avx512(__m512i &dst_, const Element &src);
-    static void copy_avx512(__m512i &dst_, const __m512i &src_);
-    
+    inline void copy_avx512(Element *dst, const Element &src);
+    inline void copy_avx512(Element *dst, const Element *src);
+    inline void copy_avx512(__m512i &dst_, const Element &src);
+    inline void copy_avx512(__m512i &dst_, const __m512i &src_);
+    inline void op_avx(uint64_t op, __m512i &c_, const __m512i &a_, const __m512i &b_);
+
 #endif
 
     /*
