@@ -231,6 +231,9 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
         aux1-=0xFFFFFFFF;
     }
     uint64_t aux = 0xFFFFFFFF* rhl;
+    // aux1 <= 2^64-1
+    // aux <= (2^32-1)*(2^32-1) = 2^64-2^32+1-2^32 = P-2^32
+    // aux1 + aux <= 2^64-1 + P-2^32 = P+P-2=2P-2   
     add_no_double_carry(result.fe, aux1, aux);
 
 }
