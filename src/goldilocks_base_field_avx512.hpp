@@ -485,7 +485,7 @@ inline void Goldilocks::copy_avx512(__m512i &dst_, const __m512i &src_)
     dst_ = src_;
 }
 
-inline void Goldilocks::op_avx(uint64_t op, __m512i &c_, const __m512i &a_, const __m512i &b_)
+inline void Goldilocks::op_avx512(uint64_t op, __m512i &c_, const __m512i &a_, const __m512i &b_)
 {
     switch (op)
     {
