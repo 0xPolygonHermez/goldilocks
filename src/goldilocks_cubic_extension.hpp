@@ -328,6 +328,50 @@ public:
 
 #ifdef __AVX512__
 
+
+    static inline void load_avx512(Element_avx512 &a_, const Goldilocks::Element *a, uint64_t stride_a)
+    {
+        Goldilocks::Element a0[8], a1[8], a2[8];
+        a0[0] = a[0];
+        a1[0] = a[1];
+        a2[0] = a[2];
+        a0[1] = a[stride_a];
+        a1[1] = a[stride_a + 1];
+        a2[1] = a[stride_a + 2];
+        int ind = stride_a << 1;
+        a0[2] = a[ind];
+        a1[2] = a[ind + 1];
+        a2[2] = a[ind + 2];
+        ind = ind + stride_a;
+        a0[3] = a[ind];
+        a1[3] = a[ind + 1];
+        a2[3] = a[ind + 2];
+        a_[0] = _mm512_loadu_si512((__m512i *)(a0));
+        a_[1] = _mm512_loadu_si512((__m512i *)(a1));
+        a_[2] = _mm512_loadu_si512((__m512i *)(a2));
+    };
+    static inline void load_avx512(Element_avx512 &a_, const Goldilocks::Element *a, const uint64_t offsets_a[8])
+    {
+        Goldilocks::Element a0[8], a1[8], a2[8];
+
+        a0[0] = a[offsets_a[0]];
+        a1[0] = a[offsets_a[0] + 1];
+        a2[0] = a[offsets_a[0] + 2];
+        a0[1] = a[offsets_a[1]];
+        a1[1] = a[offsets_a[1] + 1];
+        a2[1] = a[offsets_a[1] + 2];
+        a0[2] = a[offsets_a[2]];
+        a1[2] = a[offsets_a[2] + 1];
+        a2[2] = a[offsets_a[2] + 2];
+        a0[3] = a[offsets_a[3]];
+        a1[3] = a[offsets_a[3] + 1];
+        a2[3] = a[offsets_a[3] + 2];
+        a_[0] = _mm512_loadu_si512((__m512i *)(a0));
+        a_[1] = _mm512_loadu_si512((__m512i *)(a1));
+        a_[2] = _mm512_loadu_si512((__m512i *)(a2));
+    };
+
+
     static inline void store_avx512(Goldilocks::Element *a, uint64_t stride_a, const Element_avx512 a_)
     {
         Goldilocks::Element a0[8], a1[8], a2[8];
@@ -425,12 +469,62 @@ public:
         }
     };
 
-    static inline void copy_avx(Element_avx512 c_, Element_avx512 a_)
+    static inline void copy_avx512(Element_avx512 c_, Element_avx512 a_)
     {
         c_[0] = a_[0];
         c_[1] = a_[1];
         c_[2] = a_[2];
     }
+
+    static inline void mul_avx512(Element_avx512 &c_, const Element_avx512 &a_, const Element_avx512 &challenge_, const Element_avx512 &challenge_ops_)
+    {
+        __m512i A_, B_, C_, D_, E_, F_, G_;
+        __m512i auxr_;
+
+        Goldilocks::add_avx512(A_, a_[0], a_[1]);
+        Goldilocks::add_avx512(B_, a_[0], a_[2]);
+        Goldilocks::add_avx512(C_, a_[1], a_[2]);
+        Goldilocks::mult_avx512(A_, A_, challenge_ops_[0]);
+        Goldilocks::mult_avx512(B_, B_, challenge_ops_[1]);
+        Goldilocks::mult_avx512(C_, C_, challenge_ops_[2]);
+        Goldilocks::mult_avx512(D_, a_[0], challenge_[0]);
+        Goldilocks::mult_avx512(E_, a_[1], challenge_[1]);
+        Goldilocks::mult_avx512(F_, a_[2], challenge_[2]);
+        Goldilocks::sub_avx512(G_, D_, E_);
+
+        Goldilocks::add_avx512(c_[0], C_, G_);
+        Goldilocks::sub_avx512(c_[0], c_[0], F_);
+        Goldilocks::add_avx512(c_[1], A_, C_);
+        Goldilocks::add_avx512(auxr_, E_, E_);
+        Goldilocks::add_avx512(auxr_, auxr_, D_);
+        Goldilocks::sub_avx512(c_[1], c_[1], auxr_);
+        Goldilocks::sub_avx512(c_[2], B_, G_);
+    };
+
+    static inline void mul_avx512(__m512i *c_, uint64_t stride_c, const __m512i *a_, uint64_t stride_a, const Element_avx512 &challenge_, const Element_avx512 &challenge_ops_)
+    {
+        __m512i A_, B_, C_, D_, E_, F_, G_;
+        __m512i auxr_;
+
+        Goldilocks::add_avx512(A_, a_[0], a_[stride_a]);
+        Goldilocks::add_avx512(B_, a_[0], a_[2 * stride_a]);
+        Goldilocks::add_avx512(C_, a_[stride_a], a_[2 * stride_a]);
+        Goldilocks::mult_avx512(A_, A_, challenge_ops_[0]);
+        Goldilocks::mult_avx512(B_, B_, challenge_ops_[1]);
+        Goldilocks::mult_avx512(C_, C_, challenge_ops_[2]);
+        Goldilocks::mult_avx512(D_, a_[0], challenge_[0]);
+        Goldilocks::mult_avx512(E_, a_[stride_a], challenge_[1]);
+        Goldilocks::mult_avx512(F_, a_[2 * stride_a], challenge_[2]);
+        Goldilocks::sub_avx512(G_, D_, E_);
+
+        Goldilocks::add_avx512(c_[0], C_, G_);
+        Goldilocks::sub_avx512(c_[0], c_[0], F_);
+        Goldilocks::add_avx512(c_[stride_c], A_, C_);
+        Goldilocks::add_avx512(auxr_, E_, E_);
+        Goldilocks::add_avx512(auxr_, auxr_, D_);
+        Goldilocks::sub_avx512(c_[stride_c], c_[stride_c], auxr_);
+        Goldilocks::sub_avx512(c_[2 * stride_c], B_, G_);
+    };
 
 #endif
     // ======== ADD ========
