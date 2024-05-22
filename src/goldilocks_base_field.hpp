@@ -194,10 +194,18 @@ public:
         AVX512 operations
     */
 #ifdef __AVX512__ 
-    static void load_avx512(__m512i &a, const Goldilocks::Element *a8);
-    static void load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a);
-    static void store_avx512(Goldilocks::Element *a8, const __m512i &a);
-    static void store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a);
+
+    static void load_avx512(__m512i &a_, const Goldilocks::Element *a8);
+    static void load_avx512(__m512i &a_,  const Goldilocks::Element &a);
+    static void load_avx512(__m512i &a_, const Goldilocks::Element *a8, uint64_t stride_a);
+    static void load_avx512(__m512i &a_, const Goldilocks::Element *a8, const uint64_t stride_a[8]);
+    static void load_avx512_a(__m512i &a_, const Goldilocks::Element *a8_a);
+
+    static void store_avx512(Goldilocks::Element *a8, const __m512i &a_);
+    static void store_avx512(Goldilocks::Element *a8, uint64_t stride_a, const __m512i &a_);
+    static void store_avx512(Goldilocks::Element *a8, const uint64_t stride_a[8], const __m512i &a_);
+    static void store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a_);
+
     static void toCanonical_avx512(__m512i &a_c, const __m512i &a);
 
     static void add_avx512(__m512i &c, const __m512i &a, const __m512i &b);

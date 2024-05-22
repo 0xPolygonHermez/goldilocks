@@ -20,24 +20,62 @@ const __m512i P8 = _mm512_set_epi64(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOC
 const __m512i P8_n = _mm512_set_epi64(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);
 const __m512i sqmask8 = _mm512_set_epi64(0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF);
 
-inline void Goldilocks::load_avx512(__m512i &a, const Goldilocks::Element *a8)
+inline void Goldilocks::load_avx512(__m512i &a_, const Goldilocks::Element *a8)
 {
-    a = _mm512_loadu_si512((__m512i *)(a8));
+    a_ = _mm512_loadu_si512((__m512i *)(a8));
 }
 
-inline void Goldilocks::load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a)
+inline void Goldilocks::load_avx512(__m512i &a_,  const Goldilocks::Element &a)
 {
-    a = _mm512_load_si512((__m512i *)(a8_a));
+    a_ = _mm512_set1_epi64(a.fe);
+}
+inline void Goldilocks::load_avx512(__m512i &a_, const Goldilocks::Element *a8, uint64_t stride_a){
+    a_ = _mm512_set_epi64(a8[7*stride_a].fe, a8[6*stride_a].fe, a8[5*stride_a].fe, a8[4*stride_a].fe, a8[3*stride_a].fe, a8[2*stride_a].fe, a8[stride_a].fe, a8[0].fe);
 }
 
-inline void Goldilocks::store_avx512(Goldilocks::Element *a8, const __m512i &a)
-{
-    _mm512_storeu_si512((__m512i *)a8, a);
+inline void Goldilocks::load_avx512(__m512i &a_, const Goldilocks::Element *a8, const uint64_t stride_a[8]){
+    a_ = _mm512_set_epi64(a8[stride_a[7]].fe, a8[stride_a[6]].fe, a8[stride_a[5]].fe, a8[stride_a[4]].fe, a8[stride_a[3]].fe, a8[stride_a[2]].fe, a8[stride_a[1]].fe, a8[stride_a[0]].fe);
 }
 
-inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a)
+inline void Goldilocks::load_avx512_a(__m512i &a_, const Goldilocks::Element *a8_a)
 {
-    _mm512_store_si512((__m512i *)a8_a, a);
+    a_ = _mm512_load_si512((__m512i *)(a8_a));
+}
+
+inline void Goldilocks::store_avx512(Goldilocks::Element *a8, const __m512i &a_)
+{
+    _mm512_storeu_si512((__m512i *)a8, a_);
+}
+
+inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a_)
+{
+    _mm512_store_si512((__m512i *)a8_a, a_);
+}
+
+inline void Goldilocks::store_avx512(Goldilocks::Element *a8, uint64_t stride_a, const __m512i &a_){
+    Goldilocks::Element a8_[8];
+    _mm512_storeu_si512((__m512i *)a8_, a_);
+    a8[0] = a8_[0];
+    a8[stride_a] = a8_[1];
+    a8[2*stride_a] = a8_[2];
+    a8[3*stride_a] = a8_[3];
+    a8[4*stride_a] = a8_[4];
+    a8[5*stride_a] = a8_[5];
+    a8[6*stride_a] = a8_[6];
+    a8[7*stride_a] = a8_[7];
+}
+
+inline void Goldilocks::store_avx512(Goldilocks::Element *a8, const uint64_t stride_a[8], const __m512i &a_){
+    Goldilocks::Element a8_[8];
+    _mm512_storeu_si512((__m512i *)a8_, a_);
+    a8[stride_a[0]] = a8_[0];
+    a8[stride_a[1]] = a8_[1];
+    a8[stride_a[2]] = a8_[2];
+    a8[stride_a[3]] = a8_[3];
+    a8[stride_a[4]] = a8_[4];
+    a8[stride_a[5]] = a8_[5];
+    a8[stride_a[6]] = a8_[6];
+    a8[stride_a[7]] = a8_[7];
 }
 
 // Obtain cannonical representative of a,
