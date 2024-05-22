@@ -332,20 +332,12 @@ public:
     static inline void load_avx512(Element_avx512 &a_, const Goldilocks::Element *a, uint64_t stride_a)
     {
         Goldilocks::Element a0[8], a1[8], a2[8];
-        a0[0] = a[0];
-        a1[0] = a[1];
-        a2[0] = a[2];
-        a0[1] = a[stride_a];
-        a1[1] = a[stride_a + 1];
-        a2[1] = a[stride_a + 2];
-        int ind = stride_a << 1;
-        a0[2] = a[ind];
-        a1[2] = a[ind + 1];
-        a2[2] = a[ind + 2];
-        ind = ind + stride_a;
-        a0[3] = a[ind];
-        a1[3] = a[ind + 1];
-        a2[3] = a[ind + 2];
+        for(int i=0; i<8; ++i){
+            uint64_t ind = i*stride_a;
+            a0[i] = a[ind];
+            a1[i] = a[ind+1];
+            a2[i] = a[ind+2];
+        }
         a_[0] = _mm512_loadu_si512((__m512i *)(a0));
         a_[1] = _mm512_loadu_si512((__m512i *)(a1));
         a_[2] = _mm512_loadu_si512((__m512i *)(a2));
@@ -353,19 +345,11 @@ public:
     static inline void load_avx512(Element_avx512 &a_, const Goldilocks::Element *a, const uint64_t offsets_a[8])
     {
         Goldilocks::Element a0[8], a1[8], a2[8];
-
-        a0[0] = a[offsets_a[0]];
-        a1[0] = a[offsets_a[0] + 1];
-        a2[0] = a[offsets_a[0] + 2];
-        a0[1] = a[offsets_a[1]];
-        a1[1] = a[offsets_a[1] + 1];
-        a2[1] = a[offsets_a[1] + 2];
-        a0[2] = a[offsets_a[2]];
-        a1[2] = a[offsets_a[2] + 1];
-        a2[2] = a[offsets_a[2] + 2];
-        a0[3] = a[offsets_a[3]];
-        a1[3] = a[offsets_a[3] + 1];
-        a2[3] = a[offsets_a[3] + 2];
+        for(int i=0; i<8; ++i){
+            a0[i] = a[offsets_a[i]];
+            a1[i] = a[offsets_a[i]+1];
+            a2[i] = a[offsets_a[i]+2];
+        }
         a_[0] = _mm512_loadu_si512((__m512i *)(a0));
         a_[1] = _mm512_loadu_si512((__m512i *)(a1));
         a_[2] = _mm512_loadu_si512((__m512i *)(a2));
@@ -378,61 +362,38 @@ public:
         _mm512_storeu_si512((__m512i *)a0, a_[0]);
         _mm512_storeu_si512((__m512i *)a1, a_[1]);
         _mm512_storeu_si512((__m512i *)a2, a_[2]);
-        a[0] = a0[0];
-        a[1] = a1[0];
-        a[2] = a2[0];
-        a[stride_a] = a0[1];
-        a[stride_a + 1] = a1[1];
-        a[stride_a + 2] = a2[1];
-        int ind = stride_a << 1;
-        a[ind] = a0[2];
-        a[ind + 1] = a1[2];
-        a[ind + 2] = a2[2];
-        ind = ind + stride_a;
-        a[ind] = a0[3];
-        a[ind + 1] = a1[3];
-        a[ind + 2] = a2[3];
+        for(int i=0; i<8; ++i){
+            uint64_t ind = i*stride_a;
+            a[ind] = a0[i];
+            a[ind+1] = a1[i];
+            a[ind+2] = a2[i];
+        }
     };
     static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[4], const Element_avx512 &a_)
     {
-        Goldilocks::Element a0[4], a1[4], a2[4];
+        Goldilocks::Element a0[8], a1[8], a2[8];
         _mm512_storeu_si512((__m512i *)a0, a_[0]);
         _mm512_storeu_si512((__m512i *)a1, a_[1]);
         _mm512_storeu_si512((__m512i *)a2, a_[2]);
-        a[offsets_a[0]] = a0[0];
-        a[offsets_a[0] + 1] = a1[0];
-        a[offsets_a[0] + 2] = a2[0];
-        a[offsets_a[1]] = a0[1];
-        a[offsets_a[1] + 1] = a1[1];
-        a[offsets_a[1] + 2] = a2[1];
-        a[offsets_a[2]] = a0[2];
-        a[offsets_a[2] + 1] = a1[2];
-        a[offsets_a[2] + 2] = a2[2];
-        a[offsets_a[3]] = a0[3];
-        a[offsets_a[3] + 1] = a1[3];
-        a[offsets_a[3] + 2] = a2[3];
+        for(int i=0; i<4; ++i){
+            a[offsets_a[i]] = a0[i];
+            a[offsets_a[i]+1] = a1[i];
+            a[offsets_a[i]+2] = a2[i];
+        }
     };
 
     static inline void store_avx512(Goldilocks::Element *a, const uint64_t offset_a, const __m512i *a_, uint64_t stride_a)
     {
-        Goldilocks::Element a0[4], a1[4], a2[4];
+        Goldilocks::Element a0[8], a1[8], a2[8];
         _mm512_storeu_si512((__m512i *)a0, a_[0]);
         _mm512_storeu_si512((__m512i *)a1, a_[stride_a]);
         _mm512_storeu_si512((__m512i *)a2, a_[2*stride_a]);
-        a[0] = a0[0];
-        a[1] = a1[0];
-        a[2] = a2[0];
-        a[offset_a] = a0[1];
-        a[offset_a + 1] = a1[1];
-        a[offset_a + 2] = a2[1];
-        int ind = offset_a << 1;
-        a[ind] = a0[2];
-        a[ind + 1] = a1[2];
-        a[ind + 2] = a2[2];
-        ind = ind + offset_a;
-        a[ind] = a0[3];
-        a[ind + 1] = a1[3];
-        a[ind + 2] = a2[3];
+        for(int i=0; i<8; ++i){
+            uint64_t ind = i*offset_a;
+            a[ind] = a0[i];
+            a[ind+1] = a1[i];
+            a[ind+2] = a2[i];
+        }
     };
 
     static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[4], const __m512i *a_, uint64_t stride_a)
@@ -441,18 +402,11 @@ public:
         _mm512_storeu_si512((__m512i *)a0, a_[0]);
         _mm512_storeu_si512((__m512i *)a1, a_[stride_a]);
         _mm512_storeu_si512((__m512i *)a2, a_[2 * stride_a]);
-        a[offsets_a[0]] = a0[0];
-        a[offsets_a[0] + 1] = a1[0];
-        a[offsets_a[0] + 2] = a2[0];
-        a[offsets_a[1]] = a0[1];
-        a[offsets_a[1] + 1] = a1[1];
-        a[offsets_a[1] + 2] = a2[1];
-        a[offsets_a[2]] = a0[2];
-        a[offsets_a[2] + 1] = a1[2];
-        a[offsets_a[2] + 2] = a2[2];
-        a[offsets_a[3]] = a0[3];
-        a[offsets_a[3] + 1] = a1[3];
-        a[offsets_a[3] + 2] = a2[3];
+        for(int i=0; i<8; ++i){
+            a[offsets_a[i]] = a0[i];
+            a[offsets_a[i]+1] = a1[i];
+            a[offsets_a[i]+2] = a2[i];
+        }
     };
 
     static void copy_avx512(Goldilocks::Element *dst, const __m512i a0_, const __m512i a1_, const __m512i a2_)
