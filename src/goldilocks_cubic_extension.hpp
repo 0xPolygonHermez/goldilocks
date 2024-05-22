@@ -327,6 +327,90 @@ public:
     }
 
 #ifdef __AVX512__
+
+    static inline void store_avx512(Goldilocks::Element *a, uint64_t stride_a, const Element_avx512 a_)
+    {
+        Goldilocks::Element a0[8], a1[8], a2[8];
+        _mm512_storeu_si512((__m512i *)a0, a_[0]);
+        _mm512_storeu_si512((__m512i *)a1, a_[1]);
+        _mm512_storeu_si512((__m512i *)a2, a_[2]);
+        a[0] = a0[0];
+        a[1] = a1[0];
+        a[2] = a2[0];
+        a[stride_a] = a0[1];
+        a[stride_a + 1] = a1[1];
+        a[stride_a + 2] = a2[1];
+        int ind = stride_a << 1;
+        a[ind] = a0[2];
+        a[ind + 1] = a1[2];
+        a[ind + 2] = a2[2];
+        ind = ind + stride_a;
+        a[ind] = a0[3];
+        a[ind + 1] = a1[3];
+        a[ind + 2] = a2[3];
+    };
+    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[4], const Element_avx512 &a_)
+    {
+        Goldilocks::Element a0[4], a1[4], a2[4];
+        _mm512_storeu_si512((__m512i *)a0, a_[0]);
+        _mm512_storeu_si512((__m512i *)a1, a_[1]);
+        _mm512_storeu_si512((__m512i *)a2, a_[2]);
+        a[offsets_a[0]] = a0[0];
+        a[offsets_a[0] + 1] = a1[0];
+        a[offsets_a[0] + 2] = a2[0];
+        a[offsets_a[1]] = a0[1];
+        a[offsets_a[1] + 1] = a1[1];
+        a[offsets_a[1] + 2] = a2[1];
+        a[offsets_a[2]] = a0[2];
+        a[offsets_a[2] + 1] = a1[2];
+        a[offsets_a[2] + 2] = a2[2];
+        a[offsets_a[3]] = a0[3];
+        a[offsets_a[3] + 1] = a1[3];
+        a[offsets_a[3] + 2] = a2[3];
+    };
+
+    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offset_a, const __m512i *a_, uint64_t stride_a)
+    {
+        Goldilocks::Element a0[4], a1[4], a2[4];
+        _mm512_storeu_si512((__m512i *)a0, a_[0]);
+        _mm512_storeu_si512((__m512i *)a1, a_[stride_a]);
+        _mm512_storeu_si512((__m512i *)a2, a_[2*stride_a]);
+        a[0] = a0[0];
+        a[1] = a1[0];
+        a[2] = a2[0];
+        a[offset_a] = a0[1];
+        a[offset_a + 1] = a1[1];
+        a[offset_a + 2] = a2[1];
+        int ind = offset_a << 1;
+        a[ind] = a0[2];
+        a[ind + 1] = a1[2];
+        a[ind + 2] = a2[2];
+        ind = ind + offset_a;
+        a[ind] = a0[3];
+        a[ind + 1] = a1[3];
+        a[ind + 2] = a2[3];
+    };
+
+    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[4], const __m512i *a_, uint64_t stride_a)
+    {
+        Goldilocks::Element a0[4], a1[4], a2[4];
+        _mm512_storeu_si512((__m512i *)a0, a_[0]);
+        _mm512_storeu_si512((__m512i *)a1, a_[stride_a]);
+        _mm512_storeu_si512((__m512i *)a2, a_[2 * stride_a]);
+        a[offsets_a[0]] = a0[0];
+        a[offsets_a[0] + 1] = a1[0];
+        a[offsets_a[0] + 2] = a2[0];
+        a[offsets_a[1]] = a0[1];
+        a[offsets_a[1] + 1] = a1[1];
+        a[offsets_a[1] + 2] = a2[1];
+        a[offsets_a[2]] = a0[2];
+        a[offsets_a[2] + 1] = a1[2];
+        a[offsets_a[2] + 2] = a2[2];
+        a[offsets_a[3]] = a0[3];
+        a[offsets_a[3] + 1] = a1[3];
+        a[offsets_a[3] + 2] = a2[3];
+    };
+
     static void copy_avx512(Goldilocks::Element *dst, const __m512i a0_, const __m512i a1_, const __m512i a2_)
     {
         Goldilocks::Element buff0[AVX512_SIZE_], buff1[AVX512_SIZE_], buff2[AVX512_SIZE_];
@@ -340,6 +424,14 @@ public:
             Goldilocks::copy(dst[k * FIELD_EXTENSION + 2], buff2[k]);
         }
     };
+
+    static inline void copy_avx(Element_avx512 c_, Element_avx512 a_)
+    {
+        c_[0] = a_[0];
+        c_[1] = a_[1];
+        c_[2] = a_[2];
+    }
+
 #endif
     // ======== ADD ========
     static inline void add(Element &result, const Element &a, const uint64_t &b)
@@ -764,7 +856,7 @@ public:
         c_[2*stride_c] = a_[2*stride_a];
     }
 
-    static inline void op_avx(uint64_t op, __m512i *c_, uint64_t stride_c, const __m512i *a_, uint64_t stride_a, const __m512i *b_, uint64_t stride_b)
+    static inline void op_avx512(uint64_t op, __m512i *c_, uint64_t stride_c, const __m512i *a_, uint64_t stride_a, const __m512i *b_, uint64_t stride_b)
     {
         switch (op)
         {
