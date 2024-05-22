@@ -369,7 +369,7 @@ public:
             a[ind+2] = a2[i];
         }
     };
-    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[4], const Element_avx512 &a_)
+    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[8], const Element_avx512 &a_)
     {
         Goldilocks::Element a0[8], a1[8], a2[8];
         _mm512_storeu_si512((__m512i *)a0, a_[0]);
@@ -396,9 +396,9 @@ public:
         }
     };
 
-    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[4], const __m512i *a_, uint64_t stride_a)
+    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[8], const __m512i *a_, uint64_t stride_a)
     {
-        Goldilocks::Element a0[4], a1[4], a2[4];
+        Goldilocks::Element a0[8], a1[8], a2[8];
         _mm512_storeu_si512((__m512i *)a0, a_[0]);
         _mm512_storeu_si512((__m512i *)a1, a_[stride_a]);
         _mm512_storeu_si512((__m512i *)a2, a_[2 * stride_a]);
