@@ -349,20 +349,37 @@ public:
             Goldilocks::copy((*dst)[i], (*src)[i]);
         }
     };
-    static inline void copy_avx(Element_avx c_, Element_avx a_)
+    static inline void copy_avx(Element_avx c_, const Element_avx a_)
     {
         c_[0] = a_[0];
         c_[1] = a_[1];
         c_[2] = a_[2];
     }
-#ifdef __AVX512__
-    
     static inline void copy_avx(__m256i *c_, uint64_t stride_c, const __m256i *a_, uint64_t stride_a) {
         c_[0] = a_[0];
         c_[stride_c] = a_[stride_a];
         c_[2*stride_c] = a_[2*stride_a];
     }
+    static inline void copy_pack(Element *dst, const Element &src, uint32_t size)
+    {
+        
+        for(uint32_t irow =0; irow<size; ++irow){
+            Goldilocks::copy(dst[irow][0], src[0]);
+            Goldilocks::copy(dst[irow][1], src[1]);
+            Goldilocks::copy(dst[irow][2], src[2]);
+        }
+    }
+    static inline void copy_pack(Element *dst, const Element *src, uint32_t size)
+    {
+        for(uint32_t irow =0; irow<size; ++irow){
+            Goldilocks::copy(dst[irow][0], src[irow][0]);
+            Goldilocks::copy(dst[irow][1], src[irow][1]);
+            Goldilocks::copy(dst[irow][2], src[irow][2]);   
+        }
+    }
 
+#ifdef __AVX512__
+    
     static void copy_avx512(Goldilocks::Element *dst, const __m512i a0_, const __m512i a1_, const __m512i a2_)
     {
         Goldilocks::Element buff0[AVX512_SIZE_], buff1[AVX512_SIZE_], buff2[AVX512_SIZE_];
@@ -434,25 +451,25 @@ public:
 #endif
 
     // ======== SUB ========
-    static inline void sub(Element &result, Element &a, uint64_t &b)
+    static inline void sub(Element &result, const Element &a, const uint64_t &b)
     {
         result[0] = a[0] - Goldilocks::fromU64(b);
         result[1] = a[1];
         result[2] = a[2];
     }
-    static inline void sub(Element &result, Goldilocks::Element a, Element &b)
+    static inline void sub(Element &result, const Goldilocks::Element a, const Element &b)
     {
         result[0] = a - b[0];
         result[1] = Goldilocks::neg(b[1]);
         result[2] = Goldilocks::neg(b[2]);
     }
-    static inline void sub(Element &result, Element &a, Goldilocks::Element b)
+    static inline void sub(Element &result, const Element &a, const Goldilocks::Element b)
     {
         result[0] = a[0] - b;
         result[1] = a[1];
         result[2] = a[2];
     }
-    static inline void sub(Element &result, Element &a, Element &b)
+    static inline void sub(Element &result, const Element &a, const Element &b)
     {
         for (uint64_t i = 0; i < FIELD_EXTENSION; i++)
         {
@@ -478,17 +495,17 @@ public:
 #endif
     
     // ======== NEG ========
-    static inline void neg(Element &result, Element &a)
+    static inline void neg(Element &result, const Element &a)
     {
         sub(result, (Element &)zero(), a);
     }
 
     // ======== MUL ========
-    static inline void mul(Element *result, Element *a, Element *b)
+    static inline void mul(Element *result, const Element *a, const Element *b)
     {
         mul(*result, *a, *b);
     }
-    static inline void mul(Element &result, Element &a, Element &b)
+    static inline void mul(Element &result, const Element &a, const Element &b)
     {
         Goldilocks::Element A = (a[0] + a[1]) * (b[0] + b[1]);
         Goldilocks::Element B = (a[0] + a[2]) * (b[0] + b[2]);
@@ -502,17 +519,17 @@ public:
         result[1] = ((((A + C) - E) - E) - D);
         result[2] = B - G;
     };
-    static inline void mul(Element &result, Element &a, Goldilocks::Element &b)
+    static inline void mul(Element &result, const Element &a, const Goldilocks::Element &b)
     {
         result[0] = a[0] * b;
         result[1] = a[1] * b;
         result[2] = a[2] * b;
     }
-    static inline void mul(Element &result, Goldilocks::Element a, Element &b)
+    static inline void mul(Element &result, const Goldilocks::Element a, const Element &b)
     {
         mul(result, b, a);
     }
-    static inline void mul(Element &result, Element &a, uint64_t b)
+    static inline void mul(Element &result, const Element &a, const uint64_t b)
     {
         result[0] = a[0] * Goldilocks::fromU64(b);
         result[1] = a[1] * Goldilocks::fromU64(b);
@@ -681,14 +698,14 @@ public:
 #endif
     
     // ======== DIV ========
-    static inline void div(Element &result, Element &a, Goldilocks::Element b)
+    static inline void div(Element &result, const Element &a, const Goldilocks::Element b)
     {
         Goldilocks::Element b_inv = Goldilocks::inv(b);
         mul(result, a, b_inv);
     }
 
     // ======== MULSCALAR ========
-    static inline void mulScalar(Element &result, Element &a, std::string &b)
+    static inline void mulScalar(Element &result, const Element &a, const std::string &b)
     {
         result[0] = a[0] * Goldilocks::fromString(b);
         result[1] = a[1] * Goldilocks::fromString(b);
@@ -696,17 +713,17 @@ public:
     }
 
     // ======== SQUARE ========
-    static inline void square(Element &result, Element &a)
+    static inline void square(Element &result, const Element &a)
     {
         mul(result, a, a);
     }
 
     // ======== INV ========
-    static inline void inv(Element *result, Element *a)
+    static inline void inv(Element *result, const Element *a)
     {
         inv(*result, *a);
     }
-    static inline void inv(Element &result, Element &a)
+    static inline void inv(Element &result, const Element &a)
     {
         Goldilocks::Element aa = a[0] * a[0];
         Goldilocks::Element ac = a[0] * a[2];
@@ -737,7 +754,7 @@ public:
         result[2] = i3;
     }
 
-    static void batchInverse(Element *res, Element *src, uint64_t size)
+    static void batchInverse(Element *res, const Element *src, uint64_t size)
     {
         Element* tmp = new Element[size];
         copy(tmp[0], src[0]);
@@ -762,6 +779,107 @@ public:
     }
 
     // ======== OPERATIONS ========
+
+    static inline void op_pack(uint64_t op, Element *c, const Element *a, const Element *b, uint32_t size)
+    {
+        switch (op)
+        {
+        case 0:
+            for (uint32_t i = 0; i < size; ++i)
+            {
+                add(c[i], a[i], b[i]);
+            }
+            break;
+        case 1:
+            for (uint32_t i = 0; i < size; ++i)
+            {
+                sub(c[i], a[i], b[i]);
+            }
+            break;
+        case 2:
+            for (uint32_t i = 0; i < size; ++i)
+            {
+                mul(c[i], a[i], b[i]);
+            }
+            break;
+        case 3:
+            for (uint32_t i = 0; i < size; ++i)
+            {
+                sub(c[i], b[i], a[i]);
+            }
+            break;
+        default:
+            assert(0);
+            break;
+        }
+    }
+    static inline void op_31_pack(uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b, uint32_t size)
+    {
+        switch (op)
+        {
+        case 0:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                add(c[i], a[i], b[i]);
+            }
+            break;
+        case 1:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                sub(c[i], a[i], b[i]);
+            }
+            break;
+        case 2:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                mul(c[i], a[i], b[i]);
+            }
+            break;
+        case 3:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                sub(c[i], b[i], a[i]);
+            }
+            break;
+        default:
+            assert(0);
+            break;
+        }
+    }
+    static inline void op_13_pack(uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b, uint32_t size)
+    {
+        switch (op)
+        {
+        case 0:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                add(c[i], a[i], b[i]);
+            }
+            break;
+        case 1:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                sub(c[i], a[i], b[i]);
+            }
+            break;
+        case 2:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                mul(c[i], a[i], b[i]);
+            }
+            break;
+        case 3:
+            for (uint64_t i = 0; i < size; ++i)
+            {
+                sub(c[i], b[i], a[i]);
+            }
+            break;
+        default:
+            assert(0);
+            break;
+        }
+    }
+   
 
     static inline void op_avx(uint64_t op, __m256i *c_, uint64_t stride_c, const __m256i *a_, uint64_t stride_a, const __m256i *b_, uint64_t stride_b)
     {
@@ -814,7 +932,6 @@ public:
             break;
         }
     }
-
     static inline void op_avx(uint64_t op, Element_avx &c_, const Element_avx &a_, const Element_avx &b_)
     {
         switch (op)
@@ -836,7 +953,6 @@ public:
             break;
         }
     }
-
     static inline void op_31_avx(uint64_t op, Element_avx &c_, const Element_avx &a_, const __m256i &b_)
     {
         switch (op)
@@ -866,7 +982,6 @@ public:
             break;
         }
     }
-
     static inline void op_31_avx(uint64_t op, __m256i *c_, uint64_t stride_c, const __m256i *a_, uint64_t stride_a, const __m256i &b_)
     {
         switch (op)

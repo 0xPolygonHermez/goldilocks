@@ -247,9 +247,9 @@ public:
         Pack operations
     
     */
-    inline void copy_pack(Element *dst, const Element &src, uint64_t size);
-    inline void copy_pack(Element *dst, const Element *src, uint64_t size);
-    inline void op_pack(uint64_t op, Element *c, const Element *a, const Element *b, uint64_t size);
+    inline void copy_pack(Element *dst, const Element &src, uint32_t size);
+    inline void copy_pack(Element *dst, const Element *src, uint32_t size);
+    inline void op_pack(uint64_t op, Element *c, const Element *a, const Element *b, uint32_t size);
 };
 
 /*
