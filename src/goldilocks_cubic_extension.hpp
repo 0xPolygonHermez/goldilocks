@@ -360,18 +360,18 @@ public:
         c_[stride_c] = a_[stride_a];
         c_[2*stride_c] = a_[2*stride_a];
     }
-    static inline void copy_pack(Element *dst, const Element &src, uint32_t size)
+    static inline void copy_pack( uint64_t nrowsPack, Element *dst, const Element &src)
     {
         
-        for(uint32_t irow =0; irow<size; ++irow){
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
             Goldilocks::copy(dst[irow][0], src[0]);
             Goldilocks::copy(dst[irow][1], src[1]);
             Goldilocks::copy(dst[irow][2], src[2]);
         }
     }
-    static inline void copy_pack(Element *dst, const Element *src, uint32_t size)
+    static inline void copy_pack( uint64_t nrowsPack, Element *dst, const Element *src)
     {
-        for(uint32_t irow =0; irow<size; ++irow){
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
             Goldilocks::copy(dst[irow][0], src[irow][0]);
             Goldilocks::copy(dst[irow][1], src[irow][1]);
             Goldilocks::copy(dst[irow][2], src[irow][2]);   
@@ -780,30 +780,30 @@ public:
 
     // ======== OPERATIONS ========
 
-    static inline void op_pack(uint64_t op, Element *c, const Element *a, const Element *b, uint32_t size)
+    static inline void op_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Element *b)
     {
         switch (op)
         {
         case 0:
-            for (uint32_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 add(c[i], a[i], b[i]);
             }
             break;
         case 1:
-            for (uint32_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 sub(c[i], a[i], b[i]);
             }
             break;
         case 2:
-            for (uint32_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 mul(c[i], a[i], b[i]);
             }
             break;
         case 3:
-            for (uint32_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 sub(c[i], b[i], a[i]);
             }
@@ -813,30 +813,30 @@ public:
             break;
         }
     }
-    static inline void op_31_pack(uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b, uint32_t size)
+    static inline void op_31_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b)
     {
         switch (op)
         {
         case 0:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 add(c[i], a[i], b[i]);
             }
             break;
         case 1:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 sub(c[i], a[i], b[i]);
             }
             break;
         case 2:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 mul(c[i], a[i], b[i]);
             }
             break;
         case 3:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 sub(c[i], b[i], a[i]);
             }
@@ -846,30 +846,30 @@ public:
             break;
         }
     }
-    static inline void op_13_pack(uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b, uint32_t size)
+    static inline void op_13_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b)
     {
         switch (op)
         {
         case 0:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 add(c[i], a[i], b[i]);
             }
             break;
         case 1:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 sub(c[i], a[i], b[i]);
             }
             break;
         case 2:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 mul(c[i], a[i], b[i]);
             }
             break;
         case 3:
-            for (uint64_t i = 0; i < size; ++i)
+            for (uint64_t i = 0; i < nrowsPack; ++i)
             {
                 sub(c[i], b[i], a[i]);
             }
