@@ -377,6 +377,16 @@ public:
             Goldilocks::copy(dst[irow][2], src[irow][2]);   
         }
     }
+    static inline void copy_pack( uint64_t nrowsPack, Goldilocks::Element *dst, uint64_t stride_a, const Element &src)
+    {
+        
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
+            int ind = irow*stride_a;
+            Goldilocks::copy(dst[ind], src[0]);
+            Goldilocks::copy(dst[ind + 1], src[1]);
+            Goldilocks::copy(dst[ind + 2], src[2]);
+        }
+    }
 
 #ifdef __AVX512__
     
