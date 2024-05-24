@@ -22,7 +22,7 @@
 
     }
 
-    inline void Goldilocks::copy_pack( uint64_t nrowsPack, Element *dst, uint64_t stride_dst, Element *src){
+    inline void Goldilocks::copy_pack( uint64_t nrowsPack, Element *dst, uint64_t stride_dst, const Element *src){
         for (uint64_t i = 0; i < nrowsPack; ++i)
         {
             dst[i*stride_dst].fe = src[i].fe;
