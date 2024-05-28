@@ -360,31 +360,44 @@ public:
         c_[stride_c] = a_[stride_a];
         c_[2*stride_c] = a_[2*stride_a];
     }
-    static inline void copy_pack( uint64_t nrowsPack, Element *dst, const Element &src)
+    static inline void copy_pack( uint64_t nrowsPack, Goldilocks::Element *dst, const Goldilocks::Element *src)
     {
-        
         for(uint64_t irow =0; irow<nrowsPack; ++irow){
-            Goldilocks::copy(dst[irow][0], src[0]);
-            Goldilocks::copy(dst[irow][1], src[1]);
-            Goldilocks::copy(dst[irow][2], src[2]);
+            Goldilocks::copy(dst[irow], src[irow]);
+            Goldilocks::copy(dst[nrowsPack + irow], src[nrowsPack + irow]);
+            Goldilocks::copy(dst[2*nrowsPack + irow], src[2*nrowsPack + irow]);   
         }
     }
-    static inline void copy_pack( uint64_t nrowsPack, Element *dst, const Element *src)
-    {
+    static inline void copy_pack( uint64_t nrowsPack, Goldilocks::Element *dst, uint64_t *offsets_c, const Goldilocks::Element *src, uint64_t stride_a)
+    { 
         for(uint64_t irow =0; irow<nrowsPack; ++irow){
-            Goldilocks::copy(dst[irow][0], src[irow][0]);
-            Goldilocks::copy(dst[irow][1], src[irow][1]);
-            Goldilocks::copy(dst[irow][2], src[irow][2]);   
+            Goldilocks::copy(dst[offsets_c[irow]], src[irow]);
+            Goldilocks::copy(dst[offsets_c[irow] + 1], src[nrowsPack*stride_a + irow]);
+            Goldilocks::copy(dst[offsets_c[irow] + 2], src[2*nrowsPack*stride_a + irow]);
         }
     }
-    static inline void copy_pack( uint64_t nrowsPack, Goldilocks::Element *dst, uint64_t stride_a, const Element &src)
-    {
-        
+    static inline void copy_pack( uint64_t nrowsPack, Goldilocks::Element *dst, uint64_t stride_c, const Goldilocks::Element *src, uint64_t stride_a)
+    { 
         for(uint64_t irow =0; irow<nrowsPack; ++irow){
-            int ind = irow*stride_a;
-            Goldilocks::copy(dst[ind], src[0]);
-            Goldilocks::copy(dst[ind + 1], src[1]);
-            Goldilocks::copy(dst[ind + 2], src[2]);
+            Goldilocks::copy(dst[irow], src[irow]);
+            Goldilocks::copy(dst[nrowsPack*stride_c + irow], src[nrowsPack*stride_a + irow]);
+            Goldilocks::copy(dst[2*nrowsPack*stride_c + irow], src[2*nrowsPack*stride_a + irow]);
+        }
+    }
+    static inline void load_pack( uint64_t nrowsPack, Goldilocks::Element *dst, uint64_t stride_c, const Goldilocks::Element *src, uint64_t stride_a)
+    { 
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
+            Goldilocks::copy(dst[irow], src[stride_a*irow]);
+            Goldilocks::copy(dst[stride_c*nrowsPack + irow], src[stride_a*irow + 1]);
+            Goldilocks::copy(dst[2*stride_c*nrowsPack + irow], src[stride_a*irow + 2]);
+        }
+    }
+    static inline void store_pack( uint64_t nrowsPack, Goldilocks::Element *dst, uint64_t stride_c, const Goldilocks::Element *src, uint64_t stride_a)
+    { 
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
+            Goldilocks::copy(dst[stride_c*irow], src[irow]);
+            Goldilocks::copy(dst[stride_c*irow + 1], src[stride_a*nrowsPack + irow]);
+            Goldilocks::copy(dst[stride_c*irow + 2], src[2*stride_a*nrowsPack + irow]);
         }
     }
 
@@ -706,6 +719,58 @@ public:
     };
 
 #endif
+
+    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, const Goldilocks::Element *a_, const Goldilocks::Element *b_)
+    {
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            Goldilocks::Element A = (a_[i] + a_[nrowsPack + i]) * (b_[i] + b_[nrowsPack + i]);
+            Goldilocks::Element B = (a_[i] + a_[2*nrowsPack + i]) * (b_[i] + b_[2*nrowsPack + i]);
+            Goldilocks::Element C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * (b_[nrowsPack + i] + b_[2*nrowsPack + i]);
+            Goldilocks::Element D = a_[i] * b_[i];
+            Goldilocks::Element E = a_[nrowsPack + i] * b_[nrowsPack + i];
+            Goldilocks::Element F = a_[2*nrowsPack + i] * b_[2*nrowsPack + i];
+            Goldilocks::Element G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*nrowsPack + i] = B - G;
+        }
+    };
+    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, const Goldilocks::Element *a_, const Goldilocks::Element *challenge_, const Goldilocks::Element *challenge_ops_)
+    {   
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            Goldilocks::Element A = (a_[i] + a_[nrowsPack + i]) * challenge_ops_[i];
+            Goldilocks::Element B = (a_[i] + a_[2*nrowsPack + i]) * challenge_ops_[nrowsPack + i];
+            Goldilocks::Element C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * challenge_ops_[2*nrowsPack + i];
+            Goldilocks::Element D = a_[i] * challenge_[i];
+            Goldilocks::Element E = a_[nrowsPack + i] * challenge_[nrowsPack + i];
+            Goldilocks::Element F = a_[2*nrowsPack + i] * challenge_[2*nrowsPack + i];
+            Goldilocks::Element G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*nrowsPack + i] = B - G;
+        }
+    };
+    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, uint64_t stride_c, const Goldilocks::Element *a_, uint64_t stride_a, const Goldilocks::Element *challenge_, const Goldilocks::Element *challenge_ops_)
+    {
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {   
+            Goldilocks::Element A = (a_[i] + a_[stride_a*nrowsPack + i]) * challenge_ops_[i];
+            Goldilocks::Element B = (a_[i] + a_[2*stride_a*nrowsPack + i]) * challenge_ops_[nrowsPack + i];
+            Goldilocks::Element C = (a_[stride_a*nrowsPack + i] + a_[2*stride_a*nrowsPack + i]) * challenge_ops_[2*nrowsPack + i];
+            Goldilocks::Element D = a_[i] * challenge_[i];
+            Goldilocks::Element E = a_[stride_a*nrowsPack + i] * challenge_[nrowsPack + i];
+            Goldilocks::Element F = a_[2*stride_a*nrowsPack + i] * challenge_[2*nrowsPack + i];
+            Goldilocks::Element G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[stride_c*nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*stride_c*nrowsPack + i] = B - G;
+        }
+    };
     
     // ======== DIV ========
     static inline void div(Element &result, const Element &a, const Goldilocks::Element b)
@@ -790,32 +855,48 @@ public:
 
     // ======== OPERATIONS ========
 
-    static inline void op_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Element *b)
+    static inline void op_pack( uint64_t nrowsPack, uint64_t op, Goldilocks::Element *c, const Goldilocks::Element *a, const Goldilocks::Element *b)
     {
         switch (op)
         {
         case 0:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                add(c[i], a[i], b[i]);
+                c[i] = a[i] + b[i];
+                c[nrowsPack + i] = a[nrowsPack + i] + b[nrowsPack + i];
+                c[2*nrowsPack + i] = a[2*nrowsPack + i] + b[2*nrowsPack + i];
             }
             break;
         case 1:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                sub(c[i], a[i], b[i]);
+                c[i] = a[i] - b[i];
+                c[nrowsPack + i] = a[nrowsPack + i] - b[nrowsPack + i];
+                c[2*nrowsPack + i] = a[2*nrowsPack + i] - b[2*nrowsPack + i];
             }
             break;
         case 2:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                mul(c[i], a[i], b[i]);
+                Goldilocks::Element A = (a[i] + a[nrowsPack + i]) * (b[i] + b[nrowsPack + i]);
+                Goldilocks::Element B = (a[i] + a[2*nrowsPack + i]) * (b[i] + b[2*nrowsPack + i]);
+                Goldilocks::Element C = (a[nrowsPack + i] + a[2*nrowsPack + i]) * (b[nrowsPack + i] + b[2*nrowsPack + i]);
+                Goldilocks::Element D = a[i] * b[i];
+                Goldilocks::Element E = a[nrowsPack + i] * b[nrowsPack + i];
+                Goldilocks::Element F = a[2*nrowsPack + i] * b[2*nrowsPack + i];
+                Goldilocks::Element G = D - E;
+
+                c[i] = (C + G) - F;
+                c[nrowsPack + i] = ((((A + C) - E) - E) - D);
+                c[2*nrowsPack + i] = B - G;
             }
             break;
         case 3:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                sub(c[i], b[i], a[i]);
+                c[i] = b[i] - a[i];
+                c[nrowsPack + i] = b[nrowsPack + i] - a[nrowsPack + i];
+                c[2*nrowsPack + i] = b[2*nrowsPack + i] - a[2*nrowsPack + i];
             }
             break;
         default:
@@ -823,32 +904,48 @@ public:
             break;
         }
     }
-    static inline void op_31_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b)
+    static inline void op_pack( uint64_t nrowsPack, uint64_t op, Goldilocks::Element *c, uint64_t stride_c, const Goldilocks::Element *a, uint64_t stride_a, const Goldilocks::Element *b, uint64_t stride_b)
     {
         switch (op)
         {
         case 0:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                add(c[i], a[i], b[i]);
+                c[i] = a[i] + b[i];
+                c[stride_c*nrowsPack + i] = a[stride_a*nrowsPack + i] + b[stride_b*nrowsPack + i];
+                c[2*stride_c*nrowsPack + i] = a[2*stride_a*nrowsPack + i] + b[2*stride_b*nrowsPack + i];
             }
             break;
         case 1:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                sub(c[i], a[i], b[i]);
+                c[i] = a[i] - b[i];
+                c[stride_c*nrowsPack + i] = a[stride_a*nrowsPack + i] - b[stride_b*nrowsPack + i];
+                c[2*stride_c*nrowsPack + i] = a[2*stride_a*nrowsPack + i] - b[2*stride_b*nrowsPack + i];
             }
             break;
         case 2:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                mul(c[i], a[i], b[i]);
+                Goldilocks::Element A = (a[i] + a[stride_a*nrowsPack + i]) * (b[i] + b[stride_b*nrowsPack + i]);
+                Goldilocks::Element B = (a[i] + a[2*stride_a*nrowsPack + i]) * (b[i] + b[2*stride_b*nrowsPack + i]);
+                Goldilocks::Element C = (a[stride_a*nrowsPack + i] + a[2*stride_a*nrowsPack + i]) * (b[stride_b*nrowsPack + i] + b[2*stride_b*nrowsPack + i]);
+                Goldilocks::Element D = a[i] * b[i];
+                Goldilocks::Element E = a[stride_a*nrowsPack + i] * b[stride_b*nrowsPack + i];
+                Goldilocks::Element F = a[2*stride_a*nrowsPack + i] * b[2*stride_b*nrowsPack + i];
+                Goldilocks::Element G = D - E;
+
+                c[i] = (C + G) - F;
+                c[stride_c*nrowsPack + i] = ((((A + C) - E) - E) - D);
+                c[2*stride_c*nrowsPack + i] = B - G;
             }
             break;
         case 3:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                sub(c[i], b[i], a[i]);
+                c[i] = b[i] - a[i];
+                c[stride_c*nrowsPack + i] = b[stride_b*nrowsPack + i] - a[stride_a*nrowsPack + i];
+                c[2*stride_c*nrowsPack + i] = b[2*stride_b*nrowsPack + i] - a[2*stride_a*nrowsPack + i];
             }
             break;
         default:
@@ -856,32 +953,41 @@ public:
             break;
         }
     }
-    static inline void op_13_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Goldilocks::Element *b)
+
+    static inline void op_31_pack( uint64_t nrowsPack, uint64_t op, Goldilocks::Element *c, const Goldilocks::Element *a, const Goldilocks::Element *b)
     {
         switch (op)
         {
         case 0:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                add(c[i], a[i], b[i]);
+                c[i] = a[i] + b[i];
+                c[nrowsPack + i] = a[nrowsPack + i];
+                c[2*nrowsPack + i] = a[2*nrowsPack + i];
             }
             break;
         case 1:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                sub(c[i], a[i], b[i]);
+                c[i] = a[i] - b[i];
+                c[nrowsPack + i] = a[nrowsPack + i];
+                c[2*nrowsPack + i] = a[2*nrowsPack + i];
             }
             break;
         case 2:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                mul(c[i], a[i], b[i]);
+                c[i] = a[i] * b[i];
+                c[nrowsPack + i] = a[nrowsPack + i] * b[i];
+                c[2*nrowsPack + i] = a[2*nrowsPack + i] * b[i];
             }
             break;
         case 3:
             for (uint64_t i = 0; i < nrowsPack; ++i)
             {
-                sub(c[i], b[i], a[i]);
+                c[i] = b[i] - a[i];
+                c[nrowsPack + i] = -a[nrowsPack + i];
+                c[2*nrowsPack + i] = -a[2*nrowsPack + i];
             }
             break;
         default:
@@ -889,7 +995,49 @@ public:
             break;
         }
     }
-   
+
+    static inline void op_31_pack( uint64_t nrowsPack, uint64_t op, Goldilocks::Element *c, uint64_t stride_c, const Goldilocks::Element *a, uint64_t stride_a, const Goldilocks::Element *b)
+    {
+        switch (op)
+        {
+        case 0:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] + b[i];
+                c[stride_c*nrowsPack + i] = a[stride_a*nrowsPack + i];
+                c[2*stride_c*nrowsPack + i] = a[2*stride_a*nrowsPack + i];
+            }
+            break;
+        case 1:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] - b[i];
+                c[stride_c*nrowsPack + i] = a[stride_a*nrowsPack + i];
+                c[2*stride_c*nrowsPack + i] = a[2*stride_a*nrowsPack + i];
+            }
+            break;
+        case 2:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                
+                c[i] = a[i] * b[i];
+                c[stride_c*nrowsPack + i] = a[stride_a*nrowsPack + i] * b[i];
+                c[2*stride_c*nrowsPack + i] = a[2*stride_a*nrowsPack + i] * b[i];
+            }
+            break;
+        case 3:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = b[i] - a[i];
+                c[stride_c*nrowsPack + i] = -a[stride_a*nrowsPack + i];
+                c[2*stride_c*nrowsPack + i] = -a[2*stride_a*nrowsPack + i];
+            }
+            break;
+        default:
+            assert(0);
+            break;
+        }
+    }
 
     static inline void op_avx(uint64_t op, __m256i *c_, uint64_t stride_c, const __m256i *a_, uint64_t stride_a, const __m256i *b_, uint64_t stride_b)
     {

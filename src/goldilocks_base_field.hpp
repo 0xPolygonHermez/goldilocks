@@ -249,7 +249,8 @@ public:
     */
     static void copy_pack( uint64_t nrowsPack, Element *dst, const Element &src);
     static void copy_pack( uint64_t nrowsPack, Element *dst, const Element *src);
-    static void copy_pack( uint64_t nrowsPack, Element *dst, uint64_t stride_dst, const Element *src);
+    static void copy_pack( uint64_t nrowsPack, Element *dst, uint64_t *offsets_dst, const Element *src);
+    static void copy_pack( uint64_t nrowsPack, Element *dst, uint64_t offsets_dst, const Element *src);
     static void op_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Element *b);
     static void op_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Element &b);
     static void op_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element &a, const Element *b);
