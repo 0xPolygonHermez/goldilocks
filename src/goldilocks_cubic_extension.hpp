@@ -719,58 +719,6 @@ public:
     };
 
 #endif
-
-    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, const Goldilocks::Element *a_, const Goldilocks::Element *b_)
-    {
-        for (uint64_t i = 0; i < nrowsPack; ++i)
-        {
-            Goldilocks::Element A = (a_[i] + a_[nrowsPack + i]) * (b_[i] + b_[nrowsPack + i]);
-            Goldilocks::Element B = (a_[i] + a_[2*nrowsPack + i]) * (b_[i] + b_[2*nrowsPack + i]);
-            Goldilocks::Element C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * (b_[nrowsPack + i] + b_[2*nrowsPack + i]);
-            Goldilocks::Element D = a_[i] * b_[i];
-            Goldilocks::Element E = a_[nrowsPack + i] * b_[nrowsPack + i];
-            Goldilocks::Element F = a_[2*nrowsPack + i] * b_[2*nrowsPack + i];
-            Goldilocks::Element G = D - E;
-
-            c_[i] = (C + G) - F;
-            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
-            c_[2*nrowsPack + i] = B - G;
-        }
-    };
-    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, const Goldilocks::Element *a_, const Goldilocks::Element *challenge_, const Goldilocks::Element *challenge_ops_)
-    {   
-        for (uint64_t i = 0; i < nrowsPack; ++i)
-        {
-            Goldilocks::Element A = (a_[i] + a_[nrowsPack + i]) * challenge_ops_[i];
-            Goldilocks::Element B = (a_[i] + a_[2*nrowsPack + i]) * challenge_ops_[nrowsPack + i];
-            Goldilocks::Element C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * challenge_ops_[2*nrowsPack + i];
-            Goldilocks::Element D = a_[i] * challenge_[i];
-            Goldilocks::Element E = a_[nrowsPack + i] * challenge_[nrowsPack + i];
-            Goldilocks::Element F = a_[2*nrowsPack + i] * challenge_[2*nrowsPack + i];
-            Goldilocks::Element G = D - E;
-
-            c_[i] = (C + G) - F;
-            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
-            c_[2*nrowsPack + i] = B - G;
-        }
-    };
-    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, uint64_t stride_c, const Goldilocks::Element *a_, uint64_t stride_a, const Goldilocks::Element *challenge_, const Goldilocks::Element *challenge_ops_)
-    {
-        for (uint64_t i = 0; i < nrowsPack; ++i)
-        {   
-            Goldilocks::Element A = (a_[i] + a_[stride_a*nrowsPack + i]) * challenge_ops_[i];
-            Goldilocks::Element B = (a_[i] + a_[2*stride_a*nrowsPack + i]) * challenge_ops_[nrowsPack + i];
-            Goldilocks::Element C = (a_[stride_a*nrowsPack + i] + a_[2*stride_a*nrowsPack + i]) * challenge_ops_[2*nrowsPack + i];
-            Goldilocks::Element D = a_[i] * challenge_[i];
-            Goldilocks::Element E = a_[stride_a*nrowsPack + i] * challenge_[nrowsPack + i];
-            Goldilocks::Element F = a_[2*stride_a*nrowsPack + i] * challenge_[2*nrowsPack + i];
-            Goldilocks::Element G = D - E;
-
-            c_[i] = (C + G) - F;
-            c_[stride_c*nrowsPack + i] = ((((A + C) - E) - E) - D);
-            c_[2*stride_c*nrowsPack + i] = B - G;
-        }
-    };
     
     // ======== DIV ========
     static inline void div(Element &result, const Element &a, const Goldilocks::Element b)
@@ -855,6 +803,58 @@ public:
 
     // ======== OPERATIONS ========
 
+     static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, const Goldilocks::Element *a_, const Goldilocks::Element *b_)
+    {
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            Goldilocks::Element A = (a_[i] + a_[nrowsPack + i]) * (b_[i] + b_[nrowsPack + i]);
+            Goldilocks::Element B = (a_[i] + a_[2*nrowsPack + i]) * (b_[i] + b_[2*nrowsPack + i]);
+            Goldilocks::Element C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * (b_[nrowsPack + i] + b_[2*nrowsPack + i]);
+            Goldilocks::Element D = a_[i] * b_[i];
+            Goldilocks::Element E = a_[nrowsPack + i] * b_[nrowsPack + i];
+            Goldilocks::Element F = a_[2*nrowsPack + i] * b_[2*nrowsPack + i];
+            Goldilocks::Element G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*nrowsPack + i] = B - G;
+        }
+    };
+    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, const Goldilocks::Element *a_, const Goldilocks::Element *challenge_, const Goldilocks::Element *challenge_ops_)
+    {   
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            Goldilocks::Element A = (a_[i] + a_[nrowsPack + i]) * challenge_ops_[i];
+            Goldilocks::Element B = (a_[i] + a_[2*nrowsPack + i]) * challenge_ops_[nrowsPack + i];
+            Goldilocks::Element C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * challenge_ops_[2*nrowsPack + i];
+            Goldilocks::Element D = a_[i] * challenge_[i];
+            Goldilocks::Element E = a_[nrowsPack + i] * challenge_[nrowsPack + i];
+            Goldilocks::Element F = a_[2*nrowsPack + i] * challenge_[2*nrowsPack + i];
+            Goldilocks::Element G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*nrowsPack + i] = B - G;
+        }
+    };
+    static inline void mul_pack(uint64_t nrowsPack, Goldilocks::Element *c_, uint64_t stride_c, const Goldilocks::Element *a_, uint64_t stride_a, const Goldilocks::Element *challenge_, const Goldilocks::Element *challenge_ops_)
+    {
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {   
+            Goldilocks::Element A = (a_[i] + a_[stride_a*nrowsPack + i]) * challenge_ops_[i];
+            Goldilocks::Element B = (a_[i] + a_[2*stride_a*nrowsPack + i]) * challenge_ops_[nrowsPack + i];
+            Goldilocks::Element C = (a_[stride_a*nrowsPack + i] + a_[2*stride_a*nrowsPack + i]) * challenge_ops_[2*nrowsPack + i];
+            Goldilocks::Element D = a_[i] * challenge_[i];
+            Goldilocks::Element E = a_[stride_a*nrowsPack + i] * challenge_[nrowsPack + i];
+            Goldilocks::Element F = a_[2*stride_a*nrowsPack + i] * challenge_[2*nrowsPack + i];
+            Goldilocks::Element G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[stride_c*nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*stride_c*nrowsPack + i] = B - G;
+        }
+    };
+    
     static inline void op_pack( uint64_t nrowsPack, uint64_t op, Goldilocks::Element *c, const Goldilocks::Element *a, const Goldilocks::Element *b)
     {
         switch (op)
@@ -897,6 +897,14 @@ public:
                 c[i] = b[i] - a[i];
                 c[nrowsPack + i] = b[nrowsPack + i] - a[nrowsPack + i];
                 c[2*nrowsPack + i] = b[2*nrowsPack + i] - a[2*nrowsPack + i];
+            }
+            break;
+        case 4:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i];
+                c[nrowsPack + i] = a[nrowsPack + i];
+                c[2*nrowsPack + i] = a[2*nrowsPack + i];
             }
             break;
         default:
@@ -946,6 +954,14 @@ public:
                 c[i] = b[i] - a[i];
                 c[stride_c*nrowsPack + i] = b[stride_b*nrowsPack + i] - a[stride_a*nrowsPack + i];
                 c[2*stride_c*nrowsPack + i] = b[2*stride_b*nrowsPack + i] - a[2*stride_a*nrowsPack + i];
+            }
+            break;
+        case 4:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i];
+                c[stride_c*nrowsPack + i] = a[stride_a*nrowsPack + i];
+                c[2*stride_c*nrowsPack + i] = a[2*stride_a*nrowsPack + i];
             }
             break;
         default:
@@ -1085,6 +1101,11 @@ public:
             Goldilocks::sub_avx(c_[stride_c], b_[stride_b], a_[stride_a]);
             Goldilocks::sub_avx(c_[2 * stride_c], b_[2 * stride_b], a_[2 * stride_a]);
             break;
+        case 4: 
+            c_[0] = a_[0];
+            c_[stride_c] = a_[stride_a];
+            c_[2*stride_c] = a_[2*stride_a];
+            break;
         default:
             assert(0);
             break;
@@ -1105,6 +1126,9 @@ public:
             break;
         case 3:
             sub_avx(c_, b_, a_);
+            break;
+        case 4:
+            copy_avx(c_, a_);
             break;
         default:
             assert(0);

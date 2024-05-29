@@ -670,6 +670,9 @@ inline void Goldilocks::op_avx(uint64_t op, __m256i &c_, const __m256i &a_, cons
     case 3:
         sub_avx(c_, b_, a_);
         break;
+    case 4:
+        copy_avx(c_, a_);
+        break;
     default:
         assert(0);
         break;
