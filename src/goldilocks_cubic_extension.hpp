@@ -351,6 +351,19 @@ public:
         }
     };
 
+    static inline void store_avx512(Goldilocks::Element *a, const uint64_t offsets_a[8], const __m512i *a_)
+    {
+        Goldilocks::Element a0[8], a1[8], a2[8];
+        _mm512_storeu_si512((__m512i *)a0, a_[0]);
+        _mm512_storeu_si512((__m512i *)a1, a_[1]);
+        _mm512_storeu_si512((__m512i *)a2, a_[2]);
+        for(int i=0; i<8; ++i){
+            a[offsets_a[i]] = a0[i];
+            a[offsets_a[i]+1] = a1[i];
+            a[offsets_a[i]+2] = a2[i];
+        }
+    };
+
 #endif
     
     // ======== COPY =======
