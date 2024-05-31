@@ -29,7 +29,7 @@ inline void Goldilocks3::sub_avx512(Element_avx512 &c_, const Element_avx512 a_,
     Goldilocks::sub_avx512(c_[2], a_[2], b_[2]);
 }
 
-static inline void Goldilocks3::mul_avx512(Element_avx512 &c_, const Element_avx512 &a_, const Element_avx512 &b_)
+inline void Goldilocks3::mul_avx512(Element_avx512 &c_, const Element_avx512 &a_, const Element_avx512 &b_)
 {
 
     __m512i aux0_, aux1_, aux2_;
@@ -59,7 +59,7 @@ static inline void Goldilocks3::mul_avx512(Element_avx512 &c_, const Element_avx
     Goldilocks::sub_avx512(c_[2], B_, G_);
 };
 
-static inline void Goldilocks3::mul_avx512(Element_avx512 &c_, const Element_avx512 &a_, const Element_avx512 &challenge_, const Element_avx512 &challenge_ops_)
+inline void Goldilocks3::mul_avx512(Element_avx512 &c_, const Element_avx512 &a_, const Element_avx512 &challenge_, const Element_avx512 &challenge_ops_)
 {
     __m512i A_, B_, C_, D_, E_, F_, G_;
     __m512i auxr_;
