@@ -35,31 +35,6 @@ inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element *a4)
     a_ = _mm256_loadu_si256((__m256i *)(a4));
 }
 
-inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t offset_a)
-{
-    Goldilocks::Element a4_[4];
-
-    a4_[0] = a4[0];
-    a4_[1] = a4[offset_a];
-    a4_[2] = a4[offset_a << 1];
-    a4_[3] = a4[(offset_a << 1) + offset_a];
-    a_ = _mm256_loadu_si256((__m256i *)(a4_));
-}
-
-inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element &a)
-{
-    a_ = _mm256_set1_epi64x(a.fe);
-}
-inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t offset_a[4])
-{
-    Goldilocks::Element a4_[4];
-    a4_[0] = a4[offset_a[0]];
-    a4_[1] = a4[offset_a[1]];
-    a4_[2] = a4[offset_a[2]];
-    a4_[3] = a4[offset_a[3]];
-    a_ = _mm256_loadu_si256((__m256i *)(a4_));
-}
-
 // We assume a4_a aligned on a 32-byte boundary
 inline void Goldilocks::load_avx_a(__m256i &a, const Goldilocks::Element *a4_a)
 {
@@ -89,16 +64,6 @@ inline void Goldilocks::store_avx_a(Goldilocks::Element *a4_a, const __m256i &a)
 inline void Goldilocks::shift_avx(__m256i &a_s, const __m256i &a)
 {
     a_s = _mm256_xor_si256(a, MSB);
-}
-
-inline void Goldilocks::store_avx(Goldilocks::Element *a4, const uint64_t offset_a[4], const __m256i &a)
-{
-    Goldilocks::Element a4_[4];
-    _mm256_storeu_si256((__m256i *)a4_, a);
-    a4[offset_a[0]] = a4_[0];
-    a4[offset_a[1]] = a4_[1];
-    a4[offset_a[2]] = a4_[2];
-    a4[offset_a[3]] = a4_[3];
 }
 
 inline void Goldilocks::Goldilocks::toCanonical_avx(__m256i &a_c, const __m256i &a)
@@ -620,33 +585,6 @@ inline void Goldilocks::mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const
 /*
     Implementations for expressions:
 */
-inline void Goldilocks::copy_avx(Element *dst, const Element &src)
-{
-    // Does not make sense to vectorize yet
-    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
-    {
-        dst[i].fe = src.fe;
-    }
-}
-
-inline void Goldilocks::copy_avx(Element *dst, const Element *src)
-{
-    // Does not make sense to vectorize yet
-    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
-    {
-        dst[i].fe = src[i].fe;
-    }
-}
-
-inline void Goldilocks::copy_avx(__m256i &dst_, const Element &src)
-{
-    Element dst[4];
-    for (uint64_t i = 0; i < AVX_SIZE_; ++i)
-    {
-        dst[i].fe = src.fe;
-    }
-    load_avx(dst_, dst);
-}
 
 inline void Goldilocks::copy_avx(__m256i &dst_, const __m256i &src_)
 {

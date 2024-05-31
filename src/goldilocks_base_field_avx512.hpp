@@ -25,18 +25,6 @@ inline void Goldilocks::load_avx512(__m512i &a_, const Goldilocks::Element *a8)
     a_ = _mm512_loadu_si512((__m512i *)(a8));
 }
 
-inline void Goldilocks::load_avx512(__m512i &a_,  const Goldilocks::Element &a)
-{
-    a_ = _mm512_set1_epi64(a.fe);
-}
-inline void Goldilocks::load_avx512(__m512i &a_, const Goldilocks::Element *a8, uint64_t stride_a){
-    a_ = _mm512_set_epi64(a8[7*stride_a].fe, a8[6*stride_a].fe, a8[5*stride_a].fe, a8[4*stride_a].fe, a8[3*stride_a].fe, a8[2*stride_a].fe, a8[stride_a].fe, a8[0].fe);
-}
-
-inline void Goldilocks::load_avx512(__m512i &a_, const Goldilocks::Element *a8, const uint64_t stride_a[8]){
-    a_ = _mm512_set_epi64(a8[stride_a[7]].fe, a8[stride_a[6]].fe, a8[stride_a[5]].fe, a8[stride_a[4]].fe, a8[stride_a[3]].fe, a8[stride_a[2]].fe, a8[stride_a[1]].fe, a8[stride_a[0]].fe);
-}
-
 inline void Goldilocks::load_avx512_a(__m512i &a_, const Goldilocks::Element *a8_a)
 {
     a_ = _mm512_load_si512((__m512i *)(a8_a));
@@ -63,19 +51,6 @@ inline void Goldilocks::store_avx512(Goldilocks::Element *a8, uint64_t stride_a,
     a8[5*stride_a] = a8_[5];
     a8[6*stride_a] = a8_[6];
     a8[7*stride_a] = a8_[7];
-}
-
-inline void Goldilocks::store_avx512(Goldilocks::Element *a8, const uint64_t stride_a[8], const __m512i &a_){
-    Goldilocks::Element a8_[8];
-    _mm512_storeu_si512((__m512i *)a8_, a_);
-    a8[stride_a[0]] = a8_[0];
-    a8[stride_a[1]] = a8_[1];
-    a8[stride_a[2]] = a8_[2];
-    a8[stride_a[3]] = a8_[3];
-    a8[stride_a[4]] = a8_[4];
-    a8[stride_a[5]] = a8_[5];
-    a8[stride_a[6]] = a8_[6];
-    a8[stride_a[7]] = a8_[7];
 }
 
 // Obtain cannonical representative of a,
@@ -453,32 +428,6 @@ inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, co
 /*
     Implementations for expressions:
 */
-
-inline void Goldilocks::copy_avx512(Element *dst, const Element &src)
-{
-    // Does not make sense to vectorize yet
-    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
-    {
-        dst[i].fe = src.fe;
-    }
-}
-inline void Goldilocks::copy_avx512(Element *dst, const Element *src)
-{
-    // Does not make sense to vectorize yet
-    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
-    {
-        dst[i].fe = src[i].fe;
-    }
-}
-inline void Goldilocks::copy_avx512(__m512i &dst_, const Element &src)
-{
-    Element dst[AVX512_SIZE_];
-    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
-    {
-        dst[i].fe = src.fe;
-    }
-    load_avx512(dst_, dst);
-}
 
 inline void Goldilocks::copy_avx512(__m512i &dst_, const __m512i &src_)
 {
