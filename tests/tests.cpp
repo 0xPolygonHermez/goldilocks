@@ -2744,13 +2744,13 @@ int main(int argc, char **argv)
 // Build commands AVX:
 
 // g++:
-//  g++ tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//')
+//  g++ tests/tests.cpp src/*.{cpp,hpp} -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//')
 //  Intel:
-//  icpx tests/tests.cpp src/*.cpp -o test -lgtest -lgmp  -pthread -fopenmp -mavx2
+//  icpx tests/tests.cpp src/*.{cpp,hpp} -o test -lgtest -lgmp  -pthread -fopenmp -mavx2
 
 // Build commands AVX512:
 
 // g++:
-//  g++ tests/tests.cpp src/* -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2  -mavx512f -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -D__AVX512__
+//  g++ tests/tests.cpp src/*.{cpp,hpp} -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2  -mavx512f -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -D__AVX512__
 //  Intel:
-//  icpx tests/tests.cpp src/*.cpp -o test -lgtest -lgmp  -pthread -fopenmp -mavx2 -mavx512f -D__AVX512__
+//  icpx tests/tests.cpp src/*.{cpp,hpp} -o test -lgtest -lgmp  -pthread -fopenmp -mavx2 -mavx512f -D__AVX512__
