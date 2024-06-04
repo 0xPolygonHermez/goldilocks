@@ -59,7 +59,7 @@ __device__ __forceinline__ void Goldilocks3::mul_gpu(uint64_t blockDim.x, gl64_t
         c_[blockDim.x << 1 + blockDim.x] = B - G;
 };
 
-__device__ __forceinline__ void Goldilocks3::op_gpu(uint64_t op, gl64_t *c, const Goldilocks::Element *a, const Goldilocks::Element *b)
+__device__ __forceinline__ void Goldilocks3::op_gpu(uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b)
 {
     switch (op)
     {
@@ -81,7 +81,7 @@ __device__ __forceinline__ void Goldilocks3::op_gpu(uint64_t op, gl64_t *c, cons
     }
 }
 
-__device__ __forceinline__ void Goldilocks3::op_31_gpu(uint64_t op, Goldilocks::Element *c, const Goldilocks::Element *a, const Goldilocks::Element *b)
+__device__ __forceinline__ void Goldilocks3::op_31_gpu(uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b)
 {
     switch (op)
     {
