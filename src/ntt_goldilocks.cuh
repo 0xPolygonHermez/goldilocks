@@ -4,7 +4,7 @@
 #include <sys/time.h>
 
 #ifdef GPU_TIMING
-#include "timer_gl.chpp"
+#include "timer_gl.hpp"
 #endif
 
 __device__ __constant__ uint64_t omegas[33] = {
