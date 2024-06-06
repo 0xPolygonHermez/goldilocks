@@ -1,4 +1,4 @@
-#include "timer.hpp"
+#include "timer_gl.hpp"
 
 using namespace std;
 

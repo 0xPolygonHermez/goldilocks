@@ -7,7 +7,7 @@
 #include "merklehash_goldilocks.hpp"
 
 #ifdef GPU_TIMING
-#include "timer.hpp"
+#include "timer_gl.chpp"
 #endif
 
 typedef uint32_t u32;

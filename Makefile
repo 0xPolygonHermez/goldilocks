@@ -48,6 +48,9 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -mavx2
 
+testscpu: tests/tests.cpp $(ALLSRCS)
+	$(CXX) tests/tests.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o $@
+
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 	$(CXX) $(OBJS) $(CXXFLAGS) -o $@ $(LDFLAGS)
 
@@ -67,8 +70,6 @@ $(BUILD_DIR_GPU)/%.cu.o: %.cu
 
 .PHONY: clean
 
-testscpu: tests/tests.cpp $(ALLSRCS)
-	$(CXX) tests/tests.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o $@
 
 testsgpu: $(BUILD_DIR_GPU)/tests/tests.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
 	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp
@@ -103,6 +104,13 @@ runbenchgpu: benchgpu
 clean:
 	$(RM) -r $(BUILD_DIR)
 	$(RM) -r $(BUILD_DIR_GPU)
+	$(RM) test
+	$(RM) bench
+	$(RM) testscpu
+	$(RM) testsgpu
+	$(RM) benchcpu
+	$(RM) benchgpu
+
 
 -include $(DEPS)
 
