@@ -423,12 +423,6 @@ public:
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b);
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_]);
 #endif
-    /* 
-        GPU operations 
-    */
-#ifdef __USE_CUDA__
-    static __device__ __forceinline__ void op_gpu( uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b);
-#endif
 };
 
 /*
@@ -448,9 +442,6 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_avx.hpp"
 #ifdef __AVX512__
 #include "goldilocks_base_field_avx512.hpp"
-#endif
-#ifdef __USE_CUDA__
-#include "goldilocks_base_field_gpu.cuh"
 #endif
 
 #endif // GOLDILOCKS_BASE

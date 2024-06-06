@@ -4234,20 +4234,6 @@ public:
         copy(aux[0], z);
         std::memcpy(res, &aux[0], size * sizeof(Goldilocks3::Element));
     }
-
-    /* 
-        GPU operations 
-    */
-#ifdef __USE_CUDA__
-    static __device__ __forceinline__ void copy_gpu(gl64_t *c_, const gl64_t *a_);
-    static __device__ __forceinline__ void add_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *b_);
-    static __device__ __forceinline__ void sub_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *b_);
-    static __device__ __forceinline__ void mul_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *b_);
-    static __device__ __forceinline__ void mul_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *challenge_, const gl64_t *challenge_ops_);
-    
-    static __device__ __forceinline__ void op_gpu(uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b);
-    static __device__ __forceinline__ void op_31_gpu(uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b);
-#endif
 };
 
 #endif // GOLDILOCKS_F3
