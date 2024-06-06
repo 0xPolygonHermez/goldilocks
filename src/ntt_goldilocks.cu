@@ -19,7 +19,7 @@ cudaStream_t gpu_stream[MAX_GPUS];
 gl64_t *gpu_poseidon_state[MAX_GPUS];
 
 #ifdef GPU_TIMING
-#include "timer_gl.chpp"
+#include "timer_gl.hpp"
 #endif
 
 __global__ void transpose(uint64_t *dst, uint64_t *src, uint32_t nblocks, uint32_t nrows, uint32_t ncols, uint32_t ncols_last_block)
