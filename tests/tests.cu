@@ -2,7 +2,7 @@
 #include "../src/goldilocks_base_field.hpp"
 #include "../src/poseidon_goldilocks.hpp"
 #include "../src/ntt_goldilocks.hpp"
-#include "../utils/timer.hpp"
+#include "../utils/timer_gl.chpp"
 #include "../utils/cuda_utils.hpp"
 
 #define FFT_SIZE (1 << 23)
