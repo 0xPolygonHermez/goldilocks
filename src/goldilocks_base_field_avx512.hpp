@@ -20,24 +20,37 @@ const __m512i P8 = _mm512_set_epi64(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOC
 const __m512i P8_n = _mm512_set_epi64(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);
 const __m512i sqmask8 = _mm512_set_epi64(0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF);
 
-inline void Goldilocks::load_avx512(__m512i &a, const Goldilocks::Element *a8)
+inline void Goldilocks::load_avx512(__m512i &a_, const Goldilocks::Element *a8)
 {
-    a = _mm512_loadu_si512((__m512i *)(a8));
+    a_ = _mm512_loadu_si512((__m512i *)(a8));
 }
 
-inline void Goldilocks::load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a)
+inline void Goldilocks::load_avx512_a(__m512i &a_, const Goldilocks::Element *a8_a)
 {
-    a = _mm512_load_si512((__m512i *)(a8_a));
+    a_ = _mm512_load_si512((__m512i *)(a8_a));
 }
 
-inline void Goldilocks::store_avx512(Goldilocks::Element *a8, const __m512i &a)
+inline void Goldilocks::store_avx512(Goldilocks::Element *a8, const __m512i &a_)
 {
-    _mm512_storeu_si512((__m512i *)a8, a);
+    _mm512_storeu_si512((__m512i *)a8, a_);
 }
 
-inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a)
+inline void Goldilocks::store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a_)
 {
-    _mm512_store_si512((__m512i *)a8_a, a);
+    _mm512_store_si512((__m512i *)a8_a, a_);
+}
+
+inline void Goldilocks::store_avx512(Goldilocks::Element *a8, uint64_t stride_a, const __m512i &a_){
+    Goldilocks::Element a8_[8];
+    _mm512_storeu_si512((__m512i *)a8_, a_);
+    a8[0] = a8_[0];
+    a8[stride_a] = a8_[1];
+    a8[2*stride_a] = a8_[2];
+    a8[3*stride_a] = a8_[3];
+    a8[4*stride_a] = a8_[4];
+    a8[5*stride_a] = a8_[5];
+    a8[6*stride_a] = a8_[6];
+    a8[7*stride_a] = a8_[7];
 }
 
 // Obtain cannonical representative of a,
@@ -416,20 +429,31 @@ inline void Goldilocks::mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, co
     Implementations for expressions:
 */
 
-inline void Goldilocks::copy_avx512(__m512i &dst_, const Element &src)
-{
-    Element dst[AVX512_SIZE_];
-    for (uint64_t i = 0; i < AVX512_SIZE_; ++i)
-    {
-        dst[i].fe = src.fe;
-    }
-    load_avx512(dst_, dst);
-}
-
 inline void Goldilocks::copy_avx512(__m512i &dst_, const __m512i &src_)
 {
     dst_ = src_;
 }
 
+inline void Goldilocks::op_avx512(uint64_t op, __m512i &c_, const __m512i &a_, const __m512i &b_)
+{
+    switch (op)
+    {
+    case 0:
+        add_avx512(c_, a_, b_);
+        break;
+    case 1:
+        sub_avx512(c_, a_, b_);
+        break;
+    case 2:
+        mult_avx512(c_, a_, b_);
+        break;
+    case 3:
+        sub_avx512(c_, b_, a_);
+        break;
+    default:
+        assert(0);
+        break;
+    }
+};
 #endif
 #endif

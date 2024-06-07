@@ -135,14 +135,10 @@ public:
     static void set_avx(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
 
     static void load_avx(__m256i &a_, const Goldilocks::Element *a4);
-    static void load_avx(__m256i &a_, const Goldilocks::Element &a);
-    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t stride_a);
-    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, const uint64_t stride_a[4]);
     static void load_avx_a(__m256i &a, const Goldilocks::Element *a4_a);
 
     static void store_avx(Goldilocks::Element *a4, const __m256i &a);
-    static void store_avx(Goldilocks::Element *a4, uint64_t stride_a, const __m256i &a);
-    static void store_avx(Goldilocks::Element *a4, const uint64_t stride_a[4], const __m256i &a);
+static void store_avx(Goldilocks::Element *a4, uint64_t stride_a, const __m256i &a);
     static void store_avx_a(Goldilocks::Element *a4_a, const __m256i &a);
 
     static void shift_avx(__m256i &a_s, const __m256i &a);
@@ -183,21 +179,21 @@ public:
     static void mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Element M_8[144]);
 
     // implementations for expressions:
-    static void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const __m256i &b_);
-
-    static void copy_avx(Element *dst, const Element &src);
-    static void copy_avx(Element *dst, const Element *src);
-    static void copy_avx(__m256i &dst_, const Element &src);
     static void copy_avx(__m256i &dst_, const __m256i &src_);
+    static void op_avx(uint64_t op, __m256i &c_, const __m256i &a_, const __m256i &b_);
    
     /*
         AVX512 operations
     */
 #ifdef __AVX512__ 
-    static void load_avx512(__m512i &a, const Goldilocks::Element *a8);
-    static void load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a);
-    static void store_avx512(Goldilocks::Element *a8, const __m512i &a);
-    static void store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a);
+
+    static void load_avx512(__m512i &a_, const Goldilocks::Element *a8);
+    static void load_avx512_a(__m512i &a_, const Goldilocks::Element *a8_a);
+
+    static void store_avx512(Goldilocks::Element *a8, const __m512i &a_);
+static void store_avx512(Goldilocks::Element *a8, uint64_t stride_a, const __m512i &a_);
+    static void store_avx512_a(Goldilocks::Element *a8_a, const __m512i &a_);
+
     static void toCanonical_avx512(__m512i &a_c, const __m512i &a);
 
     static void add_avx512(__m512i &c, const __m512i &a, const __m512i &b);
@@ -227,11 +223,16 @@ public:
     static void mmult_avx512(__m512i &a0, __m512i &a1, __m512i &a2, const Element M[144]);
     static void mmult_avx512_8(__m512i &a0, __m512i &a1, __m512i &a2, const Element M_8[144]);
 
-    
-    static void copy_avx512(__m512i &dst_, const Element &src);
     static void copy_avx512(__m512i &dst_, const __m512i &src_);
-    
+    static void op_avx512(uint64_t op, __m512i &c_, const __m512i &a_, const __m512i &b_);
+
 #endif
+
+    /* Pack operations */
+    static void copy_pack( uint64_t nrowsPack, Element *dst, const Element *src);
+    static void copy_pack( uint64_t nrowsPack, Element *dst, uint64_t stride_dst, const Element *src);
+    static void op_pack( uint64_t nrowsPack, uint64_t op, Element *c, const Element *a, const Element *b);
+
 };
 
 /*
@@ -248,6 +249,7 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_tools.hpp"
 #include "goldilocks_base_field_scalar.hpp"
 #include "goldilocks_base_field_avx.hpp"
+#include "goldilocks_base_field_pack.hpp"
 #ifdef __AVX512__
 #include "goldilocks_base_field_avx512.hpp"
 #endif

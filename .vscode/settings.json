@@ -57,6 +57,7 @@
         "iomanip": "cpp",
         "variant": "cpp",
         "cstring": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "bitset": "cpp"
     }
 }
