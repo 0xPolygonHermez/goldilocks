@@ -622,6 +622,15 @@ public:
     }
 
 public:
+
+    static __device__ __forceinline__ void copy_gpu( gl64_t *dst, const gl64_t *src){
+            dst[threadIdx.x] = src[threadIdx.x];
+    }
+
+
+    static __device__ __forceinline__ void copy_gpu( gl64_t *dst, uint64_t stride_dst, const gl64_t *src){
+            dst[threadIdx.x*stride_dst] = src[threadIdx.x];
+    }
     
     static __device__ __forceinline__ void op_gpu( uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b)
     {
