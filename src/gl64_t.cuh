@@ -6,6 +6,8 @@
 #define __SPPARK_FF_GL64_T_CUH__
 
 #include <cstdint>
+#include <cassert>
+
 
 namespace gl64_device {
     static __device__ __constant__ /*const*/ uint32_t W = 0xffffffffU;
@@ -618,6 +620,40 @@ public:
 
         return t1;
     }
+
+public:
+
+    static __device__ __forceinline__ void copy_gpu( gl64_t *dst, const gl64_t *src){
+            dst[threadIdx.x] = src[threadIdx.x];
+    }
+
+
+    static __device__ __forceinline__ void copy_gpu( gl64_t *dst, uint64_t stride_dst, const gl64_t *src){
+            dst[threadIdx.x*stride_dst] = src[threadIdx.x];
+    }
+    
+    static __device__ __forceinline__ void op_gpu( uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b)
+    {
+        switch (op)
+        {
+        case 0:
+            c[threadIdx.x] = a[threadIdx.x] + b[threadIdx.x];
+            break;
+        case 1:
+            c[threadIdx.x] = a[threadIdx.x] - b[threadIdx.x];
+            break;
+        case 2:
+            c[threadIdx.x] = a[threadIdx.x] * b[threadIdx.x];
+            break;
+        case 3:
+            c[threadIdx.x] = b[threadIdx.x] - a[threadIdx.x];
+            break;
+        default:
+            assert(0);
+            break;
+        }
+    }
+
 };
 
 # undef inline
