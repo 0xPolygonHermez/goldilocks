@@ -314,7 +314,7 @@ public:
         }
         copy(res[0], z);
 
-        delete tmp;
+        delete[] tmp;
     }
 
     // ======== OPERATIONS ========
