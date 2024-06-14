@@ -12,7 +12,6 @@ ifndef LIBOMP
 $(error LIBOMP is not set, you need to install libomp-dev)
 endif
 
-#CXX := mpiCC
 CXX = g++
 CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp
 LDFLAGS := -lpthread -lgmp -lstdc++ -lgmpxx -lbenchmark
@@ -48,7 +47,7 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -mavx2
 
-testscpu: tests/tests.cpp $(ALLSRCS)
+testcpu: tests/tests.cpp $(ALLSRCS)
 	$(CXX) tests/tests.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o $@
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
@@ -71,14 +70,14 @@ $(BUILD_DIR_GPU)/%.cu.o: %.cu
 .PHONY: clean
 
 
-testsgpu: $(BUILD_DIR_GPU)/tests/tests.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
+testgpu: $(BUILD_DIR_GPU)/tests/tests.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
 	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp
 
-runtestscpu: testscpu
-	./testscpu --gtest_filter=GOLDILOCKS_TEST.merkletree_seq
+runtestcpu: testcpu
+	./testcpu --gtest_filter=GOLDILOCKS_TEST.merkletree_seq
 
-runtestsgpu: testsgpu
-	./testsgpu --gtest_filter=GOLDILOCKS_TEST.merkletree_cuda
+runtestgpu: testgpu
+	./testgpu --gtest_filter=GOLDILOCKS_TEST.merkletree_cuda
 
 full: $(BUILD_DIR_GPU)/tests/tests.cu.o $(BUILD_DIR_GPU)/src/goldilocks_base_field.cpp.o  $(BUILD_DIR_GPU)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o  $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o
 	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp
@@ -89,7 +88,7 @@ runfullgpu: full
 runfullcpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_cpu
 
-benchcpu: $(BUILD_DIR)/
+benchcpu: benchcpu
 	$(CXX) benchs/bench.cpp src/*.cpp -lbenchmark -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -O3 -o $@
 
 benchgpu: $(BUILD_DIR_GPU)/benchs/bench.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o
@@ -106,8 +105,8 @@ clean:
 	$(RM) -r $(BUILD_DIR_GPU)
 	$(RM) test
 	$(RM) bench
-	$(RM) testscpu
-	$(RM) testsgpu
+	$(RM) testcpu
+	$(RM) testgpu
 	$(RM) benchcpu
 	$(RM) benchgpu
 
