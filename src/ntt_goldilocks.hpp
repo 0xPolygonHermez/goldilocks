@@ -191,6 +191,14 @@ public:
 
     void LDE_MerkleTree_MultiGPU_Init(u_int64_t size, u_int64_t ext_size, u_int64_t ncols);
     void LDE_MerkleTree_MultiGPU_Free();
+
+    void Prepare_MultiGPU(u_int64_t size, u_int64_t ext_size, u_int64_t ncols);
+    void LDE_MultiGPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, u_int64_t ncols_per_gpu, u_int64_t ncols_last_gpu, Goldilocks::Element *buffer, u_int64_t nphase);
+    void LDE_MerkleTree_Switch_MultiGPU(u_int64_t nrows_per_gpu);
+    void MerkleTree_MultiGPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t ext_size, u_int64_t ncols, u_int64_t nrows_per_gpu, Goldilocks::Element *buffer, u_int64_t nphase);
+    void LDE_MerkleTree_Cleanup_MultiGPU();
+
+    void LDE_MerkleTree_MultiGPU_viaCPU_Steps(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, bool buildMerkleTree = true);
 #endif  // __USE_CUDA__
 };
 // extend parameter is used to indicate tha the polinomial will be extended after the INTT
