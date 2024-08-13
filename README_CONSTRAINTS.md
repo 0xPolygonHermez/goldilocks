@@ -19,5 +19,6 @@ Still need to check the AST files generated, please use by now:
 * q_polynomial.json (large real case)
 
 
-## NOTE: This implementation is not focus in performance!
+## NOTE: 
+This implementation is not focus in performance!
 
