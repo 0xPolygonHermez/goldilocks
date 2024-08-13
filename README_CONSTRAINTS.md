@@ -10,7 +10,7 @@ make constr_eval
 
 ./constr_eval ./constr/test_ast.json 10
 
-This ejecutin will evaluate the constraints of the ast_1.json in a trace of 1024 rows and will output the hash of the resultant matrix.
+This ejecution will evaluate the constraints of the test_ast.json in a trace of 1024 rows and will output the hash of the resultant matrix.
 
 ## IMPORTANT about AST inputs:
 
