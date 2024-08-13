@@ -101,6 +101,9 @@ runbenchcpu: benchcpu
 runbenchgpu: benchgpu
 	./benchgpu --benchmark_filter=MERKLETREE_BENCH_CUDA
 
+constr_eval: constr/eval.cpp $(ALLSRCS)
+	$(CXX) constr/eval.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o constr_eval
+
 clean:
 	$(RM) -r $(BUILD_DIR)
 	$(RM) -r $(BUILD_DIR_GPU)
@@ -110,6 +113,7 @@ clean:
 	$(RM) testsgpu
 	$(RM) benchcpu
 	$(RM) benchgpu
+	$(RM) constr_eval
 
 
 -include $(DEPS)

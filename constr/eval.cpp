@@ -104,6 +104,8 @@ int main(int argc, char *argv[])
     uint64_t nsums = 0;
     uint64_t nsubs = 0;
     uint64_t nmuls = 0;
+    uint64_t nreads = 0;
+    uint64_t nwrites = 0;
     auto &nodes = ast["nodes"];
 
     for (uint64_t irow = 0; irow < N; ++irow)
@@ -124,6 +126,7 @@ int main(int argc, char *argv[])
                     nodesRes[k * 3] = variables[groupIdx][3 * varIdx];
                     nodesRes[k * 3 + 1] = Goldilocks::zero();
                     nodesRes[k * 3 + 2] = Goldilocks::zero();
+                    ++nreads;
                 }
                 else if (node["name"] == "VARIABLE3")
                 {
@@ -132,6 +135,7 @@ int main(int argc, char *argv[])
                     nodesRes[k * 3] = variables[groupIdx][3 * varIdx];
                     nodesRes[k * 3 + 1] = variables[groupIdx][3 * varIdx + 1];
                     nodesRes[k * 3 + 2] = variables[groupIdx][3 * varIdx + 2];
+                    nreads += 3;
                 }
                 else if (node["name"] == "TRACE")
                 {
@@ -149,6 +153,7 @@ int main(int argc, char *argv[])
                     }
                     nodesRes[k * 3 + 1] = Goldilocks::zero();
                     nodesRes[k * 3 + 2] = Goldilocks::zero();
+                    ++nreads;
                 }
                 else if (node["name"] == "TRACE3")
                 {
@@ -160,19 +165,23 @@ int main(int argc, char *argv[])
                     if (irow == N - 1 && row_offset == 1)
                     {
                         nodesRes[k * 3] = trace[stageIdx][colIdx];
+                        nodesRes[k * 3 + 1] = trace[stageIdx][colIdx + 1];
+                        nodesRes[k * 3 + 2] = trace[stageIdx][colIdx + 2];
                     }
                     else
                     {
                         nodesRes[k * 3] = trace[stageIdx][(irow + row_offset) * ncols + colIdx];
+                        nodesRes[k * 3 + 1] = trace[stageIdx][(irow + row_offset) * ncols + colIdx + 1];
+                        nodesRes[k * 3 + 2] = trace[stageIdx][(irow + row_offset) * ncols + colIdx + 2];
                     }
-                    nodesRes[k * 3 + 1] = trace[stageIdx][(irow + row_offset) * ncols + colIdx + 1];
-                    nodesRes[k * 3 + 2] = trace[stageIdx][(irow + row_offset) * ncols + colIdx + 2];
+                    nreads += 3;
                 }
                 else if (node["name"] == "EVAL")
                 {
                     int nodeIdx = node["args"]["node_out"];
                     int destIdx = node["args"]["dest_col"];
                     evaluation[irow * nResCols + destIdx] = nodesRes[nodeIdx * 3];
+                    ++nwrites;
                 }
                 else if (node["name"] == "EVAL3")
                 {
@@ -181,6 +190,7 @@ int main(int argc, char *argv[])
                     evaluation[irow * nResCols + destIdx] = nodesRes[nodeIdx * 3];
                     evaluation[irow * nResCols + destIdx + 1] = nodesRes[nodeIdx * 3 + 1];
                     evaluation[irow * nResCols + destIdx + 2] = nodesRes[nodeIdx * 3 + 2];
+                    nwrites += 3;
                 }
                 else
                 {
@@ -191,8 +201,8 @@ int main(int argc, char *argv[])
             {
                 assert(node["type"] == "OP");
 
-                int node1 = node["args"]["node1"];
-                int node2 = node["args"]["node2"];
+                uint64_t node1 = node["args"]["node1"];
+                uint64_t node2 = node["args"]["node2"];
                 assert(node1 * 3 >= 0 && node1 * 3 < nNodes * 3);
                 assert(node2 * 3 >= 0 && node2 * 3 < nNodes * 3);
                 Goldilocks::Element *input1 = &nodesRes[node1 * 3];
@@ -315,9 +325,12 @@ int main(int argc, char *argv[])
     std::cout << "]" << endl;
     std::cout << "nNodes = " << nNodes << endl;
     std::cout << "evaluations HASH = " << hash[0].fe << " " << hash[1].fe << " " << hash[2].fe << " " << hash[3].fe << endl;
-    std::cout << "#sums: " << nsums << endl;
-    std::cout << "#subs: " << nsubs << endl;
-    std::cout << "#muls: " << nmuls << endl;
+    int ntotal = nsums + nsubs + nmuls + nreads + nwrites;
+    std::cout << std::fixed << std::setprecision(1) << "#sums: " << nsums << " ( " << float(nsums) / float(ntotal) * 100.0 << "%)" << endl;
+    std::cout << std::fixed << std::setprecision(1) << "#subs: " << nsubs << " ( " << float(nsubs) / float(ntotal) * 100.0 << "%)" << endl;
+    std::cout << std::fixed << std::setprecision(1) << "#muls: " << nmuls << " ( " << float(nmuls) / float(ntotal) * 100.0 << "%)" << endl;
+    std::cout << std::fixed << std::setprecision(1) << "#reads: " << nreads << " ( " << float(nreads) / float(ntotal) * 100.0 << "%)" << endl;
+    std::cout << std::fixed << std::setprecision(1) << "#writes: " << nwrites << " ( " << float(nwrites) / float(ntotal) * 100.0 << "%)" << endl;
     std::cout << endl;
 
     return 0;
