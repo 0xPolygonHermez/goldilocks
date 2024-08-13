@@ -4,7 +4,7 @@ make constr_eval
 
 ## EXECUTE:
 
-./constr_eval <<AST.json>> <<logN>>
+./constr_eval AST.json logN
 
 ## EXAMPLE :
 
