@@ -20,5 +20,5 @@ Still need to check the AST files generated, please use by now:
 
 
 ## NOTE: 
-This implementation is not focus in performance!
+This implementation is not focused in performance!
 
