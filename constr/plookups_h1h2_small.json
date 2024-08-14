@@ -1,0 +1,288 @@
+{
+  "max_nodes_base": 7,
+  "max_nodes_extension": 1,
+  "nEvals": 6,
+  "nNodes": 27,
+  "nStages": 7,
+  "nVariables": 4,
+  "nodes": [
+    {
+      "args": {
+        "column_idx": 12,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 13,
+        "row_offset": 1,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 0,
+        "node2": 1
+      },
+      "name": "MULT",
+      "resultType": "base",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 7,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 8,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 14,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 6,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "group_idx": 0,
+        "var_idx": 0
+      },
+      "name": "VARIABLE3",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 7,
+        "node2": 3
+      },
+      "name": "MULT31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 8,
+        "node2": 4
+      },
+      "name": "ADD31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 9,
+        "node2": 7
+      },
+      "name": "MULT33",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 10,
+        "node2": 5
+      },
+      "name": "ADD31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 0,
+        "var_idx": 1
+      },
+      "name": "VARIABLE3",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 11,
+        "node2": 12
+      },
+      "name": "SUB33",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 13,
+        "node2": 6
+      },
+      "name": "MULT31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 14,
+        "node2": 12
+      },
+      "name": "ADD33",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "dest_col": 0,
+        "node_out": 15
+      },
+      "name": "EVAL3",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 11,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 7,
+        "node2": 0
+      },
+      "name": "MULT31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 18,
+        "node2": 1
+      },
+      "name": "ADD31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 19,
+        "node2": 7
+      },
+      "name": "MULT33",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 20,
+        "node2": 2
+      },
+      "name": "ADD31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 0,
+        "row_offset": 0,
+        "stage_idx": 4
+      },
+      "name": "TRACE3",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 21,
+        "node2": 22
+      },
+      "name": "SUB33",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 23,
+        "node2": 17
+      },
+      "name": "MULT31",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 22,
+        "node2": 24
+      },
+      "name": "ADD33",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "dest_col": 3,
+        "node_out": 25
+      },
+      "name": "EVAL3",
+      "resultType": "extension",
+      "type": "VALUE"
+    }
+  ],
+  "stagesCols": [
+    11,
+    15,
+    0,
+    0,
+    12,
+    0,
+    0
+  ],
+  "variablesSize": [
+    [
+      8,
+      3
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      3
+    ]
+  ]
+}
