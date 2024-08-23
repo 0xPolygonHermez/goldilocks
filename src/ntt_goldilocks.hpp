@@ -187,18 +187,25 @@ public:
     // Refer to `https://docs.nvidia.com/cuda/cuda-runtime-api/group__CUDART__MEMORY.html#group__CUDART__MEMORY_1gab84100ae1fa1b12eaca660207ef585b`
     void LDE_MerkleTree_MultiGPU_viaCPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, bool buildMerkleTree = true);
     // Automatically select computing devices according to data scale
-    void LDE_MerkleTree_Auto(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, bool buildMerkleTree = true);
+    void LDE_MerkleTree_Auto(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t steps = 0);
 
     void LDE_MerkleTree_MultiGPU_Init(u_int64_t size, u_int64_t ext_size, u_int64_t ncols);
     void LDE_MerkleTree_MultiGPU_Free();
 
-    void Prepare_MultiGPU(u_int64_t size, u_int64_t ext_size, u_int64_t ncols);
-    void LDE_MultiGPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, u_int64_t ncols_per_gpu, u_int64_t ncols_last_gpu, Goldilocks::Element *buffer, u_int64_t nphase);
+    void Prepare_MultiGPU(u_int64_t size, u_int64_t ext_size, u_int64_t ncols, u_int64_t steps);
+    void LDE_MultiGPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, u_int64_t ncols_per_gpu, u_int64_t ncols_last_gpu, Goldilocks::Element *buffer);
     void LDE_MerkleTree_Switch_MultiGPU(u_int64_t nrows_per_gpu);
-    void MerkleTree_MultiGPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t ext_size, u_int64_t ncols, u_int64_t nrows_per_gpu, Goldilocks::Element *buffer, u_int64_t nphase);
+    void MerkleTree_MultiGPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t ncols, u_int64_t nrows_per_gpu, Goldilocks::Element *buffer);
     void LDE_MerkleTree_Cleanup_MultiGPU();
 
-    void LDE_MerkleTree_MultiGPU_viaCPU_Steps(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, bool buildMerkleTree = true);
+    void LDE_MerkleTree_MultiGPU_Steps(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t steps = 1);
+    void LDE_MultiGPU_Steps(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t steps = 1);
+
+    void LDE_MultiGPU_Full(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t steps = 1);
+
+    void extendPol_Cuda(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer = NULL, uint64_t PACK = 8);
+    void prepare_params(uint64_t N_Extended, uint64_t N);
+    void release_params();
 #endif  // __USE_CUDA__
 };
 // extend parameter is used to indicate tha the polinomial will be extended after the INTT

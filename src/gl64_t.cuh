@@ -654,6 +654,58 @@ public:
         }
     }
 
+    static inline void copy( gl64_t &dst, const gl64_t &src) {
+        dst.val = src.val;
+    }
+
+    /* Pack operations */
+    static inline void copy_pack( uint64_t nrowsPack, gl64_t *dst, const gl64_t *src) {
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            dst[i].val = src[i].val;
+        }
+    }
+
+    static inline void copy_pack( uint64_t nrowsPack, gl64_t *dst, uint64_t stride_dst, const gl64_t *src){
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            dst[i*stride_dst].val = src[i].val;
+        }
+    }
+
+    static inline void op_pack( uint64_t nrowsPack, uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b){
+        switch (op)
+        {
+        case 0:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] +b[i];
+            }
+            break;
+        case 1:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] - b[i];
+            }
+            break;
+        case 2:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] * b[i];
+            }
+            break;
+        case 3:
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = b[i] - a[i];
+            }
+            break;
+        default:
+            assert(0);
+            break;
+        }
+    }
+
 };
 
 # undef inline
