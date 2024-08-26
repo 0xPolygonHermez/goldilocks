@@ -7,7 +7,7 @@
 #include "../src/goldilocks_cubic_extension.hpp"
 #include "../src/goldilocks_cubic_extension_pack.hpp"
 
-#define FFT_SIZE (1 << 24)
+#define FFT_SIZE (1 << 14)
 #define BLOWUP_FACTOR 1
 #define NUM_COLUMNS 750
 
@@ -167,16 +167,70 @@ TEST(GOLDILOCKS_TEST, lde)
             a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * (i - 1) + j] + a[NUM_COLUMNS * (i - 2) + j];
         }
     }
-    ntt.prepare_params(FFT_SIZE<<BLOWUP_FACTOR, FFT_SIZE);
+    warmup_all_gpus();
     TimerStart(extendPol_Cuda);
     ntt.extendPol_Cuda(b, a, FFT_SIZE<<BLOWUP_FACTOR, FFT_SIZE, NUM_COLUMNS, buffer, 16);
     //ntt.LDE_MultiGPU_Full(b, a, FFT_SIZE, FFT_SIZE<<BLOWUP_FACTOR, NUM_COLUMNS, buffer, 8);
     TimerStopAndLog(extendPol_Cuda);
-    ntt.release_params();
 
     cudaFree(a);
     cudaFree(b);
     cudaFreeHost(buffer);
+}
+
+TEST(GOLDILOCKS_TEST, mt)
+{
+    Goldilocks::Element *tree_a;
+    Goldilocks::Element *tree_b;
+    Goldilocks::Element *input;
+    uint64_t num_rows = FFT_SIZE << BLOWUP_FACTOR;
+    uint64_t numElementsTree = (2* num_rows -1) * 4;
+    cudaMallocHost(&tree_a, numElementsTree * sizeof(Goldilocks::Element));
+    cudaMallocHost(&tree_b, numElementsTree * sizeof(Goldilocks::Element));
+
+    cudaMallocHost(&input, num_rows * NUM_COLUMNS * sizeof(Goldilocks::Element));
+
+    for (uint i = 0; i < 2; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            Goldilocks::add(input[i * NUM_COLUMNS + j], Goldilocks::one(), Goldilocks::fromU64(j));
+        }
+    }
+
+    for (uint64_t i = 2; i < FFT_SIZE; i++)
+    {
+        for (uint j = 0; j < NUM_COLUMNS; j++)
+        {
+            input[i * NUM_COLUMNS + j] = input[NUM_COLUMNS * (i - 1) + j] + input[NUM_COLUMNS * (i - 2) + j];
+        }
+    }
+
+
+
+    warmup_all_gpus();
+    alloc_pinned_mem(numElementsTree);
+
+    TimerStart(merkletree_cuda_async);
+    PoseidonGoldilocks::merkletree_cuda_async(tree_a, input, NUM_COLUMNS, num_rows);
+    TimerStopAndLog(merkletree_cuda_async);
+
+    TimerStart(merkletree_cuda);
+    PoseidonGoldilocks::merkletree_avx(tree_b, input, NUM_COLUMNS, num_rows);
+    TimerStopAndLog(merkletree_cuda);
+
+    for (uint64_t i=0;i<numElementsTree;i++) {
+        uint64_t left = Goldilocks::toU64(tree_a[i]);
+        uint64_t right = Goldilocks::toU64(tree_b[i]);
+        if (left != right) {
+            printf("i:%lu, left:%lu, right:%lu\n", i, left, right);
+            assert(0);
+        }
+    }
+
+    cudaFreeHost(tree_a);
+    cudaFreeHost(tree_b);
+    cudaFreeHost(input);
 }
 
 #endif
@@ -367,53 +421,6 @@ TEST(GOLDILOCKS_TEST, copy)
             CHECKCUDAERR(cudaStreamDestroy(streams2d[i][j]));
         }
     }
-}
-
-TEST(GOLDILOCKS_TEST, para)
-{
-    int nDevices;
-    CHECKCUDAERR(cudaGetDeviceCount(&nDevices));
-
-    const int nStreams = 2;
-    uint64_t segment = 1<<30;
-    uint64_t *a_h;
-    cudaMallocHost(&a_h, segment * nStreams * nDevices * sizeof(uint64_t));
-    init(a_h, segment * nDevices);
-    uint64_t *a_d[8];
-
-
-    cudaStream_t streams[16];
-    for (int s=0;s<nStreams*nDevices;s++) {
-        CHECKCUDAERR(cudaSetDevice(s/nStreams));
-        CHECKCUDAERR(cudaStreamCreate(&streams[s]));
-    }
-
-    for (int d=0;d<nDevices;d++) {
-        CHECKCUDAERR(cudaSetDevice(d));
-        CHECKCUDAERR(cudaMalloc(&a_d[d*nStreams], segment * sizeof(uint64_t)));
-        CHECKCUDAERR(cudaMalloc(&a_d[d*nStreams+1], segment * sizeof(uint64_t)));
-    }
-
-    TimerStart(WHOLE_WORK);
-    for (int s=0;s<nStreams*nDevices;s++) {
-        cudaStream_t stream = streams[s];
-        CHECKCUDAERR(cudaMemcpyAsync(a_d[s], a_h + segment * s, segment * sizeof(uint64_t), cudaMemcpyHostToDevice, stream));
-        add_one<<<segment/16, 16, 0, stream>>>(a_d[s], segment);
-        CHECKCUDAERR(cudaMemcpyAsync(a_h + segment * s, a_d[s], segment * sizeof(uint64_t), cudaMemcpyDeviceToHost, stream));
-    }
-
-    TimerStart(WAIT_WORK);
-    for (int s=0;s<nStreams*nDevices;s++) {
-        CHECKCUDAERR(cudaStreamSynchronize(streams[s]));
-    }
-    TimerStopAndLog(WAIT_WORK);
-
-    for (int s=0;s<nStreams*nDevices;s++) {
-        CHECKCUDAERR(cudaStreamDestroy(streams[s]));
-        cudaFree(a_d[s]);
-    }
-    TimerStopAndLog(WHOLE_WORK);
-    cudaFreeHost(a_h);
 }
 
 int main(int argc, char **argv)

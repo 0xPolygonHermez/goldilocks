@@ -77,6 +77,8 @@ public:
     void static merkletree_cuda_multi_gpu_steps(uint64_t** gpu_inputs, uint64_t** gpu_trees, void* v_gpu_streams, uint64_t num_cols, uint64_t num_rows_device, uint32_t const ngpu, uint64_t dim = 1);
     void static merkletree_cuda_multi_gpu_final(Goldilocks::Element *tree, uint64_t* final_tree, void* v_gpu_streams, uint64_t num_rows);
 
+    void static merkletree_cuda_async(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows);
+
 #endif
 };
 

@@ -1030,51 +1030,6 @@ void NTT_Goldilocks::LDE_MultiGPU_Full(Goldilocks::Element *dst, Goldilocks::Ele
 #endif
 }
 
-gl64_t *forward_tf_d[MAX_GPUS];
-gl64_t *inverse_tf_d[MAX_GPUS];
-gl64_t *r_d[MAX_GPUS];
-gl64_t *data_d[nStreams*MAX_GPUS];
-cudaStream_t cuda_streams[nStreams*MAX_GPUS];
-cudaEvent_t events[nStreams*MAX_GPUS];
-
-void NTT_Goldilocks::prepare_params(uint64_t N_Extended, uint64_t N) {
-
-    int lg2 = log2(N);
-    int lg2ext = log2(N_Extended);
-
-    int nDevices = 0;
-    CHECKCUDAERR(cudaGetDeviceCount(&nDevices));
-    printf("nDevices: %d\n", nDevices);
-
-    TimerStart(PREPARE_PARAMS);
-#pragma omp parallel for
-    for (int d=0;d<nDevices;d++) {
-        CHECKCUDAERR(cudaSetDevice(d));
-        CHECKCUDAERR(cudaMalloc(&forward_tf_d[d], N_Extended * sizeof(uint64_t)));
-        CHECKCUDAERR(cudaMalloc(&inverse_tf_d[d], N_Extended * sizeof(uint64_t)));
-        CHECKCUDAERR(cudaMalloc(&r_d[d], N_Extended * sizeof(uint64_t)));
-        init_twiddle_factors(forward_tf_d[d], inverse_tf_d[d], lg2);
-        init_twiddle_factors(forward_tf_d[d], inverse_tf_d[d], lg2ext);
-        init_r(r_d[d], lg2);
-    }
-    TimerStopAndLog(PREPARE_PARAMS);
-}
-
-void NTT_Goldilocks::release_params() {
-
-    int nDevices = 0;
-    CHECKCUDAERR(cudaGetDeviceCount(&nDevices));
-    printf("nDevices: %d\n", nDevices);
-
-    TimerStart(CLEANUP_PARAMS);
-    for (int d=0;d<nDevices;d++) {
-        cudaFree(forward_tf_d[d]);
-        cudaFree(inverse_tf_d[d]);
-        cudaFree(r_d[d]);
-    }
-    TimerStopAndLog(CLEANUP_PARAMS);
-}
-
 void NTT_Goldilocks::extendPol_Cuda(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer, uint64_t PACK) {
     printf("*** In extendPol_Cuda() ...\n");
     int nDevices = 0;
@@ -1088,6 +1043,35 @@ void NTT_Goldilocks::extendPol_Cuda(Goldilocks::Element *output, Goldilocks::Ele
     printf("lg2ext: %d\n", lg2ext);
     printf("ncols:%lu\n", ncols);
 
+    if (buffer == NULL) {
+        buffer = (Goldilocks::Element *)get_pinned_mem();
+    }
+    assert(buffer != NULL);
+
+    if (ncols < nDevices * PACK) {
+        return extendPol(output, input, N_Extended, N, ncols, buffer);
+    }
+
+    gl64_t *forward_tf_d[MAX_GPUS];
+    gl64_t *inverse_tf_d[MAX_GPUS];
+    gl64_t *r_d[MAX_GPUS];
+    gl64_t *data_d[nStreams*MAX_GPUS];
+    cudaStream_t cuda_streams[nStreams*MAX_GPUS];
+    cudaEvent_t events[nStreams*MAX_GPUS];
+
+    TimerStart(PREPARE_PARAMS);
+#pragma omp parallel for
+    for (int d=0;d<nDevices;d++) {
+        CHECKCUDAERR(cudaSetDevice(d));
+        CHECKCUDAERR(cudaMalloc(&forward_tf_d[d], N_Extended * sizeof(uint64_t)));
+        CHECKCUDAERR(cudaMalloc(&inverse_tf_d[d], N_Extended * sizeof(uint64_t)));
+        CHECKCUDAERR(cudaMalloc(&r_d[d], N_Extended * sizeof(uint64_t)));
+        init_twiddle_factors(forward_tf_d[d], inverse_tf_d[d], lg2);
+        init_twiddle_factors(forward_tf_d[d], inverse_tf_d[d], lg2ext);
+        init_r(r_d[d], lg2);
+    }
+    TimerStopAndLog(PREPARE_PARAMS);
+
     for (int d=0;d<nDevices;d++) {
         CHECKCUDAERR(cudaSetDevice(d));
         for (int s=0;s<nStreams;s++) {
@@ -1097,12 +1081,6 @@ void NTT_Goldilocks::extendPol_Cuda(Goldilocks::Element *output, Goldilocks::Ele
             CHECKCUDAERR(cudaEventCreate(events + idx));
         }
     }
-
-    if (buffer == NULL) {
-        buffer = (Goldilocks::Element *)get_pinned_mem();
-    }
-
-    assert(buffer != NULL);
 
     Goldilocks::Element *buffer_[nStreams*nDevices];
 
@@ -1169,5 +1147,12 @@ void NTT_Goldilocks::extendPol_Cuda(Goldilocks::Element *output, Goldilocks::Ele
         cudaEventDestroy(events[s]);
         cudaStreamDestroy(cuda_streams[s]);
     }
+    TimerStart(CLEANUP_PARAMS);
+    for (int d=0;d<nDevices;d++) {
+        cudaFree(forward_tf_d[d]);
+        cudaFree(inverse_tf_d[d]);
+        cudaFree(r_d[d]);
+    }
+    TimerStopAndLog(CLEANUP_PARAMS);
     TimerStopAndLog(CLEANUP);
 }

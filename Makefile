@@ -99,8 +99,8 @@ runfullcpu: full
 runcopy: full
 	./full --gtest_filter=GOLDILOCKS_TEST.copy
 
-runpara: full
-	./full --gtest_filter=GOLDILOCKS_TEST.para
+runmt: full
+	./full --gtest_filter=GOLDILOCKS_TEST.mt
 
 benchcpu: benchs/bench.cpp $(ALLSRCS)
 	$(CXX) benchs/bench.cpp src/*.cpp -lbenchmark -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -O3 -o $@
