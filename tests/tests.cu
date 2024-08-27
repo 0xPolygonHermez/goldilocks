@@ -7,9 +7,9 @@
 #include "../src/goldilocks_cubic_extension.hpp"
 #include "../src/goldilocks_cubic_extension_pack.hpp"
 
-#define FFT_SIZE (1 << 14)
+#define FFT_SIZE (1 << 24)
 #define BLOWUP_FACTOR 1
-#define NUM_COLUMNS 750
+#define NUM_COLUMNS 32
 
 #ifdef __USE_CUDA__
 #include "../src/gl64_t.cuh"
@@ -145,8 +145,8 @@ TEST(GOLDILOCKS_TEST, lde)
     Goldilocks::Element *a;
     Goldilocks::Element *b;
     Goldilocks::Element *buffer;
-    cudaMallocManaged(&a, (uint64_t)(FFT_SIZE) * NUM_COLUMNS * sizeof(Goldilocks::Element));
-    cudaMallocManaged(&b, (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    cudaMallocHost(&a, (uint64_t)(FFT_SIZE) * NUM_COLUMNS * sizeof(Goldilocks::Element));
+    cudaMallocHost(&b, (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
 
     cudaMallocHost(&buffer, (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * 128 * sizeof(Goldilocks::Element));
 
@@ -168,13 +168,72 @@ TEST(GOLDILOCKS_TEST, lde)
         }
     }
     warmup_all_gpus();
-    TimerStart(extendPol_Cuda);
-    ntt.extendPol_Cuda(b, a, FFT_SIZE<<BLOWUP_FACTOR, FFT_SIZE, NUM_COLUMNS, buffer, 16);
+    TimerStart(extendPol_MultiGPU);
+    //ntt.extendPol_MultiGPU(b, a, FFT_SIZE<<BLOWUP_FACTOR, FFT_SIZE, NUM_COLUMNS, buffer, 16);
+    ntt.extendPol_GPU(b, a, FFT_SIZE<<BLOWUP_FACTOR, FFT_SIZE, NUM_COLUMNS);
     //ntt.LDE_MultiGPU_Full(b, a, FFT_SIZE, FFT_SIZE<<BLOWUP_FACTOR, NUM_COLUMNS, buffer, 8);
-    TimerStopAndLog(extendPol_Cuda);
+    TimerStopAndLog(extendPol_MultiGPU);
 
-    cudaFree(a);
-    cudaFree(b);
+    cudaFreeHost(a);
+    cudaFreeHost(b);
+    cudaFreeHost(buffer);
+}
+
+TEST(GOLDILOCKS_TEST, lde2)
+{
+    Goldilocks::Element *a;
+    Goldilocks::Element *b;
+    Goldilocks::Element *c;
+    Goldilocks::Element *buffer;
+    uint64_t ncols = 78;
+    uint64_t N = 1<<20;
+    uint64_t N_Extended = 1<<22;
+    cudaMallocHost(&a, N * ncols * sizeof(Goldilocks::Element));
+    cudaMallocHost(&b, N_Extended * ncols * sizeof(Goldilocks::Element));
+    cudaMallocHost(&c, N_Extended * ncols * sizeof(Goldilocks::Element));
+
+    cudaMallocHost(&buffer, N_Extended * 128 * sizeof(Goldilocks::Element));
+
+    NTT_Goldilocks ntt(N);
+
+    for (uint i = 0; i < 2; i++)
+    {
+        for (uint j = 0; j < ncols; j++)
+        {
+            Goldilocks::add(a[i * ncols + j], Goldilocks::one(), Goldilocks::fromU64(j));
+        }
+    }
+
+    for (uint64_t i = 2; i < N; i++)
+    {
+        for (uint j = 0; j < ncols; j++)
+        {
+            a[i * ncols + j] = a[ncols * (i - 1) + j] + a[ncols * (i - 2) + j];
+        }
+    }
+    warmup_all_gpus();
+    TimerStart(extendPol_MultiGPU);
+    ntt.extendPol_MultiGPU(b, a, N_Extended, N, ncols, buffer, 16);
+    //ntt.extendPol_GPU(b, a, FFT_SIZE<<BLOWUP_FACTOR, FFT_SIZE, NUM_COLUMNS);
+    TimerStopAndLog(extendPol_MultiGPU);
+
+    TimerStart(extendPol_MultiGPU2);
+    //ntt.extendPol_MultiGPU(c, a, N_Extended, N, ncols, buffer, 8);
+    ntt.extendPol_GPU(c, a, N_Extended, N, ncols);
+    TimerStopAndLog(extendPol_MultiGPU2);
+
+    for (int i = 0; i <N_Extended * ncols;i++) {
+        uint64_t left = Goldilocks::toU64(b[i]);
+        uint64_t right = Goldilocks::toU64(c[i]);
+        if (left != right) {
+            printf("i:%d, left:%lu, right:%lu\n", i, left, right);
+            assert(0);
+        }
+    }
+
+    cudaFreeHost(a);
+    cudaFreeHost(b);
+    cudaFreeHost(c);
     cudaFreeHost(buffer);
 }
 

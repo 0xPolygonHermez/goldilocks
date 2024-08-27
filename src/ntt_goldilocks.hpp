@@ -203,9 +203,11 @@ public:
 
     void LDE_MultiGPU_Full(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t steps = 1);
 
-    void extendPol_Cuda(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer = NULL, uint64_t PACK = 8);
+    void extendPol_MultiGPU(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer = NULL, uint64_t PACK = 8);
+    void extendPol_GPU(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols);
 #endif  // __USE_CUDA__
 };
+
 // extend parameter is used to indicate tha the polinomial will be extended after the INTT
 void NTT_Goldilocks::INTT(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ncols, Goldilocks::Element *buffer, u_int64_t nphase, u_int64_t nblock, bool extend)
 {

@@ -7,11 +7,18 @@ uint64_t *global_buffer;
 
 void alloc_pinned_mem(uint64_t n)
 {
-  CHECKCUDAERR(cudaMallocHost(&global_buffer, n * sizeof(uint64_t)));
+    CHECKCUDAERR(cudaHostAlloc(&global_buffer, n * sizeof(uint64_t), cudaHostAllocPortable));
+}
+
+void alloc_pinned_mem_per_device(uint64_t n)
+{
+    int nDevices = 0;
+    CHECKCUDAERR(cudaGetDeviceCount(&nDevices));
+    CHECKCUDAERR(cudaHostAlloc(&global_buffer, n * nDevices * sizeof(uint64_t), cudaHostAllocPortable));
 }
 
 uint64_t* get_pinned_mem() {
-  return global_buffer;
+    return global_buffer;
 }
 
 void free_pinned_mem()

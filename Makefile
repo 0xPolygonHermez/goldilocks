@@ -93,6 +93,9 @@ runfullstep: full
 runlde: full
 	./full --gtest_filter=GOLDILOCKS_TEST.lde
 
+runlde2: full
+	./full --gtest_filter=GOLDILOCKS_TEST.lde2
+
 runfullcpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_cpu
 
