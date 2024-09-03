@@ -64,7 +64,6 @@ $(BUILD_DIR_GPU)/%.cpp.o: %.cpp
 	$(MKDIR_P) $(dir $@)
 	$(CXX) -D__USE_CUDA__ -mavx2 $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -c $< -o $@
 
-#-DGPU_TIMING
 $(BUILD_DIR_GPU)/%.cu.o: %.cu
 	$(MKDIR_P) $(dir $@)
 	$(NVCC) -D__USE_CUDA__ -Iutils -Xcompiler -O3 -Xcompiler -fopenmp -Xcompiler -fPIC -Xcompiler -mavx2 -arch=$(CUDA_ARCH) -dc $< --output-file $@
@@ -87,14 +86,8 @@ full: $(BUILD_DIR_GPU)/tests/tests.cu.o $(BUILD_DIR_GPU)/src/goldilocks_base_fie
 runfullgpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_gpu
 
-runfullstep: full
-	./full --gtest_filter=GOLDILOCKS_TEST.full_step
-
 runlde: full
 	./full --gtest_filter=GOLDILOCKS_TEST.lde
-
-runlde2: full
-	./full --gtest_filter=GOLDILOCKS_TEST.lde2
 
 runfullcpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_cpu

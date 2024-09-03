@@ -89,57 +89,6 @@ TEST(GOLDILOCKS_TEST, full_gpu)
     free_pinned_mem();
 }
 
-TEST(GOLDILOCKS_TEST, full_step)
-{
-    Goldilocks::Element *a;
-    Goldilocks::Element *b;
-    Goldilocks::Element *c;
-    cudaMallocManaged(&a, (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
-    cudaMallocManaged(&b, (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
-    cudaMallocManaged(&c, (uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS * sizeof(Goldilocks::Element));
-
-    const int STEPS = 2;
-    NTT_Goldilocks ntt(FFT_SIZE);
-    warmup_all_gpus();
-    alloc_pinned_mem((uint64_t)(FFT_SIZE << BLOWUP_FACTOR) * NUM_COLUMNS / STEPS);
-
-    for (uint i = 0; i < 2; i++)
-    {
-        for (uint j = 0; j < NUM_COLUMNS; j++)
-        {
-            Goldilocks::add(a[i * NUM_COLUMNS + j], Goldilocks::one(), Goldilocks::fromU64(j));
-        }
-    }
-
-    for (uint64_t i = 2; i < FFT_SIZE; i++)
-    {
-        for (uint j = 0; j < NUM_COLUMNS; j++)
-        {
-            a[i * NUM_COLUMNS + j] = a[NUM_COLUMNS * (i - 1) + j] + a[NUM_COLUMNS * (i - 2) + j];
-        }
-    }
-
-    TimerStart(LDE_MerkleTree_MultiGPU_Steps);
-    ntt.LDE_MerkleTree_MultiGPU_Steps(b, a, FFT_SIZE, FFT_SIZE<<BLOWUP_FACTOR, NUM_COLUMNS, c, STEPS);
-    TimerStopAndLog(LDE_MerkleTree_MultiGPU_Steps);
-
-
-    printf("merkle tree:\n");
-    for (uint64_t i = 0; i<8; i++) {
-        printf("%lu\n", Goldilocks::toU64(b[NUM_COLUMNS+i]));
-    }
-
-
-    uint64_t free_mem, total_mem;
-    cudaMemGetInfo(&free_mem, &total_mem);
-    printf("free_mem: %lu, total_mem: %lu\n", free_mem, total_mem);
-
-    cudaFree(a);
-    cudaFree(b);
-    cudaFree(c);
-    free_pinned_mem();
-}
-
 TEST(GOLDILOCKS_TEST, lde)
 {
     Goldilocks::Element *a;
@@ -176,64 +125,6 @@ TEST(GOLDILOCKS_TEST, lde)
 
     cudaFreeHost(a);
     cudaFreeHost(b);
-    cudaFreeHost(buffer);
-}
-
-TEST(GOLDILOCKS_TEST, lde2)
-{
-    Goldilocks::Element *a;
-    Goldilocks::Element *b;
-    Goldilocks::Element *c;
-    Goldilocks::Element *buffer;
-    uint64_t ncols = 78;
-    uint64_t N = 1<<20;
-    uint64_t N_Extended = 1<<22;
-    cudaMallocHost(&a, N * ncols * sizeof(Goldilocks::Element));
-    cudaMallocHost(&b, N_Extended * ncols * sizeof(Goldilocks::Element));
-    cudaMallocHost(&c, N_Extended * ncols * sizeof(Goldilocks::Element));
-
-    cudaMallocHost(&buffer, N_Extended * 128 * sizeof(Goldilocks::Element));
-
-    NTT_Goldilocks ntt(N);
-
-    for (uint i = 0; i < 2; i++)
-    {
-        for (uint j = 0; j < ncols; j++)
-        {
-            Goldilocks::add(a[i * ncols + j], Goldilocks::one(), Goldilocks::fromU64(j));
-        }
-    }
-
-    for (uint64_t i = 2; i < N; i++)
-    {
-        for (uint j = 0; j < ncols; j++)
-        {
-            a[i * ncols + j] = a[ncols * (i - 1) + j] + a[ncols * (i - 2) + j];
-        }
-    }
-    warmup_all_gpus();
-    TimerStart(extendPol_MultiGPU);
-    ntt.extendPol_MultiGPU(b, a, N_Extended, N, ncols, buffer, 16);
-    //ntt.extendPol_GPU(b, a, FFT_SIZE<<BLOWUP_FACTOR, FFT_SIZE, NUM_COLUMNS);
-    TimerStopAndLog(extendPol_MultiGPU);
-
-    TimerStart(extendPol_MultiGPU2);
-    //ntt.extendPol_MultiGPU(c, a, N_Extended, N, ncols, buffer, 8);
-    ntt.extendPol_GPU(c, a, N_Extended, N, ncols);
-    TimerStopAndLog(extendPol_MultiGPU2);
-
-    for (int i = 0; i <N_Extended * ncols;i++) {
-        uint64_t left = Goldilocks::toU64(b[i]);
-        uint64_t right = Goldilocks::toU64(c[i]);
-        if (left != right) {
-            printf("i:%d, left:%lu, right:%lu\n", i, left, right);
-            assert(0);
-        }
-    }
-
-    cudaFreeHost(a);
-    cudaFreeHost(b);
-    cudaFreeHost(c);
     cudaFreeHost(buffer);
 }
 
@@ -454,7 +345,7 @@ TEST(GOLDILOCKS_TEST, copy)
     TimerStart(MEMCPY_MULTIGPU_ASYNC);
 #pragma omp parallel for num_threads(nDevices)
     for (uint64_t d = 0; d < nDevices; d++) {
-        //CHECKCUDAERR(cudaSetDevice(d));
+        CHECKCUDAERR(cudaSetDevice(d));
         uint64_t *a = aa + d*total;
         uint64_t *b = bb[d];
 #pragma omp parallel for num_threads(pieces)

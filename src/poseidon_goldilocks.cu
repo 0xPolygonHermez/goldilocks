@@ -707,8 +707,6 @@ void PoseidonGoldilocks::merkletree_cuda_async(Goldilocks::Element *tree, Goldil
         }
     }
 
-    printf("numElementsTree:%lu, numElementsTreeDevice:%lu\n", numElementsTree, numElementsTreeDevice);
-
     assert(num_rows%num_rows_device == 0);
     int pack_count = num_rows/num_rows_device;
 

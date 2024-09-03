@@ -1097,7 +1097,6 @@ void NTT_Goldilocks::extendPol_MultiGPU(Goldilocks::Element *output, Goldilocks:
     cudaStream_t cuda_streams[nStreams*MAX_GPUS];
     cudaEvent_t events[nStreams*MAX_GPUS];
 
-    TimerStart(PREPARE_PARAMS);
 #pragma omp parallel for
     for (int d=0;d<nDevices;d++) {
         CHECKCUDAERR(cudaSetDevice(d));
@@ -1108,7 +1107,6 @@ void NTT_Goldilocks::extendPol_MultiGPU(Goldilocks::Element *output, Goldilocks:
         init_twiddle_factors(forward_tf_d[d], inverse_tf_d[d], lg2ext);
         init_r(r_d[d], lg2);
     }
-    TimerStopAndLog(PREPARE_PARAMS);
 
     for (int d=0;d<nDevices;d++) {
         CHECKCUDAERR(cudaSetDevice(d));
