@@ -357,6 +357,23 @@ void NTT_Goldilocks::reversePermutation(Goldilocks::Element *dst, uint64_t strid
 
 void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer, u_int64_t nphase, u_int64_t nblock)
 {
+    if (N == 0 || ncols == 0) {
+        return;
+    }
+
+#ifdef __USE_CUDA__
+    uint64_t nPack;
+    if (ncols < 16) {
+        return extendPol_GPU(output, input, N_Extended, N, ncols);
+    } else if (ncols < 32) {
+        nPack = 4;
+    } else if (ncols < 80) {
+        nPack = 8;
+    } else {
+        nPack = 16;
+    }
+    return extendPol_MultiGPU(output, input, N_Extended, N, ncols, NULL, nPack);
+#else
     NTT_Goldilocks ntt_extension(N_Extended, nThreads, N_Extended / N);
 
     Goldilocks::Element *tmp = NULL;
@@ -385,4 +402,5 @@ void NTT_Goldilocks::extendPol(Goldilocks::Element *output, Goldilocks::Element 
     {
         free(tmp);
     }
+#endif
 }

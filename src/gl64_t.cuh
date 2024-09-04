@@ -621,32 +621,51 @@ public:
         return t1;
     }
 
-public:
-
-    static __device__ __forceinline__ void copy_gpu( gl64_t *dst, const gl64_t *src){
-            dst[threadIdx.x] = src[threadIdx.x];
+    static inline void copy( gl64_t &dst, const gl64_t &src) {
+        dst.val = src.val;
     }
 
-
-    static __device__ __forceinline__ void copy_gpu( gl64_t *dst, uint64_t stride_dst, const gl64_t *src){
-            dst[threadIdx.x*stride_dst] = src[threadIdx.x];
+    /* Pack operations */
+    static inline void copy_pack( uint64_t nrowsPack, gl64_t *dst, const gl64_t *src) {
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            dst[i].val = src[i].val;
+        }
     }
-    
-    static __device__ __forceinline__ void op_gpu( uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b)
-    {
+
+    static inline void copy_pack( uint64_t nrowsPack, gl64_t *dst, uint64_t stride_dst, const gl64_t *src){
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            dst[i*stride_dst].val = src[i].val;
+        }
+    }
+
+    static inline void op_pack( uint64_t nrowsPack, uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b){
         switch (op)
         {
         case 0:
-            c[threadIdx.x] = a[threadIdx.x] + b[threadIdx.x];
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] +b[i];
+            }
             break;
         case 1:
-            c[threadIdx.x] = a[threadIdx.x] - b[threadIdx.x];
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] - b[i];
+            }
             break;
         case 2:
-            c[threadIdx.x] = a[threadIdx.x] * b[threadIdx.x];
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = a[i] * b[i];
+            }
             break;
         case 3:
-            c[threadIdx.x] = b[threadIdx.x] - a[threadIdx.x];
+            for (uint64_t i = 0; i < nrowsPack; ++i)
+            {
+                c[i] = b[i] - a[i];
+            }
             break;
         default:
             assert(0);

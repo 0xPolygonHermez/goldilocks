@@ -304,6 +304,7 @@ void ntt_cuda(cudaStream_t stream, gl64_t *data, gl64_t *r, gl64_t *fwd_twiddles
     TimerStart(NTT_Core_ReversePermutation);
 #endif
     reverse_permutation<<<gridDim, blockDim, 0, stream>>>(data, log_domain_size, ncols);
+    CHECKCUDAERR(cudaGetLastError());
 #ifdef GPU_TIMING
     cudaStreamSynchronize(stream);
     TimerStopAndLog(NTT_Core_ReversePermutation);
@@ -320,6 +321,7 @@ void ntt_cuda(cudaStream_t stream, gl64_t *data, gl64_t *r, gl64_t *fwd_twiddles
     for (uint32_t i = 0; i < log_domain_size; i++)
     {
         br_ntt_group<<<domain_size / 2, ncols, 0, stream>>>(data, ptr_twiddles, i, domain_size, ncols);
+        CHECKCUDAERR(cudaGetLastError());
     }
 #ifdef GPU_TIMING
     cudaStreamSynchronize(stream);
@@ -332,6 +334,7 @@ void ntt_cuda(cudaStream_t stream, gl64_t *data, gl64_t *r, gl64_t *fwd_twiddles
         TimerStart(NTT_Core_INTTScale);
 #endif
         intt_scale<<<domain_size, ncols, 0, stream>>>(data, r, domain_size, log_domain_size, ncols, extend);
+        CHECKCUDAERR(cudaGetLastError());
 #ifdef GPU_TIMING
         cudaStreamSynchronize(stream);
         TimerStopAndLog(NTT_Core_INTTScale);

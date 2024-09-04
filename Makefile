@@ -66,7 +66,7 @@ $(BUILD_DIR_GPU)/%.cpp.o: %.cpp
 
 $(BUILD_DIR_GPU)/%.cu.o: %.cu
 	$(MKDIR_P) $(dir $@)
-	$(NVCC) -D__USE_CUDA__ -DGPU_TIMING -Iutils -Xcompiler -O3 -Xcompiler -fopenmp -Xcompiler -fPIC -Xcompiler -mavx2 -arch=$(CUDA_ARCH) -dc $< --output-file $@
+	$(NVCC) -D__USE_CUDA__ -Iutils -Xcompiler -O3 -Xcompiler -fopenmp -Xcompiler -fPIC -Xcompiler -mavx2 -arch=$(CUDA_ARCH) -dc $< --output-file $@
 
 .PHONY: clean
 
@@ -86,8 +86,17 @@ full: $(BUILD_DIR_GPU)/tests/tests.cu.o $(BUILD_DIR_GPU)/src/goldilocks_base_fie
 runfullgpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_gpu
 
+runlde: full
+	./full --gtest_filter=GOLDILOCKS_TEST.lde
+
 runfullcpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_cpu
+
+runcopy: full
+	./full --gtest_filter=GOLDILOCKS_TEST.copy
+
+runmt: full
+	./full --gtest_filter=GOLDILOCKS_TEST.mt
 
 benchcpu: benchs/bench.cpp $(ALLSRCS)
 	$(CXX) benchs/bench.cpp src/*.cpp -lbenchmark -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -O3 -o $@

@@ -286,100 +286,122 @@ public:
         result[2] = i3;
     }
 
-    // ======== EXPRESSIONS ========
-    static __device__ __forceinline__ void copy_gpu(gl64_t *c_, const gl64_t *a_){
-        c_[threadIdx.x] = a_[threadIdx.x];
-        c_[blockDim.x + threadIdx.x] = a_[blockDim.x + threadIdx.x];
-        c_[2*blockDim.x + threadIdx.x] = a_[2*blockDim.x + threadIdx.x];
-    }
-    static __device__ __forceinline__ void add_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *b_){
-        c_[threadIdx.x] = a_[threadIdx.x] + b_[threadIdx.x];
-        c_[blockDim.x + threadIdx.x] = a_[blockDim.x + threadIdx.x] + b_[blockDim.x + threadIdx.x];
-        c_[2*blockDim.x + threadIdx.x] = a_[2*blockDim.x + threadIdx.x] + b_[2*blockDim.x + threadIdx.x];
-    }
-    static __device__ __forceinline__ void sub_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *b_){
-        c_[threadIdx.x] = a_[threadIdx.x] - b_[threadIdx.x];
-        c_[blockDim.x + threadIdx.x] = a_[blockDim.x + threadIdx.x] - b_[blockDim.x + threadIdx.x];
-        c_[2*blockDim.x + threadIdx.x] = a_[2*blockDim.x  + threadIdx.x] - b_[2*blockDim.x  + threadIdx.x];
-    }
-    static __device__ __forceinline__ void mul_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *b_){
+    /* Pack operations */
 
-        gl64_t A = (a_[threadIdx.x] + a_[blockDim.x + threadIdx.x]) * (b_[threadIdx.x] + b_[blockDim.x + threadIdx.x]);
-        gl64_t B = (a_[threadIdx.x] + a_[2*blockDim.x + threadIdx.x]) * (b_[threadIdx.x] + b_[2*blockDim.x + threadIdx.x]);
-        gl64_t C = (a_[blockDim.x + threadIdx.x] + a_[2*blockDim.x + threadIdx.x]) * (b_[blockDim.x + threadIdx.x] + b_[2*blockDim.x + threadIdx.x]);
-        gl64_t D = a_[threadIdx.x] * b_[threadIdx.x];
-        gl64_t E = a_[blockDim.x + threadIdx.x] * b_[blockDim.x + threadIdx.x];
-        gl64_t F = a_[2*blockDim.x + threadIdx.x] * b_[2*blockDim.x + threadIdx.x];
-        gl64_t G = D - E;
-
-        c_[threadIdx.x] = (C + G) - F;
-        c_[blockDim.x + threadIdx.x] = ((((A + C) - E) - E) - D);
-        c_[2*blockDim.x + threadIdx.x] = B - G;
-    }
-    static __device__ __forceinline__ void mul_gpu(gl64_t *c_, const gl64_t *a_, const gl64_t *challenge_, const gl64_t *challenge_ops_){
-        
-        
-        gl64_t A = (a_[threadIdx.x] + a_[blockDim.x + threadIdx.x]) * challenge_ops_[threadIdx.x];
-        gl64_t B = (a_[threadIdx.x] + a_[2*blockDim.x + threadIdx.x]) * challenge_ops_[blockDim.x + threadIdx.x];
-        gl64_t C = (a_[blockDim.x + threadIdx.x] + a_[2*blockDim.x + threadIdx.x]) * challenge_ops_[2*blockDim.x + threadIdx.x];
-        gl64_t D = a_[threadIdx.x] * challenge_[threadIdx.x];
-        gl64_t E = a_[blockDim.x + threadIdx.x] * challenge_[blockDim.x + threadIdx.x];
-        gl64_t F = a_[2*blockDim.x + threadIdx.x] * challenge_[2*blockDim.x + threadIdx.x];
-        gl64_t G = D - E;
-
-        c_[threadIdx.x] = (C + G) - F;
-        c_[blockDim.x + threadIdx.x] = ((((A + C) - E) - E) - D);
-        c_[2*blockDim.x + threadIdx.x] = B - G;
-    }
-    
-    static __device__ __forceinline__ void op_gpu(uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b){
-         switch (op)
-        {
-            case 0:
-                add_gpu(c, a, b);
-                break;
-            case 1:
-                sub_gpu(c, a, b);
-                break;
-            case 2:
-                mul_gpu(c, a, b);
-                break;
-            case 3:
-                sub_gpu(c, b, a);
-                break;
-            default:
-                assert(0);
-                break;
+    static inline void copy_pack( uint64_t nrowsPack, gl64_t *c_, const gl64_t *a_){
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
+            gl64_t::copy(c_[irow], a_[irow]);
+            gl64_t::copy(c_[nrowsPack + irow], a_[nrowsPack + irow]);
+            gl64_t::copy(c_[2*nrowsPack + irow], a_[2*nrowsPack + irow]);
         }
     }
-    static __device__ __forceinline__ void op_31_gpu(uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b){
+    static inline void add_pack( uint64_t nrowsPack, gl64_t *c_, const gl64_t *a_, const gl64_t *b_){
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
+            c_[irow] = a_[irow] + b_[irow];
+            c_[nrowsPack + irow] = a_[nrowsPack + irow] + b_[nrowsPack + irow];
+            c_[2*nrowsPack + irow] = a_[2*nrowsPack + irow] + b_[2*nrowsPack + irow];
+        }
+    }
+    static inline void sub_pack( uint64_t nrowsPack, gl64_t *c_, const gl64_t *a_, const gl64_t *b_){
+        for(uint64_t irow =0; irow<nrowsPack; ++irow){
+            c_[irow] = a_[irow] - b_[irow];
+            c_[nrowsPack + irow] = a_[nrowsPack + irow] - b_[nrowsPack + irow];
+            c_[2*nrowsPack + irow] = a_[2*nrowsPack + irow] - b_[2*nrowsPack + irow];
+        }
+    }
+    static inline void mul_pack(uint64_t nrowsPack, gl64_t *c_, const gl64_t *a_, const gl64_t *b_){
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            gl64_t A = (a_[i] + a_[nrowsPack + i]) * (b_[i] + b_[nrowsPack + i]);
+            gl64_t B = (a_[i] + a_[2*nrowsPack + i]) * (b_[i] + b_[2*nrowsPack + i]);
+            gl64_t C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * (b_[nrowsPack + i] + b_[2*nrowsPack + i]);
+            gl64_t D = a_[i] * b_[i];
+            gl64_t E = a_[nrowsPack + i] * b_[nrowsPack + i];
+            gl64_t F = a_[2*nrowsPack + i] * b_[2*nrowsPack + i];
+            gl64_t G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*nrowsPack + i] = B - G;
+        }
+    }
+    static inline void mul_pack(uint64_t nrowsPack, gl64_t *c_, const gl64_t *a_, const gl64_t *challenge_, const gl64_t *challenge_ops_){
+        for (uint64_t i = 0; i < nrowsPack; ++i)
+        {
+            gl64_t A = (a_[i] + a_[nrowsPack + i]) * challenge_ops_[i];
+            gl64_t B = (a_[i] + a_[2*nrowsPack + i]) * challenge_ops_[nrowsPack + i];
+            gl64_t C = (a_[nrowsPack + i] + a_[2*nrowsPack + i]) * challenge_ops_[2*nrowsPack + i];
+            gl64_t D = a_[i] * challenge_[i];
+            gl64_t E = a_[nrowsPack + i] * challenge_[nrowsPack + i];
+            gl64_t F = a_[2*nrowsPack + i] * challenge_[2*nrowsPack + i];
+            gl64_t G = D - E;
+
+            c_[i] = (C + G) - F;
+            c_[nrowsPack + i] = ((((A + C) - E) - E) - D);
+            c_[2*nrowsPack + i] = B - G;
+        }
+    }
+
+    static inline void op_pack( uint64_t nrowsPack, uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b){
         switch (op)
         {
             case 0:
-                c[threadIdx.x] = a[threadIdx.x] + b[threadIdx.x];
-                c[blockDim.x + threadIdx.x] = a[blockDim.x + threadIdx.x];
-                c[2*blockDim.x + threadIdx.x] = a[2*blockDim.x + threadIdx.x];
+                add_pack(nrowsPack, c, a, b);
                 break;
             case 1:
-                c[threadIdx.x] = a[threadIdx.x] - b[threadIdx.x];
-                c[blockDim.x + threadIdx.x] = a[blockDim.x + threadIdx.x];
-                c[2*blockDim.x + threadIdx.x] = a[2*blockDim.x + threadIdx.x];
+                sub_pack(nrowsPack, c, a, b);
                 break;
             case 2:
-                c[threadIdx.x] = a[threadIdx.x] * b[threadIdx.x];
-                c[blockDim.x + threadIdx.x] = a[blockDim.x + threadIdx.x] * b[threadIdx.x];
-                c[2*blockDim.x + threadIdx.x] = a[2*blockDim.x + threadIdx.x] * b[threadIdx.x];
+                mul_pack(nrowsPack, c, a, b);
                 break;
             case 3:
-                c[threadIdx.x] = b[threadIdx.x] - a[threadIdx.x];
-                c[blockDim.x + threadIdx.x] = -a[blockDim.x + threadIdx.x];
-                c[2*blockDim.x + threadIdx.x] = -a[2*blockDim.x + threadIdx.x];
+                sub_pack(nrowsPack, c, b, a);
                 break;
             default:
                 assert(0);
                 break;
-            }
         }
+    }
+    static inline void op_31_pack( uint64_t nrowsPack, uint64_t op, gl64_t *c, const gl64_t *a, const gl64_t *b){
+        switch (op)
+        {
+            case 0:
+                for (uint64_t i = 0; i < nrowsPack; ++i)
+                {
+                    c[i] = a[i] + b[i];
+                    c[nrowsPack + i] = a[nrowsPack + i];
+                    c[2*nrowsPack + i] = a[2*nrowsPack + i];
+                }
+                break;
+            case 1:
+                for (uint64_t i = 0; i < nrowsPack; ++i)
+                {
+                    c[i] = a[i] - b[i];
+                    c[nrowsPack + i] = a[nrowsPack + i];
+                    c[2*nrowsPack + i] = a[2*nrowsPack + i];
+                }
+                break;
+            case 2:
+                for (uint64_t i = 0; i < nrowsPack; ++i)
+                {
+                    c[i] = a[i] * b[i];
+                    c[nrowsPack + i] = a[nrowsPack + i] * b[i];
+                    c[2*nrowsPack + i] = a[2*nrowsPack + i] * b[i];
+                }
+                break;
+            case 3:
+                for (uint64_t i = 0; i < nrowsPack; ++i)
+                {
+                    c[i] = b[i] - a[i];
+                    c[nrowsPack + i] = -a[nrowsPack + i];
+                    c[2*nrowsPack + i] = -a[2*nrowsPack + i];
+                }
+                break;
+            default:
+                assert(0);
+                break;
+        }
+    }
 };
 
 #endif // GOLDILOCKS_F3_CUH

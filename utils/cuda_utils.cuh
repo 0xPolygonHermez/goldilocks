@@ -3,12 +3,14 @@
 
 #include <cuda.h>
 #include <stdio.h>
+#include <assert.h>
 
 __host__ inline void checkCudaError(cudaError_t code, const char *file, int line)
 {
     if (code != cudaSuccess)
     {
         printf("CUDA error: %s %s %d\n", cudaGetErrorString(code), file, line);
+        assert(0);
     }
 }
 
