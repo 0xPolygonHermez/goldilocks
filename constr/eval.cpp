@@ -16,7 +16,7 @@ Goldilocks::Element fill_variable(uint64_t i, uint64_t j);
 
 //
 // Evaluate the AST
-// Note: This is a reference sequential implementationn ot optimized for performance
+// Note: This is a reference sequential implementation not optimized for performance
 //
 int main(int argc, char *argv[])
 {
