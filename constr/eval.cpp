@@ -14,6 +14,10 @@ void file2json(const string &fileName, json &j);
 Goldilocks::Element fill_trace(uint64_t i, uint64_t j, uint64_t k);
 Goldilocks::Element fill_variable(uint64_t i, uint64_t j);
 
+//
+// Evaluate the AST
+// Note: This is a reference sequential implementationn ot optimized for performance
+//
 int main(int argc, char *argv[])
 {
     //
@@ -37,7 +41,7 @@ int main(int argc, char *argv[])
     auto nodes = ast["nodes"];
 
     //
-    // Allocate memory for TRACE, VARIABLES, EXPRESSIONS and NODES_RES
+    // Allocate memory for TRACE, VARIABLES, NODES_RES and EXP_EVALS
     //
     int degree = metadata["field"]["extension"]["degree"];
     uint64_t nSegments = metadata["trace_widths"].size();
@@ -85,7 +89,7 @@ int main(int argc, char *argv[])
     Goldilocks::Element *nodesRes = new Goldilocks::Element[nNodes * degree];
 
     //
-    // Fill traces and variables and initialize evaluaitons and nodes to 0
+    // Initialize TRACE and VARIABLES with deterministic inputs and initialize EXP_EVALS to 0
     //
     for (uint64_t i = 0; i < nSegments; i++)
     {
@@ -159,7 +163,7 @@ int main(int argc, char *argv[])
                 assert(row_offset == 0 || row_offset == 1);
 
                 // copy
-                if (irow == N - 1 && row_offset == 1) // case last row and offset=1 (trace value found in first row)
+                if (irow == N - 1 && row_offset == 1) // case last row and row_offset=1 (ciclic trace => trace value found in first row)
                 {
                     memcpy(&nodesRes[k * 3], &trace[segment][col_offset], dim * sizeof(Goldilocks::Element));
                 }
