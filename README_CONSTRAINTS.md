@@ -8,16 +8,9 @@ make constr_eval
 
 ## EXAMPLE :
 
-./constr_eval ./constr/test_ast.json 10
+./constr_eval ./constr/q_polynomial.json 10
 
-This ejecution will evaluate the constraints of the test_ast.json in a trace of 1024 rows and will output the hash of the resultant matrix.
-
-## IMPORTANT about AST inputs:
-
-Still need to check the AST files generated, please use by now:
-* test_ast.json (small example)
-* q_polynomial.json (large real case)
-
+This ejecution will evaluate the expressions q_polynomial.json in a trace of 1024 rows and will output the hash of the resultant matrix.
 
 ## NOTE: 
 This implementation is not focused in performance!
