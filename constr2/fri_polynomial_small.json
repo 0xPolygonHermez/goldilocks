@@ -1,0 +1,2450 @@
+{
+  "max_nodes_base": 0,
+  "max_nodes_extension": 3,
+  "nEvals": 3,
+  "nNodes": 264,
+  "nStages": 7,
+  "nVariables": 4,
+  "nodes": [
+    {
+      "args": {
+        "group_idx": 0,
+        "var_idx": 5
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 0,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 0,
+        "node2": 1
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 1,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 2,
+        "node2": 3
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 4,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 2,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 5,
+        "node2": 6
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 7,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 3,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 8,
+        "node2": 9
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 10,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 4,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 11,
+        "node2": 12
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 13,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 5,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 14,
+        "node2": 15
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 16,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 6,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 17,
+        "node2": 18
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 19,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 7,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 20,
+        "node2": 21
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 22,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 8,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 23,
+        "node2": 24
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 25,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 9,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 26,
+        "node2": 27
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 28,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 10,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 29,
+        "node2": 30
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 31,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 11,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 32,
+        "node2": 33
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 34,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 12,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 35,
+        "node2": 36
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 37,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 13,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 38,
+        "node2": 39
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 40,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 14,
+        "row_offset": 0,
+        "stage_idx": 1
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 41,
+        "node2": 42
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 43,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 0,
+        "row_offset": 0,
+        "stage_idx": 2
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 45,
+        "node2": 44
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 46,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 3,
+        "row_offset": 0,
+        "stage_idx": 2
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 48,
+        "node2": 47
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 49,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 0,
+        "row_offset": 0,
+        "stage_idx": 3
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 51,
+        "node2": 50
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 52,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 3,
+        "row_offset": 0,
+        "stage_idx": 3
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 54,
+        "node2": 53
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 55,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 6,
+        "row_offset": 0,
+        "stage_idx": 3
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 57,
+        "node2": 56
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 58,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 9,
+        "row_offset": 0,
+        "stage_idx": 3
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 60,
+        "node2": 59
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 61,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 12,
+        "row_offset": 0,
+        "stage_idx": 3
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 63,
+        "node2": 62
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 64,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 15,
+        "row_offset": 0,
+        "stage_idx": 3
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 66,
+        "node2": 65
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 67,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 18,
+        "row_offset": 0,
+        "stage_idx": 3
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 69,
+        "node2": 68
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 70,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 0,
+        "row_offset": 0,
+        "stage_idx": 4
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 72,
+        "node2": 71
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 73,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 3,
+        "row_offset": 0,
+        "stage_idx": 4
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 75,
+        "node2": 74
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 76,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 1
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 1,
+        "node2": 78
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 0,
+        "var_idx": 6
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 79,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 2
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 2,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 83,
+        "node2": 82
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 81,
+        "node2": 84
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 85,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 3
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 3,
+        "node2": 87
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 86,
+        "node2": 88
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 89,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 5
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 1,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 92,
+        "node2": 91
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 90,
+        "node2": 93
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 94,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 6
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 51,
+        "node2": 96
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 95,
+        "node2": 97
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 98,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 7
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 0,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 101,
+        "node2": 100
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 99,
+        "node2": 102
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 103,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 8
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 48,
+        "node2": 105
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 104,
+        "node2": 106
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 107,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 9
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 45,
+        "node2": 109
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 108,
+        "node2": 110
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 111,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 12
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 63,
+        "node2": 113
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 112,
+        "node2": 114
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 115,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 13
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 54,
+        "node2": 117
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 116,
+        "node2": 118
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 119,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 14
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 24,
+        "node2": 121
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 120,
+        "node2": 122
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 123,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 15
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 30,
+        "node2": 125
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 124,
+        "node2": 126
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 127,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 16
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 21,
+        "node2": 129
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 128,
+        "node2": 130
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 131,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 17
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 27,
+        "node2": 133
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 132,
+        "node2": 134
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 135,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 19
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 57,
+        "node2": 137
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 136,
+        "node2": 138
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 139,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 21
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 69,
+        "node2": 141
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 140,
+        "node2": 142
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 143,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 22
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 66,
+        "node2": 145
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 144,
+        "node2": 146
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 147,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 23
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 36,
+        "node2": 149
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 148,
+        "node2": 150
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 151,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 25
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 7,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 154,
+        "node2": 153
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 152,
+        "node2": 155
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 156,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 26
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 8,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 159,
+        "node2": 158
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 157,
+        "node2": 160
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 161,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 27
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 42,
+        "node2": 163
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 162,
+        "node2": 164
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 165,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 28
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 6,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 168,
+        "node2": 167
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 166,
+        "node2": 169
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 170,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 29
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 33,
+        "node2": 172
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 171,
+        "node2": 173
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 174,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 34
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 6,
+        "node2": 176
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 175,
+        "node2": 177
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 178,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 35
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 9,
+        "node2": 180
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 179,
+        "node2": 181
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 182,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 36
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 12,
+        "node2": 184
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 183,
+        "node2": 185
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 186,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 37
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 3,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 189,
+        "node2": 188
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 187,
+        "node2": 190
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 191,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 38
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 4,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 194,
+        "node2": 193
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 192,
+        "node2": 195
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 196,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 39
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "column_idx": 5,
+        "row_offset": 0,
+        "stage_idx": 0
+      },
+      "name": "TRACE",
+      "resultType": "base",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 199,
+        "node2": 198
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 197,
+        "node2": 200
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 201,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 40
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 60,
+        "node2": 203
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 202,
+        "node2": 204
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 205,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 41
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 72,
+        "node2": 207
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 206,
+        "node2": 208
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 209,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 42
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 75,
+        "node2": 211
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 210,
+        "node2": 212
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 0,
+        "row_offset": 0,
+        "stage_idx": 6
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 214,
+        "node2": 213
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 77,
+        "node2": 215
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 216,
+        "node2": 0
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 0
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 3,
+        "node2": 218
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 219,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 4
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 1,
+        "node2": 221
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 220,
+        "node2": 222
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 223,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 10
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 45,
+        "node2": 225
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 224,
+        "node2": 226
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 227,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 11
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 51,
+        "node2": 229
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 228,
+        "node2": 230
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 231,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 18
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 54,
+        "node2": 233
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 232,
+        "node2": 234
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 235,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 20
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 57,
+        "node2": 237
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 236,
+        "node2": 238
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 239,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 24
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 39,
+        "node2": 241
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 240,
+        "node2": 242
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 243,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 30
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 154,
+        "node2": 245
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 244,
+        "node2": 246
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 247,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 31
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 159,
+        "node2": 249
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 248,
+        "node2": 250
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 251,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 32
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 42,
+        "node2": 253
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 252,
+        "node2": 254
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 255,
+        "node2": 80
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "group_idx": 3,
+        "var_idx": 33
+      },
+      "name": "VARIABLE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 168,
+        "node2": 257
+      },
+      "name": "SUB",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 256,
+        "node2": 258
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "column_idx": 3,
+        "row_offset": 0,
+        "stage_idx": 6
+      },
+      "name": "TRACE",
+      "resultType": "extension",
+      "type": "VALUE"
+    },
+    {
+      "args": {
+        "node1": 260,
+        "node2": 259
+      },
+      "name": "MULT",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "node1": 217,
+        "node2": 261
+      },
+      "name": "ADD",
+      "resultType": "extension",
+      "type": "OP"
+    },
+    {
+      "args": {
+        "dest_col": 0,
+        "node_out": 262
+      },
+      "name": "EVAL",
+      "resultType": "extension",
+      "type": "VALUE"
+    }
+  ],
+  "stagesCols": [
+    11,
+    15,
+    6,
+    21,
+    6,
+    0,
+    6
+  ],
+  "variablesSize": [
+    [
+      8,
+      3
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      43,
+      3
+    ]
+  ]
+}

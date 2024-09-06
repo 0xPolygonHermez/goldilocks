@@ -104,6 +104,11 @@ runbenchgpu: benchgpu
 constr_eval: constr/eval.cpp $(ALLSRCS)
 	$(CXX) constr/eval.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o constr_eval
 
+constr_eval_2: constr2/eval.cpp $(ALLSRCS)
+	$(CXX) constr2/eval.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o constr_eval_2
+
+constr_eval_3: constr3/eval.cpp $(ALLSRCS)
+	$(CXX) constr3/eval.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o constr_eval_3
 clean:
 	$(RM) -r $(BUILD_DIR)
 	$(RM) -r $(BUILD_DIR_GPU)
@@ -114,6 +119,8 @@ clean:
 	$(RM) benchcpu
 	$(RM) benchgpu
 	$(RM) constr_eval
+	$(RM) constr_eval_2
+	$(RM) constr_eval_3
 
 
 -include $(DEPS)

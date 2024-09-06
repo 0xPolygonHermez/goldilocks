@@ -123,43 +123,42 @@ int main(int argc, char *argv[])
             {
                 if (node["name"] == "VARIABLE")
                 {
-                    //node data
+                    // node data
                     uint64_t groupIdx = node["args"]["group_idx"];
                     uint64_t varIdx = node["args"]["var_idx"];
                     uint64_t dim = node["resultType"] == "base" ? 1 : 3;
 
-                    //asserts
+                    // asserts
                     assert(groupIdx >= 0 && groupIdx < nVariables);
                     assert(varIdx >= 0 && varIdx < varSizes[groupIdx].first);
 
-                    //copy
-                    for(uint64_t d = 0; d < dim; d++)
+                    // copy
+                    for (uint64_t d = 0; d < dim; d++)
                     {
-                        //std::cout << "groupIdx: " << groupIdx << " varIdx: " << varIdx << " dim: " << dim << " d: " << d << std::endl;
-                        //std::cout << "variables[groupIdx][dim * varIdx + d]: " << variables[groupIdx][dim * varIdx + d].fe << std::endl;
+                        // std::cout << "groupIdx: " << groupIdx << " varIdx: " << varIdx << " dim: " << dim << " d: " << d << std::endl;
+                        // std::cout << "variables[groupIdx][dim * varIdx + d]: " << variables[groupIdx][dim * varIdx + d].fe << std::endl;
                         nodesRes[k * 3 + d] = variables[groupIdx][dim * varIdx + d];
                         ++nreads;
                     }
-                   
                 }
                 else if (node["name"] == "TRACE")
                 {
-                    //node data
+                    // node data
                     uint64_t stageIdx = node["args"]["stage_idx"];
                     uint64_t colIdx = node["args"]["column_idx"];
                     uint64_t row_offset = node["args"]["row_offset"];
                     uint64_t ncols = stagesCols[stageIdx];
                     uint64_t dim = node["resultType"] == "base" ? 1 : 3;
 
-                    //asserts
+                    // asserts
                     assert(stageIdx >= 0 && stageIdx < nStages);
                     assert(colIdx >= 0 && colIdx < ncols);
                     assert(row_offset == 0 || row_offset == 1);
 
-                    //copy
-                    if (irow == N - 1 && row_offset == 1) //last row and offset=1
+                    // copy
+                    if (irow == N - 1 && row_offset == 1) // last row and offset=1
                     {
-                        for(uint64_t d = 0; d < dim; d++)
+                        for (uint64_t d = 0; d < dim; d++)
                         {
                             nodesRes[k * 3 + d] = trace[stageIdx][colIdx + d];
                             ++nreads;
@@ -167,7 +166,7 @@ int main(int argc, char *argv[])
                     }
                     else
                     {
-                        for(uint64_t d = 0; d < dim; d++)
+                        for (uint64_t d = 0; d < dim; d++)
                         {
                             nodesRes[k * 3 + d] = trace[stageIdx][(irow + row_offset) * ncols + colIdx + d];
                             ++nreads;
@@ -176,17 +175,17 @@ int main(int argc, char *argv[])
                 }
                 else if (node["name"] == "EVAL")
                 {
-                    //node data
+                    // node data
                     uint64_t nodeIdx = node["args"]["node_out"];
                     uint64_t destIdx = node["args"]["dest_col"];
                     uint64_t dim = node["resultType"] == "base" ? 1 : 3;
 
-                    //asserts
+                    // asserts
                     assert(nodeIdx >= 0 && nodeIdx < nNodes);
                     assert(destIdx >= 0 && destIdx < nResCols);
 
-                    //copy
-                    for(uint64_t d = 0; d < dim; d++)
+                    // copy
+                    for (uint64_t d = 0; d < dim; d++)
                     {
                         evaluation[irow * nResCols + destIdx + d] = nodesRes[nodeIdx * 3 + d];
                         ++nwrites;
@@ -203,17 +202,17 @@ int main(int argc, char *argv[])
             {
                 assert(node["type"] == "OP");
 
-                //node data
+                // node data
                 uint64_t node1 = node["args"]["node1"];
                 uint64_t node2 = node["args"]["node2"];
-                uint64_t dim1  = nodes[node1]["resultType"] == "base" ? 1 : 3;
-                uint64_t dim2  = nodes[node2]["resultType"] == "base" ? 1 : 3;
+                uint64_t dim1 = nodes[node1]["resultType"] == "base" ? 1 : 3;
+                uint64_t dim2 = nodes[node2]["resultType"] == "base" ? 1 : 3;
                 uint64_t maxdim = std::max(dim1, dim2);
                 Goldilocks::Element *input1 = &nodesRes[node1 * 3];
                 Goldilocks::Element *input2 = &nodesRes[node2 * 3];
                 Goldilocks::Element *output = &nodesRes[k * 3];
 
-                //asserts
+                // asserts
                 assert(node1 * 3 >= 0 && node1 * 3 < nNodes * 3);
                 assert(node2 * 3 >= 0 && node2 * 3 < nNodes * 3);
 
@@ -221,49 +220,65 @@ int main(int argc, char *argv[])
                 {
                     Goldilocks::add(output[0], input1[0], input2[0]);
                     nsums++;
-                    for(uint64_t i = 1; i < maxdim; i++) {
-                        if (dim1 >= i && dim2 >= i) {
+                    for (uint64_t i = 1; i < maxdim; i++)
+                    {
+                        if (dim1 >= i && dim2 >= i)
+                        {
                             Goldilocks::add(output[i], input1[i], input2[i]);
                             ++nsums;
-                        } else if (dim1 >= i) {
+                        }
+                        else if (dim1 >= i)
+                        {
                             output[i] = input1[i];
-                        } else if (dim2 >= i) {
+                        }
+                        else if (dim2 >= i)
+                        {
                             output[i] = input2[i];
                         }
                     }
-
                 }
                 else if (node["name"] == "SUB")
                 {
                     Goldilocks::sub(output[0], input1[0], input2[0]);
                     nsubs++;
-                    for(uint64_t i=1; i<maxdim; i++)
+                    for (uint64_t i = 1; i < maxdim; i++)
                     {
-                        if (dim1 >= i && dim2 >= i) {
+                        if (dim1 >= i && dim2 >= i)
+                        {
                             Goldilocks::sub(output[i], input1[i], input2[i]);
                             ++nsubs;
-                        } else if (dim1 >= i) {
+                        }
+                        else if (dim1 >= i)
+                        {
                             output[i] = input1[i];
-                        } else if (dim2 >= i) {
+                        }
+                        else if (dim2 >= i)
+                        {
                             output[i] = -input2[i];
                         }
                     }
                 }
                 else if (node["name"] == "MULT")
                 {
-                    if(dim1==1 || dim2 ==1){
+                    if (dim1 == 1 || dim2 == 1)
+                    {
                         Goldilocks::mul(output[0], input1[0], input2[0]);
                         nmuls++;
-                        for(uint64_t i=1; i<maxdim; i++)
+                        for (uint64_t i = 1; i < maxdim; i++)
                         {
-                            if (dim1 >= i) {
+                            if (dim1 >= i)
+                            {
                                 Goldilocks::mul(output[i], input1[i], input2[0]);
-                            } else {
+                            }
+                            else
+                            {
                                 Goldilocks::mul(output[i], input1[0], input2[i]);
                             }
                             ++nmuls;
                         }
-                    }else{
+                    }
+                    else
+                    {
                         // Irreductible polynomial: x^3 - x - 1
                         // Karatsuba multiplication
                         Goldilocks::Element A = (input1[0] + input1[1]) * (input2[0] + input2[1]);
@@ -292,14 +307,14 @@ int main(int argc, char *argv[])
             }
         }
     }
+    /*for (uint64_t i = 0; i < nNodes; ++i)
+    {
+        std::cout << "node " << i << ": " << nodesRes[3 * i].fe << " " << nodesRes[3 * i + 1].fe << " " << nodesRes[3 * i + 1].fe << std::endl;
+    }*/
+
     //
     // Hash evaluation
     //
-
-    for (uint64_t i = 0; i < nNodes; ++i)
-    {
-        std::cout << "node " << i << ": " << nodesRes[3 * i].fe << " " << nodesRes[3 * i + 1].fe << " " << nodesRes[3 * i + 1].fe << std::endl;
-    }
     Goldilocks::Element *hash = new Goldilocks::Element[CAPACITY];
     Goldilocks::Element *hashInput = &evaluation[0];
     PoseidonGoldilocks::linear_hash_seq(hash, hashInput, nResCols * N);

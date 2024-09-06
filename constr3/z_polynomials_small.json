@@ -1,0 +1,994 @@
+{
+  "expressions": [
+    {
+      "node_id": 15
+    },
+    {
+      "node_id": 24
+    },
+    {
+      "node_id": 35
+    },
+    {
+      "node_id": 49
+    },
+    {
+      "node_id": 63
+    },
+    {
+      "node_id": 71
+    },
+    {
+      "node_id": 79
+    },
+    {
+      "node_id": 98
+    },
+    {
+      "node_id": 112
+    }
+  ],
+  "metadata": {
+    "field": {
+      "coset_offset": "7",
+      "extension": {
+        "degree": 3,
+        "polynom": [
+          1,
+          -1,
+          -1
+        ]
+      },
+      "modulus": "18446744069414584321",
+      "name": "Goldilocks",
+      "root_of_unity": "7277203076849721926"
+    },
+    "num_variables": [
+      24,
+      0,
+      0
+    ],
+    "trace_widths": [
+      11,
+      15,
+      6,
+      21,
+      12,
+      0,
+      0
+    ]
+  },
+  "nodes": [
+    {
+      "args": {
+        "col_offset": 12,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 13,
+        "row_offset": 1,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 0,
+        "rhs": 1
+      },
+      "type": "mul",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 7,
+        "row_offset": 0,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 8,
+        "row_offset": 0,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 14,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 6,
+        "row_offset": 0,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "group": 0,
+        "offset": 0
+      },
+      "type": "var",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 7,
+        "rhs": 3
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 8,
+        "rhs": 4
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 9,
+        "rhs": 7
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 10,
+        "rhs": 5
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "group": 0,
+        "offset": 3
+      },
+      "type": "var",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 11,
+        "rhs": 12
+      },
+      "type": "sub",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 13,
+        "rhs": 6
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 14,
+        "rhs": 12
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 11,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 7,
+        "rhs": 0
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 17,
+        "rhs": 1
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 18,
+        "rhs": 7
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 19,
+        "rhs": 2
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 0,
+        "row_offset": 0,
+        "segment": 4
+      },
+      "type": "trace",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 20,
+        "rhs": 21
+      },
+      "type": "sub",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 22,
+        "rhs": 16
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 21,
+        "rhs": 23
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 7,
+        "row_offset": 1,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 8,
+        "row_offset": 1,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 14,
+        "row_offset": 1,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 6,
+        "row_offset": 1,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 7,
+        "rhs": 25
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 29,
+        "rhs": 26
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 30,
+        "rhs": 7
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 31,
+        "rhs": 27
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 32,
+        "rhs": 12
+      },
+      "type": "sub",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 33,
+        "rhs": 28
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 34,
+        "rhs": 12
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 9,
+        "row_offset": 0,
+        "segment": 3
+      },
+      "type": "trace",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "group": 0,
+        "offset": 6
+      },
+      "type": "var",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 36,
+        "rhs": 37
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 0,
+        "row_offset": 1,
+        "segment": 4
+      },
+      "type": "trace",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "group": 0,
+        "offset": 9
+      },
+      "type": "var",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 39,
+        "rhs": 40
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 21,
+        "rhs": 41
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "value": 134
+      },
+      "type": "const",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 43
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 44,
+        "rhs": 37
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 42,
+        "rhs": 45
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 38,
+        "rhs": 46
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 43
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 47,
+        "rhs": 48
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 3,
+        "row_offset": 0,
+        "segment": 2
+      },
+      "type": "trace",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 50,
+        "rhs": 40
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 0,
+        "row_offset": 0,
+        "segment": 2
+      },
+      "type": "trace",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 52,
+        "rhs": 51
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 43
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 54,
+        "rhs": 37
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 53,
+        "rhs": 55
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 0,
+        "row_offset": 1,
+        "segment": 2
+      },
+      "type": "trace",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 57,
+        "rhs": 40
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 50,
+        "rhs": 58
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 43
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 60,
+        "rhs": 37
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 59,
+        "rhs": 61
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 56,
+        "rhs": 62
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 7,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 9,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 7,
+        "rhs": 64
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 66,
+        "rhs": 64
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 67,
+        "rhs": 12
+      },
+      "type": "sub",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 68,
+        "rhs": 65
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 69,
+        "rhs": 12
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 70,
+        "rhs": 40
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 8,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 10,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 7,
+        "rhs": 72
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 74,
+        "rhs": 72
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 75,
+        "rhs": 12
+      },
+      "type": "sub",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 76,
+        "rhs": 73
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 77,
+        "rhs": 12
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 78,
+        "rhs": 40
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 2,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "col_offset": 9,
+        "row_offset": 0,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 81
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 82,
+        "rhs": 80
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 83,
+        "rhs": 37
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 3,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "value": 145
+      },
+      "type": "const",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 86
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 87,
+        "rhs": 81
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 88,
+        "rhs": 85
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 89,
+        "rhs": 37
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 84,
+        "rhs": 90
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 4,
+        "row_offset": 0,
+        "segment": 1
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "value": 156
+      },
+      "type": "const",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 93
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 94,
+        "rhs": 81
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 95,
+        "rhs": 92
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 96,
+        "rhs": 37
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 91,
+        "rhs": 97
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 3,
+        "row_offset": 0,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 99
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 100,
+        "rhs": 80
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 101,
+        "rhs": 37
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 4,
+        "row_offset": 0,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 103
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 104,
+        "rhs": 85
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 105,
+        "rhs": 37
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 102,
+        "rhs": 106
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "col_offset": 5,
+        "row_offset": 0,
+        "segment": 0
+      },
+      "type": "trace",
+      "value": "base"
+    },
+    {
+      "args": {
+        "lhs": 40,
+        "rhs": 108
+      },
+      "type": "mul",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 109,
+        "rhs": 92
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 110,
+        "rhs": 37
+      },
+      "type": "add",
+      "value": "ext"
+    },
+    {
+      "args": {
+        "lhs": 107,
+        "rhs": 111
+      },
+      "type": "mul",
+      "value": "ext"
+    }
+  ],
+  "periodic": [],
+  "zerofiers": []
+}
