@@ -13,7 +13,6 @@ using json = nlohmann::json;
 void file2json(const string &fileName, json &j);
 Goldilocks::Element fill_trace(uint64_t i, uint64_t j, uint64_t k);
 Goldilocks::Element fill_variable(uint64_t i, uint64_t j);
-Goldilocks::Element fill_variable(uint64_t i, uint64_t j, uint64_t k);
 
 int main(int argc, char *argv[])
 {
@@ -300,6 +299,7 @@ int main(int argc, char *argv[])
             Goldilocks::Element *output = &expEvals[irow * expDim + pos];
             memcpy(output, input, dim * sizeof(Goldilocks::Element));
             pos += dim;
+            nwrites += dim;
         }
     }
 
