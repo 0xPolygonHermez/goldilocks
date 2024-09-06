@@ -1,1898 +1,1688 @@
 {
-  "max_nodes_base": 13,
-  "max_nodes_extension": 11,
-  "nEvals": 3,
-  "nNodes": 202,
-  "nStages": 7,
-  "nVariables": 4,
+  "expressions": [
+    {
+      "node_id": 200
+    }
+  ],
+  "metadata": {
+    "field": {
+      "coset_offset": "7",
+      "extension": {
+        "degree": 3,
+        "polynom": [
+          1,
+          -1,
+          -1
+        ]
+      },
+      "modulus": "18446744069414584321",
+      "name": "Goldilocks",
+      "root_of_unity": "7277203076849721926"
+    },
+    "num_variables": [
+      24,
+      3,
+      0
+    ],
+    "trace_widths": [
+      11,
+      15,
+      6,
+      21,
+      0,
+      0,
+      0
+    ]
+  },
   "nodes": [
     {
       "args": {
-        "column_idx": 1,
+        "col_offset": 1,
         "row_offset": 1,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 0,
+        "col_offset": 0,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 0,
-        "node2": 1
+        "lhs": 0,
+        "rhs": 1
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 2,
+        "col_offset": 2,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 2,
-        "var_idx": 0
+        "value": 134
       },
-      "name": "VARIABLE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "const",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 4,
-        "node2": 3
+        "lhs": 4,
+        "rhs": 3
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 2,
-        "node2": 5
+        "lhs": 2,
+        "rhs": 5
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 2,
-        "var_idx": 1
+        "value": 145
       },
-      "name": "VARIABLE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "const",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 6,
-        "node2": 7
+        "lhs": 6,
+        "rhs": 7
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 1,
-        "node2": 1
+        "lhs": 1,
+        "rhs": 1
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 1,
+        "col_offset": 1,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 10,
-        "node2": 10
+        "lhs": 10,
+        "rhs": 10
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 9,
-        "node2": 11
+        "lhs": 9,
+        "rhs": 11
       },
-      "name": "ADD",
-      "resultType": "base",
-      "type": "OP"
+      "type": "add",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 0,
+        "col_offset": 0,
         "row_offset": 1,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 13,
-        "node2": 12
+        "lhs": 13,
+        "rhs": 12
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 4,
-        "node2": 3
+        "lhs": 4,
+        "rhs": 3
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 14,
-        "node2": 15
+        "lhs": 14,
+        "rhs": 15
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 16,
-        "node2": 7
+        "lhs": 16,
+        "rhs": 7
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 1,
-        "var_idx": 0
+        "group": 1,
+        "offset": 0
       },
-      "name": "VARIABLE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "var",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 10,
-        "node2": 18
+        "lhs": 10,
+        "rhs": 18
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 1,
+        "col_offset": 1,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 20,
-        "node2": 19
+        "lhs": 20,
+        "rhs": 19
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 21,
-        "node2": 7
+        "lhs": 21,
+        "rhs": 7
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 1,
-        "var_idx": 1
+        "group": 1,
+        "offset": 1
       },
-      "name": "VARIABLE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "var",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 1,
-        "node2": 23
+        "lhs": 1,
+        "rhs": 23
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 20,
-        "node2": 24
+        "lhs": 20,
+        "rhs": 24
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 25,
-        "node2": 7
+        "lhs": 25,
+        "rhs": 7
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 1,
-        "var_idx": 2
+        "group": 1,
+        "offset": 2
       },
-      "name": "VARIABLE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "var",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 1,
-        "node2": 27
+        "lhs": 1,
+        "rhs": 27
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 3,
-        "node2": 28
+        "lhs": 3,
+        "rhs": 28
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 29,
-        "node2": 7
+        "lhs": 29,
+        "rhs": 7
       },
-      "name": "SUB",
-      "resultType": "base",
-      "type": "OP"
+      "type": "sub",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 0,
+        "col_offset": 0,
         "row_offset": 0,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 31,
-        "node2": 4
+        "lhs": 31,
+        "rhs": 4
       },
-      "name": "SUB31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 0,
+        "col_offset": 0,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 32,
-        "node2": 33
+        "lhs": 32,
+        "rhs": 33
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 3,
+        "col_offset": 3,
         "row_offset": 0,
-        "stage_idx": 2
+        "segment": 2
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "group_idx": 0,
-        "var_idx": 3
+        "group": 0,
+        "offset": 9
       },
-      "name": "VARIABLE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "var",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 35,
-        "node2": 36
+        "lhs": 35,
+        "rhs": 36
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 0,
+        "col_offset": 0,
         "row_offset": 0,
-        "stage_idx": 2
+        "segment": 2
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 38,
-        "node2": 37
+        "lhs": 38,
+        "rhs": 37
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 4
+        "lhs": 36,
+        "rhs": 4
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "group_idx": 0,
-        "var_idx": 2
+        "group": 0,
+        "offset": 6
       },
-      "name": "VARIABLE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "var",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 40,
-        "node2": 41
+        "lhs": 40,
+        "rhs": 41
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 39,
-        "node2": 42
+        "lhs": 39,
+        "rhs": 42
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 0,
+        "col_offset": 0,
         "row_offset": 1,
-        "stage_idx": 2
+        "segment": 2
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 44,
-        "node2": 36
+        "lhs": 44,
+        "rhs": 36
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 35,
-        "node2": 45
+        "lhs": 35,
+        "rhs": 45
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 4
+        "lhs": 36,
+        "rhs": 4
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 47,
-        "node2": 41
+        "lhs": 47,
+        "rhs": 41
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 46,
-        "node2": 48
+        "lhs": 46,
+        "rhs": 48
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 43,
-        "node2": 49
+        "lhs": 43,
+        "rhs": 49
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 0,
+        "col_offset": 0,
         "row_offset": 1,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 51,
-        "node2": 50
+        "lhs": 51,
+        "rhs": 50
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 12,
+        "col_offset": 12,
         "row_offset": 0,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 31,
-        "node2": 53
+        "lhs": 31,
+        "rhs": 53
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 52,
-        "node2": 54
+        "lhs": 52,
+        "rhs": 54
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 3,
+        "col_offset": 3,
         "row_offset": 0,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 56,
-        "node2": 4
+        "lhs": 56,
+        "rhs": 4
       },
-      "name": "SUB31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 57,
-        "node2": 33
+        "lhs": 57,
+        "rhs": 33
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 8,
+        "col_offset": 8,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 10,
+        "col_offset": 10,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 0,
-        "var_idx": 0
+        "group": 0,
+        "offset": 0
       },
-      "name": "VARIABLE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "var",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 61,
-        "node2": 59
+        "lhs": 61,
+        "rhs": 59
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 62,
-        "node2": 59
+        "lhs": 62,
+        "rhs": 59
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "group_idx": 0,
-        "var_idx": 1
+        "group": 0,
+        "offset": 3
       },
-      "name": "VARIABLE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "var",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 63,
-        "node2": 64
+        "lhs": 63,
+        "rhs": 64
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 65,
-        "node2": 60
+        "lhs": 65,
+        "rhs": 60
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 66,
-        "node2": 64
+        "lhs": 66,
+        "rhs": 64
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 67,
-        "node2": 36
+        "lhs": 67,
+        "rhs": 36
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 7,
+        "col_offset": 7,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 9,
+        "col_offset": 9,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 61,
-        "node2": 69
+        "lhs": 61,
+        "rhs": 69
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 71,
-        "node2": 69
+        "lhs": 71,
+        "rhs": 69
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 72,
-        "node2": 64
+        "lhs": 72,
+        "rhs": 64
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 73,
-        "node2": 70
+        "lhs": 73,
+        "rhs": 70
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 74,
-        "node2": 64
+        "lhs": 74,
+        "rhs": 64
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 75,
-        "node2": 36
+        "lhs": 75,
+        "rhs": 36
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 3,
+        "col_offset": 3,
         "row_offset": 1,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 77,
-        "node2": 68
+        "lhs": 77,
+        "rhs": 68
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 56,
-        "node2": 76
+        "lhs": 56,
+        "rhs": 76
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 78,
-        "node2": 79
+        "lhs": 78,
+        "rhs": 79
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 6,
+        "col_offset": 6,
         "row_offset": 0,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 81,
-        "node2": 4
+        "lhs": 81,
+        "rhs": 4
       },
-      "name": "SUB31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 82,
-        "node2": 33
+        "lhs": 82,
+        "rhs": 33
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 6,
+        "col_offset": 6,
         "row_offset": 1,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 18,
+        "col_offset": 18,
         "row_offset": 0,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 84,
-        "node2": 85
+        "lhs": 84,
+        "rhs": 85
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 15,
+        "col_offset": 15,
         "row_offset": 0,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 81,
-        "node2": 87
+        "lhs": 81,
+        "rhs": 87
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 86,
-        "node2": 88
+        "lhs": 86,
+        "rhs": 88
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 12,
+        "col_offset": 12,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 13,
+        "col_offset": 13,
         "row_offset": 1,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 90,
-        "node2": 91
+        "lhs": 90,
+        "rhs": 91
       },
-      "name": "MULT",
-      "resultType": "base",
-      "type": "OP"
+      "type": "mul",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 7,
+        "col_offset": 7,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 8,
+        "col_offset": 8,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 14,
+        "col_offset": 14,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 6,
+        "col_offset": 6,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 61,
-        "node2": 93
+        "lhs": 61,
+        "rhs": 93
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 97,
-        "node2": 94
+        "lhs": 97,
+        "rhs": 94
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 98,
-        "node2": 61
+        "lhs": 98,
+        "rhs": 61
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 99,
-        "node2": 95
+        "lhs": 99,
+        "rhs": 95
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 100,
-        "node2": 64
+        "lhs": 100,
+        "rhs": 64
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 101,
-        "node2": 96
+        "lhs": 101,
+        "rhs": 96
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 102,
-        "node2": 64
+        "lhs": 102,
+        "rhs": 64
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 11,
+        "col_offset": 11,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 7,
+        "col_offset": 7,
         "row_offset": 1,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 8,
+        "col_offset": 8,
         "row_offset": 1,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 14,
+        "col_offset": 14,
         "row_offset": 1,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 6,
+        "col_offset": 6,
         "row_offset": 1,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 61,
-        "node2": 105
+        "lhs": 61,
+        "rhs": 105
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 109,
-        "node2": 106
+        "lhs": 109,
+        "rhs": 106
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 110,
-        "node2": 61
+        "lhs": 110,
+        "rhs": 61
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 111,
-        "node2": 107
+        "lhs": 111,
+        "rhs": 107
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 112,
-        "node2": 64
+        "lhs": 112,
+        "rhs": 64
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 113,
-        "node2": 108
+        "lhs": 113,
+        "rhs": 108
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 114,
-        "node2": 64
+        "lhs": 114,
+        "rhs": 64
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 2,
+        "col_offset": 2,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 9,
+        "col_offset": 9,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 117
+        "lhs": 36,
+        "rhs": 117
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 118,
-        "node2": 116
+        "lhs": 118,
+        "rhs": 116
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 119,
-        "node2": 41
+        "lhs": 119,
+        "rhs": 41
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 3,
+        "col_offset": 3,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 2,
-        "var_idx": 2
+        "value": 156
       },
-      "name": "VARIABLE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "const",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 122
+        "lhs": 36,
+        "rhs": 122
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 123,
-        "node2": 117
+        "lhs": 123,
+        "rhs": 117
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 124,
-        "node2": 121
+        "lhs": 124,
+        "rhs": 121
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 125,
-        "node2": 41
+        "lhs": 125,
+        "rhs": 41
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 120,
-        "node2": 126
+        "lhs": 120,
+        "rhs": 126
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 4,
+        "col_offset": 4,
         "row_offset": 0,
-        "stage_idx": 1
+        "segment": 1
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "column_idx": 3,
+        "col_offset": 3,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 129
+        "lhs": 36,
+        "rhs": 129
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 130,
-        "node2": 116
+        "lhs": 130,
+        "rhs": 116
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 131,
-        "node2": 41
+        "lhs": 131,
+        "rhs": 41
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 4,
+        "col_offset": 4,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 133
+        "lhs": 36,
+        "rhs": 133
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 134,
-        "node2": 121
+        "lhs": 134,
+        "rhs": 121
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 135,
-        "node2": 41
+        "lhs": 135,
+        "rhs": 41
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 132,
-        "node2": 136
+        "lhs": 132,
+        "rhs": 136
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 5,
+        "col_offset": 5,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "group_idx": 0,
-        "var_idx": 4
+        "group": 0,
+        "offset": 12
       },
-      "name": "VARIABLE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "var",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 139,
-        "node2": 8
+        "lhs": 139,
+        "rhs": 8
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 140,
-        "node2": 17
+        "lhs": 140,
+        "rhs": 17
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 141,
-        "node2": 139
+        "lhs": 141,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 142,
-        "node2": 22
+        "lhs": 142,
+        "rhs": 22
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 143,
-        "node2": 139
+        "lhs": 143,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 144,
-        "node2": 26
+        "lhs": 144,
+        "rhs": 26
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 145,
-        "node2": 139
+        "lhs": 145,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 146,
-        "node2": 30
+        "lhs": 146,
+        "rhs": 30
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 147,
-        "node2": 139
+        "lhs": 147,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 148,
-        "node2": 34
+        "lhs": 148,
+        "rhs": 34
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 149,
-        "node2": 139
+        "lhs": 149,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 150,
-        "node2": 55
+        "lhs": 150,
+        "rhs": 55
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 151,
-        "node2": 139
+        "lhs": 151,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 152,
-        "node2": 58
+        "lhs": 152,
+        "rhs": 58
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 153,
-        "node2": 139
+        "lhs": 153,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 154,
-        "node2": 80
+        "lhs": 154,
+        "rhs": 80
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 155,
-        "node2": 139
+        "lhs": 155,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 156,
-        "node2": 83
+        "lhs": 156,
+        "rhs": 83
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 157,
-        "node2": 139
+        "lhs": 157,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 158,
-        "node2": 89
+        "lhs": 158,
+        "rhs": 89
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 159,
-        "node2": 139
+        "lhs": 159,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 61,
-        "node2": 90
+        "lhs": 61,
+        "rhs": 90
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 161,
-        "node2": 91
+        "lhs": 161,
+        "rhs": 91
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 162,
-        "node2": 61
+        "lhs": 162,
+        "rhs": 61
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 163,
-        "node2": 92
+        "lhs": 163,
+        "rhs": 92
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 164,
-        "node2": 103
+        "lhs": 164,
+        "rhs": 103
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 165,
-        "node2": 104
+        "lhs": 165,
+        "rhs": 104
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 166,
-        "node2": 103
+        "lhs": 166,
+        "rhs": 103
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 9,
+        "col_offset": 9,
         "row_offset": 0,
-        "stage_idx": 3
+        "segment": 3
       },
-      "name": "TRACE3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 167,
-        "node2": 168
+        "lhs": 167,
+        "rhs": 168
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 160,
-        "node2": 169
+        "lhs": 160,
+        "rhs": 169
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 170,
-        "node2": 139
+        "lhs": 170,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 168,
-        "node2": 41
+        "lhs": 168,
+        "rhs": 41
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 115,
-        "node2": 36
+        "lhs": 115,
+        "rhs": 36
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 103,
-        "node2": 173
+        "lhs": 103,
+        "rhs": 173
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 4
+        "lhs": 36,
+        "rhs": 4
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 175,
-        "node2": 41
+        "lhs": 175,
+        "rhs": 41
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 174,
-        "node2": 176
+        "lhs": 174,
+        "rhs": 176
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 172,
-        "node2": 177
+        "lhs": 172,
+        "rhs": 177
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 4
+        "lhs": 36,
+        "rhs": 4
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 178,
-        "node2": 179
+        "lhs": 178,
+        "rhs": 179
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 180,
-        "node2": 53
+        "lhs": 180,
+        "rhs": 53
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 171,
-        "node2": 181
+        "lhs": 171,
+        "rhs": 181
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 182,
-        "node2": 139
+        "lhs": 182,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "group_idx": 2,
-        "var_idx": 3
+        "value": 167
       },
-      "name": "VARIABLE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "const",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 184
+        "lhs": 36,
+        "rhs": 184
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 185,
-        "node2": 117
+        "lhs": 185,
+        "rhs": 117
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 186,
-        "node2": 128
+        "lhs": 186,
+        "rhs": 128
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 187,
-        "node2": 41
+        "lhs": 187,
+        "rhs": 41
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 127,
-        "node2": 188
+        "lhs": 127,
+        "rhs": 188
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 189,
-        "node2": 87
+        "lhs": 189,
+        "rhs": 87
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 183,
-        "node2": 190
+        "lhs": 183,
+        "rhs": 190
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 191,
-        "node2": 139
+        "lhs": 191,
+        "rhs": 139
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 36,
-        "node2": 138
+        "lhs": 36,
+        "rhs": 138
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 193,
-        "node2": 128
+        "lhs": 193,
+        "rhs": 128
       },
-      "name": "ADD31",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 194,
-        "node2": 41
+        "lhs": 194,
+        "rhs": 41
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 137,
-        "node2": 195
+        "lhs": 137,
+        "rhs": 195
       },
-      "name": "MULT33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "mul",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 196,
-        "node2": 85
+        "lhs": 196,
+        "rhs": 85
       },
-      "name": "SUB33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "sub",
+      "value": "ext"
     },
     {
       "args": {
-        "node1": 192,
-        "node2": 197
+        "lhs": 192,
+        "rhs": 197
       },
-      "name": "ADD33",
-      "resultType": "extension",
-      "type": "OP"
+      "type": "add",
+      "value": "ext"
     },
     {
       "args": {
-        "column_idx": 10,
+        "col_offset": 10,
         "row_offset": 0,
-        "stage_idx": 0
+        "segment": 0
       },
-      "name": "TRACE",
-      "resultType": "base",
-      "type": "VALUE"
+      "type": "trace",
+      "value": "base"
     },
     {
       "args": {
-        "node1": 129,
-        "node2": 199
+        "lhs": 129,
+        "rhs": 199
       },
-      "name": "MULT31",
-      "resultType": "extension",
-      "type": "OP"
-    },
-    {
-      "args": {
-        "dest_col": 0,
-        "node_out": 200
-      },
-      "name": "EVAL3",
-      "resultType": "extension",
-      "type": "VALUE"
+      "type": "mul",
+      "value": "ext"
     }
   ],
-  "stagesCols": [
-    11,
-    15,
-    6,
-    21,
-    0,
-    0,
-    0
-  ],
-  "variablesSize": [
-    [
-      8,
-      3
-    ],
-    [
-      3,
-      1
-    ],
-    [
-      4,
-      1
-    ],
-    [
-      0,
-      3
-    ]
-  ]
+  "periodic": [],
+  "zerofiers": []
 }
