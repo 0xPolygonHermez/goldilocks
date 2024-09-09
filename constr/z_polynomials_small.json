@@ -33,11 +33,7 @@
       "coset_offset": "7",
       "extension": {
         "degree": 3,
-        "polynom": [
-          1,
-          -1,
-          -1
-        ]
+        "polynom": "x^3 - x + 2"
       },
       "modulus": "18446744069414584321",
       "name": "Goldilocks",
@@ -419,7 +415,7 @@
     },
     {
       "args": {
-        "value": 134
+        "value": 1
       },
       "type": "const",
       "value": "base"
@@ -772,7 +768,7 @@
     },
     {
       "args": {
-        "value": 145
+        "value": 12275445934081160404
       },
       "type": "const",
       "value": "base"
@@ -828,7 +824,7 @@
     },
     {
       "args": {
-        "value": 156
+        "value": 4756475762779100925
       },
       "type": "const",
       "value": "base"

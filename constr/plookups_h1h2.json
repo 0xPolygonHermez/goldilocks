@@ -273,11 +273,7 @@
       "coset_offset": "7",
       "extension": {
         "degree": 3,
-        "polynom": [
-          1,
-          -1,
-          -1
-        ]
+        "polynom": "x^3 - x - 1"
       },
       "modulus": "18446744069414584321",
       "name": "Goldilocks",
@@ -1122,7 +1118,7 @@
     },
     {
       "args": {
-        "value": 134
+        "value": 3
       },
       "type": "const",
       "value": "base"
@@ -1205,7 +1201,7 @@
     },
     {
       "args": {
-        "value": 145
+        "value": 5
       },
       "type": "const",
       "value": "base"
@@ -1246,7 +1242,7 @@
     },
     {
       "args": {
-        "value": 156
+        "value": 7
       },
       "type": "const",
       "value": "base"
@@ -1295,7 +1291,7 @@
     },
     {
       "args": {
-        "value": 167
+        "value": 9
       },
       "type": "const",
       "value": "base"
@@ -1344,7 +1340,7 @@
     },
     {
       "args": {
-        "value": 178
+        "value": 11
       },
       "type": "const",
       "value": "base"
@@ -1393,7 +1389,7 @@
     },
     {
       "args": {
-        "value": 189
+        "value": 13
       },
       "type": "const",
       "value": "base"
@@ -1442,7 +1438,7 @@
     },
     {
       "args": {
-        "value": 200
+        "value": 15
       },
       "type": "const",
       "value": "base"
@@ -1491,7 +1487,7 @@
     },
     {
       "args": {
-        "value": 211
+        "value": 17
       },
       "type": "const",
       "value": "base"
@@ -1540,7 +1536,7 @@
     },
     {
       "args": {
-        "value": 222
+        "value": 19
       },
       "type": "const",
       "value": "base"
@@ -1589,7 +1585,7 @@
     },
     {
       "args": {
-        "value": 233
+        "value": 21
       },
       "type": "const",
       "value": "base"
@@ -1638,7 +1634,7 @@
     },
     {
       "args": {
-        "value": 244
+        "value": 23
       },
       "type": "const",
       "value": "base"
@@ -1687,7 +1683,7 @@
     },
     {
       "args": {
-        "value": 255
+        "value": 25
       },
       "type": "const",
       "value": "base"
@@ -1736,7 +1732,7 @@
     },
     {
       "args": {
-        "value": 266
+        "value": 27
       },
       "type": "const",
       "value": "base"
@@ -1785,7 +1781,7 @@
     },
     {
       "args": {
-        "value": 277
+        "value": 29
       },
       "type": "const",
       "value": "base"
@@ -1816,7 +1812,7 @@
     },
     {
       "args": {
-        "value": 288
+        "value": 31
       },
       "type": "const",
       "value": "base"
@@ -1865,7 +1861,7 @@
     },
     {
       "args": {
-        "value": 299
+        "value": 33
       },
       "type": "const",
       "value": "base"
@@ -1896,7 +1892,7 @@
     },
     {
       "args": {
-        "value": 310
+        "value": 35
       },
       "type": "const",
       "value": "base"
@@ -1995,7 +1991,7 @@
     },
     {
       "args": {
-        "value": 321
+        "value": 1
       },
       "type": "const",
       "value": "base"
@@ -6237,7 +6233,7 @@
     },
     {
       "args": {
-        "value": 332
+        "value": 0
       },
       "type": "const",
       "value": "base"
@@ -6298,7 +6294,7 @@
     },
     {
       "args": {
-        "value": 343
+        "value": 8
       },
       "type": "const",
       "value": "base"
@@ -6584,7 +6580,7 @@
     },
     {
       "args": {
-        "value": 354
+        "value": 2
       },
       "type": "const",
       "value": "base"
@@ -6625,7 +6621,7 @@
     },
     {
       "args": {
-        "value": 365
+        "value": 4
       },
       "type": "const",
       "value": "base"
@@ -7303,7 +7299,7 @@
     },
     {
       "args": {
-        "value": 376
+        "value": 128
       },
       "type": "const",
       "value": "base"
@@ -8729,7 +8725,7 @@
     },
     {
       "args": {
-        "value": 387
+        "value": 16
       },
       "type": "const",
       "value": "base"
@@ -8761,7 +8757,7 @@
     },
     {
       "args": {
-        "value": 398
+        "value": 32
       },
       "type": "const",
       "value": "base"
@@ -9257,7 +9253,7 @@
     },
     {
       "args": {
-        "value": 409
+        "value": 64
       },
       "type": "const",
       "value": "base"
@@ -9314,7 +9310,7 @@
     },
     {
       "args": {
-        "value": 420
+        "value": 256
       },
       "type": "const",
       "value": "base"
@@ -9346,7 +9342,7 @@
     },
     {
       "args": {
-        "value": 431
+        "value": 512
       },
       "type": "const",
       "value": "base"
@@ -9378,7 +9374,7 @@
     },
     {
       "args": {
-        "value": 442
+        "value": 1024
       },
       "type": "const",
       "value": "base"
@@ -9410,7 +9406,7 @@
     },
     {
       "args": {
-        "value": 453
+        "value": 2048
       },
       "type": "const",
       "value": "base"
@@ -9442,7 +9438,7 @@
     },
     {
       "args": {
-        "value": 464
+        "value": 4096
       },
       "type": "const",
       "value": "base"
@@ -9474,7 +9470,7 @@
     },
     {
       "args": {
-        "value": 475
+        "value": 8192
       },
       "type": "const",
       "value": "base"
@@ -9506,7 +9502,7 @@
     },
     {
       "args": {
-        "value": 486
+        "value": 16384
       },
       "type": "const",
       "value": "base"
@@ -9538,7 +9534,7 @@
     },
     {
       "args": {
-        "value": 497
+        "value": 32768
       },
       "type": "const",
       "value": "base"
@@ -9570,7 +9566,7 @@
     },
     {
       "args": {
-        "value": 508
+        "value": 65536
       },
       "type": "const",
       "value": "base"
@@ -9602,7 +9598,7 @@
     },
     {
       "args": {
-        "value": 519
+        "value": 131072
       },
       "type": "const",
       "value": "base"
@@ -9634,7 +9630,7 @@
     },
     {
       "args": {
-        "value": 530
+        "value": 262144
       },
       "type": "const",
       "value": "base"
@@ -9666,7 +9662,7 @@
     },
     {
       "args": {
-        "value": 541
+        "value": 524288
       },
       "type": "const",
       "value": "base"
@@ -9698,7 +9694,7 @@
     },
     {
       "args": {
-        "value": 552
+        "value": 1048576
       },
       "type": "const",
       "value": "base"
@@ -9730,7 +9726,7 @@
     },
     {
       "args": {
-        "value": 563
+        "value": 2097152
       },
       "type": "const",
       "value": "base"
@@ -9762,7 +9758,7 @@
     },
     {
       "args": {
-        "value": 574
+        "value": 4194304
       },
       "type": "const",
       "value": "base"
@@ -9794,7 +9790,7 @@
     },
     {
       "args": {
-        "value": 585
+        "value": 8388608
       },
       "type": "const",
       "value": "base"
@@ -9826,7 +9822,7 @@
     },
     {
       "args": {
-        "value": 596
+        "value": 16777216
       },
       "type": "const",
       "value": "base"
@@ -9858,7 +9854,7 @@
     },
     {
       "args": {
-        "value": 607
+        "value": 33554432
       },
       "type": "const",
       "value": "base"
@@ -9890,7 +9886,7 @@
     },
     {
       "args": {
-        "value": 618
+        "value": 67108864
       },
       "type": "const",
       "value": "base"
@@ -9922,7 +9918,7 @@
     },
     {
       "args": {
-        "value": 629
+        "value": 134217728
       },
       "type": "const",
       "value": "base"
@@ -9954,7 +9950,7 @@
     },
     {
       "args": {
-        "value": 640
+        "value": 268435456
       },
       "type": "const",
       "value": "base"
@@ -9986,7 +9982,7 @@
     },
     {
       "args": {
-        "value": 651
+        "value": 536870912
       },
       "type": "const",
       "value": "base"
@@ -10018,7 +10014,7 @@
     },
     {
       "args": {
-        "value": 662
+        "value": 1073741824
       },
       "type": "const",
       "value": "base"
@@ -15344,7 +15340,7 @@
     },
     {
       "args": {
-        "value": 673
+        "value": 2147483648
       },
       "type": "const",
       "value": "base"
@@ -15376,7 +15372,7 @@
     },
     {
       "args": {
-        "value": 684
+        "value": 4294967296
       },
       "type": "const",
       "value": "base"
@@ -15408,7 +15404,7 @@
     },
     {
       "args": {
-        "value": 695
+        "value": 8589934592
       },
       "type": "const",
       "value": "base"
@@ -15440,7 +15436,7 @@
     },
     {
       "args": {
-        "value": 706
+        "value": 17179869184
       },
       "type": "const",
       "value": "base"
@@ -15472,7 +15468,7 @@
     },
     {
       "args": {
-        "value": 717
+        "value": 34359738368
       },
       "type": "const",
       "value": "base"
@@ -15504,7 +15500,7 @@
     },
     {
       "args": {
-        "value": 728
+        "value": 68719476736
       },
       "type": "const",
       "value": "base"
@@ -15536,7 +15532,7 @@
     },
     {
       "args": {
-        "value": 739
+        "value": 137438953472
       },
       "type": "const",
       "value": "base"
@@ -15568,7 +15564,7 @@
     },
     {
       "args": {
-        "value": 750
+        "value": 274877906944
       },
       "type": "const",
       "value": "base"
@@ -15600,7 +15596,7 @@
     },
     {
       "args": {
-        "value": 761
+        "value": 549755813888
       },
       "type": "const",
       "value": "base"
@@ -15632,7 +15628,7 @@
     },
     {
       "args": {
-        "value": 772
+        "value": 1099511627776
       },
       "type": "const",
       "value": "base"
@@ -15664,7 +15660,7 @@
     },
     {
       "args": {
-        "value": 783
+        "value": 2199023255552
       },
       "type": "const",
       "value": "base"
@@ -15696,7 +15692,7 @@
     },
     {
       "args": {
-        "value": 794
+        "value": 4398046511104
       },
       "type": "const",
       "value": "base"
@@ -15728,7 +15724,7 @@
     },
     {
       "args": {
-        "value": 805
+        "value": 8796093022208
       },
       "type": "const",
       "value": "base"
@@ -15760,7 +15756,7 @@
     },
     {
       "args": {
-        "value": 816
+        "value": 17592186044416
       },
       "type": "const",
       "value": "base"
@@ -15792,7 +15788,7 @@
     },
     {
       "args": {
-        "value": 827
+        "value": 35184372088832
       },
       "type": "const",
       "value": "base"
@@ -15824,7 +15820,7 @@
     },
     {
       "args": {
-        "value": 838
+        "value": 70368744177664
       },
       "type": "const",
       "value": "base"
@@ -15856,7 +15852,7 @@
     },
     {
       "args": {
-        "value": 849
+        "value": 140737488355328
       },
       "type": "const",
       "value": "base"
@@ -15888,7 +15884,7 @@
     },
     {
       "args": {
-        "value": 860
+        "value": 281474976710656
       },
       "type": "const",
       "value": "base"
@@ -15920,7 +15916,7 @@
     },
     {
       "args": {
-        "value": 871
+        "value": 562949953421312
       },
       "type": "const",
       "value": "base"
@@ -15952,7 +15948,7 @@
     },
     {
       "args": {
-        "value": 882
+        "value": 1125899906842624
       },
       "type": "const",
       "value": "base"
@@ -15984,7 +15980,7 @@
     },
     {
       "args": {
-        "value": 893
+        "value": 2251799813685248
       },
       "type": "const",
       "value": "base"
@@ -16016,7 +16012,7 @@
     },
     {
       "args": {
-        "value": 904
+        "value": 4503599627370496
       },
       "type": "const",
       "value": "base"
@@ -16048,7 +16044,7 @@
     },
     {
       "args": {
-        "value": 915
+        "value": 9007199254740992
       },
       "type": "const",
       "value": "base"

@@ -9,11 +9,7 @@
       "coset_offset": "7",
       "extension": {
         "degree": 3,
-        "polynom": [
-          1,
-          -1,
-          -1
-        ]
+        "polynom": "x^3 - x - 1"
       },
       "modulus": "18446744069414584321",
       "name": "Goldilocks",
