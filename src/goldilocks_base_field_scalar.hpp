@@ -15,22 +15,29 @@ inline Goldilocks::Element Goldilocks::add(const Element &in1, const Element &in
 
 inline void Goldilocks::add(Element &result, const Element &in1, const Element &in2)
 {
-    uint64_t in_1 = in1.fe;
-    uint64_t in_2 = in2.fe;
-    __asm__("xor   %%r10, %%r10\n\t"
-            "mov   %1, %0\n\t"
-            "add   %2, %0\n\t"
-            "cmovc %3, %%r10\n\t"
-            "add   %%r10, %0\n\t"
-            "jnc  1f\n\t"
-            "add   %3, %0\n\t"
-            "1: \n\t"
-            : "=&a"(result.fe)
-            : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
-            : "%r10");
-
-#if GOLDILOCKS_DEBUG == 1
-    result.fe = result.fe % GOLDILOCKS_PRIME;
+#if USE_ASSEMBLY == 1
+   uint64_t in_1 = in1.fe;
+   uint64_t in_2 = in2.fe;
+   __asm__("xor   %%r10, %%r10\n\t"
+           "mov   %1, %0\n\t"
+           "add   %2, %0\n\t"
+           "cmovc %3, %%r10\n\t"
+           "add   %%r10, %0\n\t"
+           "jnc  1f\n\t"
+           "add   %3, %0\n\t"
+           "1: \n\t"
+           : "=&a"(result.fe)
+           : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
+           : "%r10");
+#else
+   uint64_t in_1 = in1.fe;
+   if(in_1 >= GOLDILOCKS_PRIME){
+       in_1 -= GOLDILOCKS_PRIME;
+   }
+   result.fe = in_1 + in2.fe;
+   if(in_1 > result.fe){
+       result.fe -= GOLDILOCKS_PRIME;
+   }
 #endif
 }
 
@@ -61,6 +68,7 @@ inline Goldilocks::Element Goldilocks::sub(const Element &in1, const Element &in
 
 inline void Goldilocks::sub(Element &result, const Element &in1, const Element &in2)
 {
+#if USE_ASSEMBLY == 1
     uint64_t in_1 = in1.fe;
     uint64_t in_2 = in2.fe;
     __asm__("xor   %%r10, %%r10\n\t"
@@ -74,7 +82,16 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
-
+#else
+    uint64_t in_2 = in2.fe;
+    if(in_2 >= GOLDILOCKS_PRIME){
+        in_2 -= GOLDILOCKS_PRIME;
+    }
+    result.fe = in1.fe - in_2;
+    if(in_2 > in1.fe){
+        result.fe += GOLDILOCKS_PRIME;
+    }
+#endif
 #if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
@@ -106,6 +123,8 @@ inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in
 */
 inline void Goldilocks::mul1(Element &result, const Element &in1, const Element &in2)
 {
+
+#if USE_ASSEMBLY == 1
     __asm__("mov   %1, %0\n\t"
             "mul   %2\n\t"
             // "xor   %%rbx, %%rbx\n\t"
@@ -138,10 +157,15 @@ inline void Goldilocks::mul1(Element &result, const Element &in1, const Element 
 #if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
+#else 
+    mul(result, in1, in2);
+#endif
 }
 
 inline void Goldilocks::mul2(Element &result, const Element &in1, const Element &in2)
 {
+
+#if USE_ASSEMBLY == 1
     __asm__(
         "mov   %1, %%rax\n\t"
         "mul   %2\n\t"
@@ -153,6 +177,9 @@ inline void Goldilocks::mul2(Element &result, const Element &in1, const Element 
 #if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
+#else
+    mul(result, in1, in2);
+#endif
 }
 
 inline void branch_hint() {
@@ -160,6 +187,8 @@ inline void branch_hint() {
 }
 inline void Goldilocks::add_no_double_carry(uint64_t &result, const uint64_t &in1, const uint64_t &in2)
 {
+
+#if USE_ASSEMBLY == 1
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %0\n\t"
             "add   %2, %0\n\t"
@@ -168,7 +197,7 @@ inline void Goldilocks::add_no_double_carry(uint64_t &result, const uint64_t &in
             : "=&a"(result)
             : "r"(in1), "r"(in2), "m"(CQ)
             : "%r10");
-
+#endif
 }
 /**
  * Optimized version inspired in Plonky3 optimizations, using branch_hint hint the processor that the branch is unlikely to be taken
@@ -195,8 +224,15 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
     uint64_t aux = 0xFFFFFFFF* rhl;
     // aux1 <= 2^64-1
     // aux <= (2^32-1)*(2^32-1) = 2^64-2^32+1-2^32 = P-2^32
-    // aux1 + aux <= 2^64-1 + P-2^32 = P+P-2=2P-2   
-    add_no_double_carry(result.fe, aux1, aux);
+    // aux1 + aux <= 2^64-1 + P-2^32 = P+P-2=2P-2
+    #if USE_ASSEMBLY == 1   
+        add_no_double_carry(result.fe, aux1, aux);
+    #else
+        Goldilocks::Element aux1_, aux2_;
+        aux1_.fe = aux1;
+        aux2_.fe = aux;
+        add(result, aux2_, aux1_);
+    #endif
 
 }
 
