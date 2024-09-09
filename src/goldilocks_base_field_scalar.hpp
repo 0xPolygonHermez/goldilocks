@@ -29,7 +29,7 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
 
-#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
+#if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
@@ -74,7 +74,8 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
-#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
+
+#if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
@@ -105,28 +106,6 @@ inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in
 */
 inline void Goldilocks::mul1(Element &result, const Element &in1, const Element &in2)
 {
-#if USE_MONTGOMERY == 1
-    __asm__("xor   %%r10, %%r10\n\t"
-            "mov   %1, %%rax\n\t"
-            "mul   %2\n\t"
-            "mov   %%rdx, %%r8\n\t"
-            "mov   %%rax, %%r9\n\t"
-            "mulq   %3\n\t"
-            "mulq   %4\n\t"
-            "add    %%r9, %%rax\n\t"
-            "adc    %%r8, %%rdx\n\t"
-            "cmovc %5, %%r10\n\t"
-            "add   %%r10, %%rdx\n\t"
-            //"cmovnc %6, %%r10\n\t"
-            //"add   %%r10, %0\n\t"
-            "jnc  1f\n\t"
-            "add   %5, %0\n\t"
-            "1: \n\t"
-            : "=&d"(result.fe)
-            : "r"(in1.fe), "r"(in2.fe), "m"(MM), "m"(Q), "m"(CQ), "m"(ZR)
-            : "%rax", "%r8", "%r9", "%r10");
-
-#else
     __asm__("mov   %1, %0\n\t"
             "mul   %2\n\t"
             // "xor   %%rbx, %%rbx\n\t"
@@ -156,30 +135,13 @@ inline void Goldilocks::mul1(Element &result, const Element &in1, const Element 
             : "r"(in1.fe), "r"(in2.fe), "m"(CQ), "m"(TWO32)
             : "%rbx", "%rcx", "%rdx");
 
-#endif
-#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
+#if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }
 
 inline void Goldilocks::mul2(Element &result, const Element &in1, const Element &in2)
 {
-#if USE_MONTGOMERY == 1
-    __asm__("xor   %%r10, %%r10\n\t"
-            "mov   %1, %%rax\n\t"
-            "mul   %2\n\t"
-            "mov   %%rdx, %%r8\n\t"
-            "mov   %%rax, %%r9\n\t"
-            "mulq   %3\n\t"
-            "mulq   %4\n\t"
-            "add    %%r9, %%rax\n\t"
-            "adc    %%r8, %%rdx\n\t"
-            "cmovc %5, %%r10\n\t"
-            "add   %%r10, %%rdx\n\t"
-            : "=&d"(result.fe)
-            : "r"(in1.fe), "r"(in2.fe), "m"(MM), "m"(Q), "m"(CQ)
-            : "%rax", "%r8", "%r9", "%r10");
-#else
     __asm__(
         "mov   %1, %%rax\n\t"
         "mul   %2\n\t"
@@ -187,8 +149,8 @@ inline void Goldilocks::mul2(Element &result, const Element &in1, const Element 
         : "=&d"(result.fe)
         : "r"(in1.fe), "r"(in2.fe), "m"(Q)
         : "%rax");
-#endif
-#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
+
+#if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 }

@@ -7,8 +7,8 @@
 #include <iostream> // string
 #include <omp.h>
 #include <immintrin.h>
+#include <cassert>
 
-#define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0
 #define GOLDILOCKS_NUM_ROOTS 33
 #define GOLDILOCKS_PRIME 0xFFFFFFFF00000001ULL
@@ -44,8 +44,6 @@ public:
     /*
         Basic functionality
     */
-    static uint64_t to_montgomery(const uint64_t &in1);
-    static uint64_t from_montgomery(const uint64_t &in1);
 
     static const Element &zero();
     static void zero(Element &result);

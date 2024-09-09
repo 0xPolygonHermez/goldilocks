@@ -43,20 +43,11 @@ const Goldilocks::Element Goldilocks::W[33] = {
     Goldilocks::fromU64(3524815499551269279ULL),
     Goldilocks::fromU64(7277203076849721926ULL)};
 
-#if USE_MONTGOMERY == 0
 const Goldilocks::Element Goldilocks::ONE = {(uint64_t)0x0000000000000001LL};
 const Goldilocks::Element Goldilocks::ZERO = {(uint64_t)0x0000000000000000LL};
 const Goldilocks::Element Goldilocks::NEGONE = {(uint64_t)0xFFFFFFFF00000000LL};
 const Goldilocks::Element Goldilocks::TWO32 = {0x0000000100000000LL};
 const Goldilocks::Element Goldilocks::SHIFT = Goldilocks::fromU64(7);
-
-#else
-const Goldilocks::Element Goldilocks::ONE = {(uint64_t)0x00000000FFFFFFFFLL};
-const Goldilocks::Element Goldilocks::ZERO = {(uint64_t)0x0000000000000000LL};
-const Goldilocks::Element Goldilocks::NEGONE = {(uint64_t)0XFFFFFFFE00000002LL};
-const Goldilocks::Element Goldilocks::SHIFT = Goldilocks::fromU64(7);
-
-#endif
 
 /*
     Scalar operations
@@ -132,7 +123,7 @@ void Goldilocks::inv(Element &result, const Element &in1)
     }
 
     Goldilocks::fromU64(result, t);
-#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
+#if GOLDILOCKS_DEBUG == 1
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
 };

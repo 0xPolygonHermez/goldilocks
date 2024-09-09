@@ -2,44 +2,6 @@
 #define GOLDILOCKS_BASIC
 #include "goldilocks_base_field.hpp"
 
-inline uint64_t Goldilocks::to_montgomery(const uint64_t &in1)
-{
-    uint64_t res;
-    __asm__(
-        "xor   %%r10, %%r10\n\t"
-        "mov   %1, %%rax\n\t"
-        "mulq   %5\n\t"
-        "mov   %%rdx, %%r8\n\t"
-        "mov   %%rax, %%r9\n\t"
-        "mulq   %2\n\t"
-        "mulq   %3\n\t"
-        "add    %%r9, %%rax\n\t"
-        "adc    %%r8, %%rdx\n\t"
-        "cmovc %4, %%r10\n\t"
-        "add   %%r10, %%rdx\n\t"
-        : "=&d"(res)
-        : "r"(in1), "m"(MM), "m"(Q), "m"(CQ), "m"(R2)
-        : "%rax", "%r8", "%r9", "%r10");
-    return res;
-}
-inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
-{
-    uint64_t res;
-    __asm__(
-        "xor   %%r10, %%r10\n\t"
-        "mov   %1, %%rax\n\t"
-        "mov   %%rax, %%r9\n\t"
-        "mulq   %2\n\t"
-        "mulq   %3\n\t"
-        "add    %%r9, %%rax\n\t"
-        "adc    %%r10, %%rdx\n\t"
-        "cmovc %4, %%r10\n\t"
-        "add   %%r10, %%rdx\n\t"
-        : "=&d"(res)
-        : "r"(in1), "m"(MM), "m"(Q), "m"(CQ)
-        : "%rax", "%r8", "%r9", "%r10");
-    return res;
-}
 
 inline const Goldilocks::Element &Goldilocks::zero() { return ZERO; };
 inline void Goldilocks::zero(Element &result) { result.fe = ZERO.fe; };
@@ -65,11 +27,7 @@ inline Goldilocks::Element Goldilocks::fromU64(uint64_t in1)
 
 inline void Goldilocks::fromU64(Element &result, uint64_t in1)
 {
-#if USE_MONTGOMERY == 1
-    result.fe = Goldilocks::to_montgomery(in1);
-#else
     result.fe = in1;
-#endif
 }
 
 inline Goldilocks::Element Goldilocks::fromS64(int64_t in1)
@@ -83,12 +41,9 @@ inline void Goldilocks::fromS64(Element &result, int64_t in1)
 {
     uint64_t aux;
     (in1 < 0) ? aux = static_cast<uint64_t>(in1) + GOLDILOCKS_PRIME : aux = static_cast<uint64_t>(in1);
-#if USE_MONTGOMERY == 1
-    result.fe = Goldilocks::to_montgomery(aux);
-#else
     result.fe = aux;
-#endif
 }
+
 
 inline Goldilocks::Element Goldilocks::fromS32(int32_t in1)
 {
@@ -101,11 +56,8 @@ inline void Goldilocks::fromS32(Element &result, int32_t in1)
 {
     uint64_t aux;
     (in1 < 0) ? aux = static_cast<uint64_t>(in1) + GOLDILOCKS_PRIME : aux = static_cast<uint64_t>(in1);
-#if USE_MONTGOMERY == 1
-    result.fe = Goldilocks::to_montgomery(aux);
-#else
     result.fe = aux;
-#endif
+
 }
 
 inline Goldilocks::Element Goldilocks::fromString(const std::string &in1, int radix)
@@ -119,11 +71,8 @@ inline void Goldilocks::fromString(Element &result, const std::string &in1, int 
 {
     mpz_class aux(in1, radix);
     aux = (aux + (uint64_t)GOLDILOCKS_PRIME) % (uint64_t)GOLDILOCKS_PRIME;
-#if USE_MONTGOMERY == 1
-    result.fe = Goldilocks::to_montgomery(aux.get_ui());
-#else
     result.fe = aux.get_ui();
-#endif
+
 };
 
 inline Goldilocks::Element Goldilocks::fromScalar(const mpz_class &scalar)
@@ -136,11 +85,7 @@ inline Goldilocks::Element Goldilocks::fromScalar(const mpz_class &scalar)
 inline void Goldilocks::fromScalar(Element &result, const mpz_class &scalar)
 {
     mpz_class aux = (scalar + (uint64_t)GOLDILOCKS_PRIME) % (uint64_t)GOLDILOCKS_PRIME;
-#if USE_MONTGOMERY == 1
-    result.fe = Goldilocks::to_montgomery(aux.get_ui());
-#else
     result.fe = aux.get_ui();
-#endif
 };
 
 inline uint64_t Goldilocks::toU64(const Element &in1)
@@ -151,15 +96,9 @@ inline uint64_t Goldilocks::toU64(const Element &in1)
 };
 inline void Goldilocks::toU64(uint64_t &result, const Element &in1)
 {
-#if USE_MONTGOMERY == 1
-    result = Goldilocks::from_montgomery(in1.fe);
-    if( result >= GOLDILOCKS_PRIME )
-        result -= GOLDILOCKS_PRIME;
-#else
     result = in1.fe;
     if( result >= GOLDILOCKS_PRIME )
         result -= GOLDILOCKS_PRIME;
-#endif
 };
 
 inline int64_t Goldilocks::toS64(const Element &in1)
