@@ -305,13 +305,15 @@ int main(int argc, char *argv[])
             pos += dim;
             nwrites += dim;
         }
+        // Debug: print nodesRes
+        /*if (irow == 0)
+        {
+            for (uint64_t i = 0; i < nNodes; ++i)
+            {
+                std::cout << "node " << i << ": " << nodesRes[3 * i].fe << " " << nodesRes[3 * i + 1].fe << " " << nodesRes[3 * i + 2].fe << std::endl;
+            }
+        }*/
     }
-
-    // Debug: print nodesRes
-    /*for (uint64_t i = 0; i < nNodes; ++i)
-    {
-        std::cout << "node " << i << ": " << nodesRes[3 * i].fe << " " << nodesRes[3 * i + 1].fe << " " << nodesRes[3 * i + 1].fe << std::endl;
-    }*/
 
     //
     // Hash expEvals
@@ -362,20 +364,14 @@ int main(int argc, char *argv[])
 Goldilocks::Element fill_trace(uint64_t i, uint64_t j, uint64_t k)
 {
     Goldilocks::Element e;
-    e = Goldilocks::fromS64(i * 3 + j * 29 + k * 47);
+    e = Goldilocks::fromS64(i * 11 + j * 7 + k * 21);
     return e;
 }
 
 Goldilocks::Element fill_variable(uint64_t i, uint64_t j)
 {
     Goldilocks::Element e;
-    e = Goldilocks::fromS64(i * 67 + j * 11);
-    return e;
-}
-Goldilocks::Element fill_variable(uint64_t i, uint64_t j, uint64_t k)
-{
-    Goldilocks::Element e;
-    e = Goldilocks::fromS64(i * 67 + j * 11 + k * 41);
+    e = Goldilocks::fromS64(i * 31 + j * 101);
     return e;
 }
 
