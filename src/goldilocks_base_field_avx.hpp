@@ -13,8 +13,8 @@
 // _8 variable can be expressed in 8 bits (<256)
 
 // OBSERVATIONS:
-// 1.  a + b overflows iff (a + b) < a (AVX does not suport carry, this is the way to check)
-// 2.  a - b underflows iff (a - b) > a (AVX does not suport carry, this is the way to check)
+// 1.  a + b overflows iff (a + b) < a (AVX does not support carry, this is the way to check)
+// 2.  a - b underflows iff (a - b) > a (AVX does not support carry, this is the way to check)
 // 3. (unsigned) a < (unsigned) b iff (signed) a_s < (singed) b_s (AVX2 does not support unsingend 64-bit comparisons)
 // 4. a_s + b = (a+b)_s. Dem: a+(1<<63)+b = a+b+(1<<63)
 
@@ -64,7 +64,7 @@ inline void Goldilocks::toCanonical_avx(__m256i &a_c, const __m256i &a)
     shift_avx(a_c, a_sc);
 }
 
-// Obtain cannonical representative of a_s,
+// Obtain canonical representative of a_s,
 // We assume a <= a_c+P
 // a_sc a shifted canonical
 // a_s  a shifted
@@ -84,7 +84,7 @@ inline void Goldilocks::add_avx(__m256i &c, const __m256i &a, const __m256i &b)
     add_avx_a_sc(c, a_sc, b);
 }
 
-// we assume a given in shifted cannonical form (a_sc)
+// we assume a given in shifted canonical form (a_sc)
 inline void Goldilocks::add_avx_a_sc(__m256i &c, const __m256i &a_sc, const __m256i &b)
 {
     // addition (if only one of the arguments is shifted the sumation is shifted)
@@ -105,7 +105,7 @@ inline void Goldilocks::add_avx_s_b_small(__m256i &c_s, const __m256i &a_s, cons
     const __m256i c0_s = _mm256_add_epi64(a_s, b_small);
     // We can use 32-bit comparison that is faster, lets see:
     // 1) a_s > c0_s => a_sh >= c0_sh
-    // 2) If a_sh = c0_sh => there is no overlow (demonstration bellow)
+    // 2) If a_sh = c0_sh => there is no overflow (demonstration bellow)
     // 3) Therefore: overflow iff a_sh > c0_sh
     // Dem item 2:
     //     c0_sh=a_sh+b_h+carry=a_sh
@@ -125,7 +125,7 @@ inline void Goldilocks::add_avx_b_small(__m256i &c, const __m256i &a, const __m2
     const __m256i c0_s = _mm256_add_epi64(a_s, b_small);
     // We can use 32-bit comparison that is faster, lets see:
     // 1) a_s > c0_s => a_sh >= c0_sh
-    // 2) If a_sh = c0_sh => there is no overlow (demonstration bellow)
+    // 2) If a_sh = c0_sh => there is no overflow (demonstration bellow)
     // 3) Therefore: overflow iff a_sh > c0_sh
     // Dem item 2:
     //     c0_sh=a_sh+b_h+carry=a_sh
@@ -180,7 +180,7 @@ inline void Goldilocks::mult_avx(__m256i &c, const __m256i &a, const __m256i &b)
     reduce_avx_128_64(c, c_h, c_l);
 }
 
-// We assume coeficients of b_8 can be expressed with 8 bits (<256)
+// We assume coefficients of b_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::mult_avx_8(__m256i &c, const __m256i &a, const __m256i &b_8)
 {
     __m256i c_h, c_l;
@@ -422,7 +422,7 @@ inline void Goldilocks::spmv_avx_4x12_a(__m256i &c, const __m256i &a0, const __m
 // Sparse matrix-vector product (4x12 sparce matrix formed of four diagonal blocs 4x5 stored in a0...a3)
 // c[i]=Sum_j(aj[i]*b[j*4+i]) 0<=i<4 0<=j<3
 // We assume b_a aligned on a 32-byte boundary
-// We assume coeficients of b_8 can be expressed with 8 bits (<256)
+// We assume coefficients of b_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::spmv_avx_4x12_8(__m256i &c, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element b_8[12])
 {
 
@@ -512,7 +512,7 @@ inline void Goldilocks::mmult_avx_4x12_a(__m256i &b, const __m256i &a0, const __
 }
 
 // Dense matrix-vector product
-// We assume coeficients of M_8 can be expressed with 8 bits (<256)
+// We assume coefficients of M_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::mmult_avx_4x12_8(__m256i &b, const __m256i &a0, const __m256i &a1, const __m256i &a2, const Goldilocks::Element M_8[48])
 {
     // Generate matrix 4x4
@@ -560,7 +560,7 @@ inline void Goldilocks::mmult_avx_a(__m256i &a0, __m256i &a1, __m256i &a2, const
     a1 = b1;
     a2 = b2;
 }
-// We assume coeficients of M_8 can be expressed with 8 bits (<256)
+// We assume coefficients of M_8 can be expressed with 8 bits (<256)
 inline void Goldilocks::mmult_avx_8(__m256i &a0, __m256i &a1, __m256i &a2, const Goldilocks::Element M_8[144])
 {
     __m256i b0, b1, b2;
