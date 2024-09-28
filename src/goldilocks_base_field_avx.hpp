@@ -1,7 +1,9 @@
 #ifndef GOLDILOCKS_AVX
 #define GOLDILOCKS_AVX
 #include "goldilocks_base_field.hpp"
-#include <immintrin.h>
+#ifdef __AVX2__
+    #include <immintrin.h>
+#endif
 #include <cassert>
 
 // NOTATION:
@@ -18,6 +20,8 @@
 // 2.  a - b underflows iff (a - b) > a (AVX does not suport carry, this is the way to check)
 // 3. (unsigned) a < (unsigned) b iff (signed) a_s < (singed) b_s (AVX2 does not support unsingend 64-bit comparisons)
 // 4. a_s + b = (a+b)_s. Dem: a+(1<<63)+b = a+b+(1<<63)
+
+#ifdef __AVX2__ 
 
 const __m256i MSB = _mm256_set_epi64x(MSB_, MSB_, MSB_, MSB_);
 const __m256i P = _mm256_set_epi64x(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME);
@@ -613,4 +617,5 @@ inline void Goldilocks::op_avx(uint64_t op, __m256i &c_, const __m256i &a_, cons
         break;
     }
 };
+#endif
 #endif

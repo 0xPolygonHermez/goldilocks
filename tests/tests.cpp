@@ -6,8 +6,9 @@
 #include "../src/poseidon_goldilocks.hpp"
 #include "../src/ntt_goldilocks.hpp"
 #include "../src/merklehash_goldilocks.hpp"
-#include <immintrin.h>
-
+#ifdef __AVX2__
+    #include <immintrin.h>
+#endif
 #define FFT_SIZE (1 << 4)
 #define NUM_REPS 5
 #define BLOWUP_FACTOR 1

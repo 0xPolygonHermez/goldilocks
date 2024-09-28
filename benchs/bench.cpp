@@ -6,8 +6,9 @@
 #include "../src/poseidon_goldilocks_avx.hpp"
 #include "../src/ntt_goldilocks.hpp"
 #include "../src/merklehash_goldilocks.hpp"
-#include <immintrin.h>
-
+#ifdef __AVX2__
+    #include <immintrin.h>
+#endif
 #include <math.h> /* ceil */
 #include "omp.h"
 
