@@ -2375,7 +2375,7 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     // Edge case:Try to call ntt with FFT_SIZE = 1 ncols=3
     uint64_t fft_size = 1;
     uint64_t ncols = 3;
-    Goldilocks::Element a1[3] = {1, 2, 3};
+    Goldilocks::Element a1[3] = {Goldilocks::fromU64(1), Goldilocks::fromU64(2), Goldilocks::fromU64(3)};
     Goldilocks::Element b1[3];
 
     gntt.NTT(b1, a1, fft_size, ncols);
@@ -2392,7 +2392,7 @@ TEST(GOLDILOCKS_TEST, ntt_block)
     // Edge case:Try to call ntt with FFT_SIZE = 2 ncols=3
     fft_size = 2;
     ncols = 3;
-    Goldilocks::Element a2[6] = {1, 2, 3, 4, 5, 6};
+    Goldilocks::Element a2[6] = {Goldilocks::fromU64(1), Goldilocks::fromU64(2), Goldilocks::fromU64(3), Goldilocks::fromU64(4), Goldilocks::fromU64(5), Goldilocks::fromU64(6)};
     Goldilocks::Element b2[6];
 
     gntt.NTT(b2, a2, fft_size, ncols);
