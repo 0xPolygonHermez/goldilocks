@@ -130,16 +130,41 @@ public:
     static Element exp(Element base, uint64_t exp);
     static void exp(Element &result, Element base, uint64_t exps);
 
+    static void batchInverse(Element *res, const Element *src, uint64_t size)
+    {
+        Element* tmp = new Element[size];
+        copy(tmp[0], src[0]);
+
+        for (uint64_t i = 1; i < size; i++)
+        {
+            mul(tmp[i], tmp[i - 1], src[i]);
+        }
+
+        Element z, z2;
+        inv(z, tmp[size - 1]);
+
+        for (uint64_t i = size - 1; i > 0; i--)
+        {
+            mul(z2, z, src[i]);
+            mul(res[i], z, tmp[i - 1]);
+            copy(z, z2);
+        }
+        copy(res[0], z);
+
+        delete[] tmp;
+    }
+
     /*
         AVX operations
     */
     static void set_avx(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
 
     static void load_avx(__m256i &a_, const Goldilocks::Element *a4);
+    static void load_avx(__m256i &a_, const Goldilocks::Element *a4, uint64_t stride_a);
     static void load_avx_a(__m256i &a, const Goldilocks::Element *a4_a);
 
     static void store_avx(Goldilocks::Element *a4, const __m256i &a);
-static void store_avx(Goldilocks::Element *a4, uint64_t stride_a, const __m256i &a);
+    static void store_avx(Goldilocks::Element *a4, uint64_t stride_a, const __m256i &a);
     static void store_avx_a(Goldilocks::Element *a4_a, const __m256i &a);
 
     static void shift_avx(__m256i &a_s, const __m256i &a);

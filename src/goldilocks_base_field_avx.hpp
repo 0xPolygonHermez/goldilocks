@@ -35,6 +35,16 @@ inline void Goldilocks::load_avx(__m256i &a_, const Goldilocks::Element *a4)
     a_ = _mm256_loadu_si256((__m256i *)(a4));
 }
 
+inline void Goldilocks::load_avx(__m256i &a, const Goldilocks::Element *a4_a, uint64_t stride) {
+    Goldilocks::Element a4_[4];
+
+    for (int i = 0; i < 4; ++i) {
+        a4_[i] = a4_a[i * stride];
+    }
+
+    a = _mm256_load_si256((__m256i *)a4_);
+}
+
 // We assume a4_a aligned on a 32-byte boundary
 inline void Goldilocks::load_avx_a(__m256i &a, const Goldilocks::Element *a4_a)
 {
