@@ -11,14 +11,12 @@ endif
 
 # Compiler and flags
 CXX = g++
-CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp -mavx2
+CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp #-mavx2
 LDFLAGS := -lpthread -lgmp -lstdc++ -lgmpxx -lbenchmark -lgtest -lgomp  
-ASFLAGS := -felf64
-NVCC := /usr/local/cuda/bin/nvcc
 
 # Preprocessor flags
 CXXFLAGS += -D__AVX2__
-#CXXFLAGS += -D__USE_ASSEMBLY__
+CXXFLAGS += -D__USE_ASSEMBLY__
 #CXXFLAGS += -D__AVX512__
 
 # Debug build flags
@@ -47,8 +45,17 @@ all: testscpu
 testscpu: $(OBJS) $(BUILD_DIR)/tests/tests.o
 	$(CXX) $(OBJS) $(BUILD_DIR)/tests/tests.o $(LDFLAGS) -o $@
 
+# Linking the benchmark executable
+benchscpu: $(BUILD_DIR)/benchs/bench.o $(OBJS)
+	$(CXX) $(BUILD_DIR)/benchs/bench.o $(OBJS) $(CXXFLAGS) $(LDFLAGS) -o $@
+
 # Compiling source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	$(MKDIR_P) $(dir $@)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
+
+# Compiling benchmark files
+$(BUILD_DIR)/benchs/%.o: benchs/%.cpp
 	$(MKDIR_P) $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
@@ -57,22 +64,10 @@ $(BUILD_DIR)/tests/%.o: $(TEST_DIR)/%.cpp
 	$(MKDIR_P) $(dir $@)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
-# Create directories
-MKDIR_P := mkdir -p
-
 .PHONY: clean
-
-
-testsgpu: $(BUILD_DIR_GPU)/tests/tests.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
-	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp
-
-benchscpu: benchs/bench.cpp $(ALLSRCS)
-	$(CXX) benchs/bench.cpp src/*.cpp -lbenchmark -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -O3 -o $@
-
 
 clean:
 	$(RM) -r $(BUILD_DIR)
-	$(RM) -r $(BUILD_DIR_GPU)
 	$(RM) testscpu
 	$(RM) benchscpu
 

@@ -95,7 +95,7 @@ static void INV_OP_BENCH(benchmark::State &state)
     }
     assert(Goldilocks::toU64(term0) == 3ULL);
 }
-
+#ifdef __AVX2__
 static void ADD_OP_AVX_BENCH(benchmark::State &state)
 {
     Goldilocks::Element term0, term1;
@@ -119,6 +119,8 @@ static void ADD_OP_AVX_BENCH(benchmark::State &state)
     Goldilocks::store_avx(res, term2_);
     assert(Goldilocks::toU64(res[0]) == 9315693631868018522ULL);
 }
+#endif
+#ifdef __AVX2__
 static void SUB_OP_AVX_BENCH(benchmark::State &state)
 {
     Goldilocks::Element term0, term1;
@@ -167,7 +169,7 @@ static void MUL_OP_AVX_BENCH(benchmark::State &state)
     assert(Goldilocks::toU64(res[0]) == 1922281271747280077ULL);
 
 }
-
+#endif
 static void POSEIDON_BENCH_FULL(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
@@ -205,6 +207,7 @@ static void POSEIDON_BENCH_FULL(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#ifdef __AVX2__
 static void POSEIDON_BENCH_FULL_AVX(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
@@ -242,6 +245,7 @@ static void POSEIDON_BENCH_FULL_AVX(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#endif
 #ifdef __AVX512__
 static void POSEIDON_BENCH_FULL_AVX512(benchmark::State &state)
 {
@@ -330,6 +334,7 @@ static void POSEIDON_BENCH(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#ifdef __AVX2__
 static void POSEIDON_BENCH_AVX(benchmark::State &state)
 {
     uint64_t input_size = (uint64_t)NUM_HASHES * (uint64_t)SPONGE_WIDTH;
@@ -369,6 +374,7 @@ static void POSEIDON_BENCH_AVX(benchmark::State &state)
     state.counters["Rate"] = benchmark::Counter(threads_core * (double)NUM_HASHES / (double)state.range(0), benchmark::Counter::kIsIterationInvariantRate | benchmark::Counter::kInvert);
     state.counters["BytesProcessed"] = benchmark::Counter(input_size * sizeof(uint64_t), benchmark::Counter::kIsIterationInvariantRate, benchmark::Counter::OneK::kIs1024);
 }
+#endif
 #ifdef __AVX512__
 static void POSEIDON_BENCH_AVX512(benchmark::State &state)
 {
@@ -461,6 +467,7 @@ static void LINEAR_HASH_BENCH(benchmark::State &state)
     delete[] cols;
     delete[] result;
 }
+#ifdef __AVX2__
 static void LINEAR_HASH_BENCH_AVX(benchmark::State &state)
 {
     Goldilocks::Element *cols = new Goldilocks::Element[(uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH];
@@ -503,6 +510,7 @@ static void LINEAR_HASH_BENCH_AVX(benchmark::State &state)
     delete[] cols;
     delete[] result;
 }
+#endif
 #ifdef __AVX512__
 static void LINEAR_HASH_BENCH_AVX512(benchmark::State &state)
 {
@@ -595,6 +603,7 @@ static void MERKLETREE_BENCH(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#ifdef __AVX2__
 static void MERKLETREE_BENCH_AVX(benchmark::State &state)
 {
     Goldilocks::Element *cols = new Goldilocks::Element[(uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH];
@@ -642,6 +651,7 @@ static void MERKLETREE_BENCH_AVX(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#endif
 #ifdef __AVX512__
 static void MERKLETREE_BENCH_AVX512(benchmark::State &state)
 {
@@ -739,6 +749,7 @@ static void MERKLETREE_BATCH_BENCH(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#ifdef __AVX2__
 static void MERKLETREE_BATCH_BENCH_AVX(benchmark::State &state)
 {
     Goldilocks::Element *cols = new Goldilocks::Element[(uint64_t)NCOLS_HASH * (uint64_t)NROWS_HASH];
@@ -786,6 +797,7 @@ static void MERKLETREE_BATCH_BENCH_AVX(benchmark::State &state)
     delete[] cols;
     delete[] tree;
 }
+#endif
 #ifdef __AVX512__
 static void MERKLETREE_BATCH_BENCH_AVX512(benchmark::State &state)
 {
@@ -1107,6 +1119,7 @@ static void NTT_BENCH_CUDA(benchmark::State &state)
     free(a);
 }
 #endif  // __USE_CUDA__
+#ifdef __AVX2__
 BENCHMARK(ADD_OP_AVX_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->UseRealTime();
@@ -1118,6 +1131,7 @@ BENCHMARK(SUB_OP_AVX_BENCH)
 BENCHMARK(MUL_OP_AVX_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->UseRealTime();
+#endif
    
 
 BENCHMARK(ADD_OP_BENCH)
@@ -1139,10 +1153,12 @@ BENCHMARK(POSEIDON_BENCH_FULL)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX2__
 BENCHMARK(POSEIDON_BENCH_FULL_AVX)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 #ifdef __AVX512__
 BENCHMARK(POSEIDON_BENCH_FULL_AVX512)
@@ -1155,12 +1171,12 @@ BENCHMARK(POSEIDON_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
-
+#ifdef __AVX2__
 BENCHMARK(POSEIDON_BENCH_AVX)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
-
+#endif
 #ifdef __AVX512__
 BENCHMARK(POSEIDON_BENCH_AVX512)
     ->Unit(benchmark::kMicrosecond)
@@ -1173,10 +1189,12 @@ BENCHMARK(LINEAR_HASH_BENCH)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX2__
 BENCHMARK(LINEAR_HASH_BENCH_AVX)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 #ifdef __AVX512__
 BENCHMARK(LINEAR_HASH_BENCH_AVX512)
@@ -1190,10 +1208,12 @@ BENCHMARK(MERKLETREE_BENCH)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
 
+#ifdef __AVX2__
 BENCHMARK(MERKLETREE_BENCH_AVX)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 #ifdef __AVX512__
 BENCHMARK(MERKLETREE_BENCH_AVX512)
@@ -1206,11 +1226,12 @@ BENCHMARK(MERKLETREE_BATCH_BENCH)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
-
+#ifdef __AVX2__
 BENCHMARK(MERKLETREE_BATCH_BENCH_AVX)
     ->Unit(benchmark::kMicrosecond)
     ->DenseRange(omp_get_max_threads() / 2, omp_get_max_threads(), omp_get_max_threads() / 2)
     ->UseRealTime();
+#endif
 
 #ifdef __AVX512__
 BENCHMARK(MERKLETREE_BATCH_BENCH_AVX512)
