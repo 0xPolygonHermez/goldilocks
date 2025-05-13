@@ -12,8 +12,22 @@ ifndef LIBOMP
 $(error LIBOMP is not set, you need to install libomp-dev)
 endif
 
+HASAVX := $(shell grep -m 1 avx /proc/cpuinfo)
+HASAVX512 := $(shell grep -m 1 avx512 /proc/cpuinfo)
+
 CXX = g++
+ifeq ($(HASAVX),)
+  $(info No AVX support detected)
 CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp
+else
+ifeq ($(HASAVX512),)
+  $(info AVX support detected)
+CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp -D__USE_AVX__ -mavx2
+else
+  $(info AVX512 support detected)
+  CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp -D__USE_AVX__ -D__USE_AVX512__ -mavx2 -mavx512f
+endif
+endif
 LDFLAGS := -lpthread -lgmp -lstdc++ -lgmpxx -lbenchmark
 ASFLAGS := -felf64
 
@@ -32,10 +46,6 @@ KERNEL = $(shell uname -s)
 ifneq ($(KERNEL),Linux)
  $(error "$(KERNEL), is not a valid kernel")
 endif
-ARCH = $(shell uname -m)
-ifneq ($(ARCH),x86_64)
- $(error "$(ARCH), is not a valid architecture")
-endif
 
 SRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.asm -or -name *.cu)
 OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
@@ -45,10 +55,10 @@ ALLSRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.asm -or -name *.hpp 
 INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
-CPPFLAGS ?= $(INC_FLAGS) -MMD -MP -mavx2
+CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
 
 testcpu: tests/tests.cpp $(ALLSRCS)
-	$(CXX) tests/tests.cpp src/*.cpp -lgtest -lgmp -O3 -Wall -pthread -fopenmp -mavx2 -o $@
+	$(CXX) tests/tests.cpp src/*.cpp $(CXXFLAGS) -o $@ $(LDFLAGS) -lgtest
 
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 	$(CXX) $(OBJS) $(CXXFLAGS) -o $@ $(LDFLAGS)
@@ -61,7 +71,7 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 # c++ source with CUDA support
 $(BUILD_DIR_GPU)/%.cpp.o: %.cpp
 	$(MKDIR_P) $(dir $@)
-	$(CXX) -D__USE_CUDA__ -mavx2 $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -c $< -o $@
+	$(CXX) -D__USE_CUDA__ $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -c $< -o $@
 
 $(BUILD_DIR_GPU)/%.cu.o: %.cu
 	$(MKDIR_P) $(dir $@)
@@ -88,8 +98,8 @@ runfullgpu: full
 runfullcpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_cpu
 
-benchcpu: benchcpu
-	$(CXX) benchs/bench.cpp src/*.cpp -lbenchmark -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -O3 -o $@
+benchcpu: benchs/bench.cpp
+	$(CXX) benchs/bench.cpp src/*.cpp $(CXXFLAGS) -o $@ $(LDFLAGS) -lbenchmark
 
 benchgpu: $(BUILD_DIR_GPU)/benchs/bench.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o
 	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp -lbenchmark

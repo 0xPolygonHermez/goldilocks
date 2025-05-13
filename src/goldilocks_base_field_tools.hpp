@@ -5,6 +5,7 @@
 inline uint64_t Goldilocks::to_montgomery(const uint64_t &in1)
 {
     uint64_t res;
+#if defined(__x86_64__)
     __asm__(
         "xor   %%r10, %%r10\n\t"
         "mov   %1, %%rax\n\t"
@@ -20,11 +21,48 @@ inline uint64_t Goldilocks::to_montgomery(const uint64_t &in1)
         : "=&d"(res)
         : "r"(in1), "m"(MM), "m"(Q), "m"(CQ), "m"(R2)
         : "%rax", "%r8", "%r9", "%r10");
+#elif defined(__aarch64__)
+    __asm__(
+        "ldr    x2, %1\n\t"
+        "mov    x4, #-8589934591\n\t"
+        "mov    x6, #-4294967297\n\t"
+        "mov    x5, #-4294967295\n\t"
+        "mov    x3, #4294967295\n\t"
+        "mul    x1, x2, x4\n\t"
+        "umulh  x2, x2, x4\n\t"
+        "neg    x0, x1\n\t"
+        "adds   x0, x1, x0\n\t"
+        "mul    x1, x1, x6\n\t"
+        "umulh  x1, x1, x5\n\t"
+        "adcs   x1, x2, x1\n\t"
+        "add    x0, x1, x3\n\t"
+        "csel   x0, x0, x1, cs\n\t"
+        "str    x0, %0\n\t"
+        : "=m"(res)
+        : "m"(in1)
+        : "x0", "x1", "x2", "x3", "x4", "x5", "x6");
+#else
+    __uint128_t t0 = (__uint128_t)in1 * R2.fe;
+    uint64_t t0l = (uint64_t)t0;
+    __uint128_t t1 = (__uint128_t)t0l * MM.fe;
+    uint64_t t1l = (uint64_t)t1;
+    __uint128_t t2 = (__uint128_t)t1l * Q.fe;
+    __uint128_t t3 = t0 + t2;
+    if (t3 < t2)
+    {
+        res = (uint64_t)(t3 >> 64) + CQ.fe;
+    }
+    else
+    {
+        res = (uint64_t)(t3 >> 64);
+    }
+#endif // __USE_X86_ASM__
     return res;
 }
 inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
 {
     uint64_t res;
+#if defined(__x86_64__)
     __asm__(
         "xor   %%r10, %%r10\n\t"
         "mov   %1, %%rax\n\t"
@@ -38,6 +76,33 @@ inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
         : "=&d"(res)
         : "r"(in1), "m"(MM), "m"(Q), "m"(CQ)
         : "%rax", "%r8", "%r9", "%r10");
+#elif defined(__aarch64__)
+    __asm__(
+        "ldr   x0, %1\n\t"
+        "mov   x2, #-4294967297\n\t"
+        "mov   x1, #-4294967295\n\t"
+        "cmp   x0, #0\n\t"
+        "mul   x0, x0, x2\n\t"
+        "umulh x0, x0, x1\n\t"
+        "cinc  x0, x0, ne\n\t"
+        "str   x0, %0\n\t"
+        : "=m"(res)
+        : "m"(in1)
+        : "x0", "x1", "x2");
+#else
+    __uint128_t t0 = (__uint128_t)in1 * MM.fe;
+    uint64_t t0l = (uint64_t)t0;
+    __uint128_t t1 = (__uint128_t)Q.fe * t0l;
+    __uint128_t t2 = in1 + t1;
+    if (t2 < t1)
+    {
+        res = (uint64_t)(t2 >> 64) + CQ.fe;
+    }
+    else
+    {
+        res = (uint64_t)(t2 >> 64);
+    }
+#endif // __USE_X86_ASM__
     return res;
 }
 
@@ -68,7 +133,14 @@ inline void Goldilocks::fromU64(Element &result, uint64_t in1)
 #if USE_MONTGOMERY == 1
     result.fe = Goldilocks::to_montgomery(in1);
 #else
-    result.fe = in1;
+    if (in1 >= GOLDILOCKS_PRIME)
+    {
+        result.fe = in1 - GOLDILOCKS_PRIME;
+    }
+    else
+    {
+        result.fe = in1;
+    }
 #endif
 }
 

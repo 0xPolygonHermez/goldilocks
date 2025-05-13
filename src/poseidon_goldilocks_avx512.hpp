@@ -1,8 +1,10 @@
 #ifndef POSEIDON_GOLDILOCKS_AVX512
 #define POSEIDON_GOLDILOCKS_AVX512
-#ifdef __AVX512__
-#include "poseidon_goldilocks.hpp"
+
+#ifdef __USE_AVX512__
 #include "goldilocks_base_field.hpp"
+#include "poseidon_goldilocks.hpp"
+#include "poseidon_goldilocks_avx.hpp"
 #include <immintrin.h>
 
 inline void PoseidonGoldilocks::hash_avx512(Goldilocks::Element (&state)[2 * CAPACITY], Goldilocks::Element const (&input)[2 * SPONGE_WIDTH])

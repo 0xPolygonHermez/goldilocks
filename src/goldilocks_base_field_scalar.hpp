@@ -13,10 +13,24 @@ inline Goldilocks::Element Goldilocks::add(const Element &in1, const Element &in
     return result;
 }
 
+inline void Goldilocks::add(uint64_t &result, const uint64_t &in1, const uint64_t &in2)
+{
+    uint64_t diff = GOLDILOCKS_PRIME - in2;
+    if (diff < in1)
+    {
+        result = in1 - diff;
+    }
+    else
+    {
+        result = in1 + in2;
+    }
+}
+
 inline void Goldilocks::add(Element &result, const Element &in1, const Element &in2)
 {
     uint64_t in_1 = in1.fe;
     uint64_t in_2 = in2.fe;
+#if defined(__x86_64__)
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %0\n\t"
             "add   %2, %0\n\t"
@@ -28,6 +42,9 @@ inline void Goldilocks::add(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
+#else
+    Goldilocks::add(result.fe, in_1, in_2);
+#endif
 
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
@@ -59,10 +76,16 @@ inline Goldilocks::Element Goldilocks::sub(const Element &in1, const Element &in
     return result;
 }
 
+inline void Goldilocks::sub(uint64_t &result, const uint64_t &in1, const uint64_t &in2)
+{
+    result = (in1 >= in2) ? in1 - in2 : (GOLDILOCKS_PRIME - in2) + in1;
+}
+
 inline void Goldilocks::sub(Element &result, const Element &in1, const Element &in2)
 {
     uint64_t in_1 = in1.fe;
     uint64_t in_2 = in2.fe;
+#if defined(__x86_64__)
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %0\n\t"
             "sub   %2, %0\n\t"
@@ -74,6 +97,10 @@ inline void Goldilocks::sub(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in_1), "r"(in_2), "m"(CQ), "m"(ZR)
             : "%r10");
+#else
+    Goldilocks::sub(result.fe, in_1, in_2);
+#endif
+
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif
@@ -102,6 +129,7 @@ inline Goldilocks::Element Goldilocks::mul(const Element &in1, const Element &in
 
 inline void Goldilocks::mul(Element &result, const Element &in1, const Element &in2)
 {
+#if defined(__x86_64__)
 #if USE_MONTGOMERY == 1
     __asm__("xor   %%r10, %%r10\n\t"
             "mov   %1, %%rax\n\t"
@@ -123,7 +151,7 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
             : "r"(in1.fe), "r"(in2.fe), "m"(MM), "m"(Q), "m"(CQ), "m"(ZR)
             : "%rax", "%r8", "%r9", "%r10");
 
-#else
+#else  // USE_MONTGOMERY
     __asm__("mov   %1, %0\n\t"
             "mul   %2\n\t"
             // "xor   %%rbx, %%rbx\n\t"
@@ -152,8 +180,20 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
             : "=&a"(result.fe)
             : "r"(in1.fe), "r"(in2.fe), "m"(CQ), "m"(TWO32)
             : "%rbx", "%rcx", "%rdx");
-
-#endif
+#endif // USE_MONTGOMERY
+#else  // no __x86_64__
+    __uint128_t x1 = (__uint128_t)in1.fe;
+    __uint128_t x2 = (__uint128_t)in2.fe;
+    __uint128_t x = x1 * x2;
+    uint64_t x_lo = (uint64_t)(x & 0xFFFFFFFFFFFFFFFF);
+    uint64_t x_hi = (uint64_t)(x >> 64);
+    uint64_t x_hi_hi = x_hi >> 32;
+    uint64_t x_hi_lo = x_hi & CQ.fe;
+    uint64_t t0;
+    Goldilocks::sub(t0, x_lo, x_hi_hi);
+    uint64_t t1 = x_hi_lo * CQ.fe;
+    Goldilocks::add(result.fe, t0, t1);
+#endif // __x86_64__
 #if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
     result.fe = result.fe % GOLDILOCKS_PRIME;
 #endif

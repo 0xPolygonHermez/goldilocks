@@ -6,7 +6,9 @@
 #include <gmpxx.h>
 #include <iostream> // string
 #include <omp.h>
+#ifdef __USE_AVX__
 #include <immintrin.h>
+#endif
 
 #define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0
@@ -90,10 +92,12 @@ public:
     static void parcpy(Element *dst, const Element *src, uint64_t size, int num_threads_copy = 64);
     static void parSetZero(Element *dst, uint64_t size, int num_threads_copy = 64);
 
+    static void add(uint64_t &result, const uint64_t &in1, const uint64_t &in2);
     static Element add(const Element &in1, const Element &in2);
     static void add(Element &result, const Element &in1, const Element &in2);
     static Element inc(const Goldilocks::Element &fe);
 
+    static void sub(uint64_t &result, const uint64_t &in1, const uint64_t &in2);
     static Element sub(const Element &in1, const Element &in2);
     static void sub(Element &result, const Element &in1, const Element &in2);
     static Element dec(const Goldilocks::Element &fe);
@@ -164,6 +168,7 @@ public:
     /*
         AVX operations
     */
+#ifdef __USE_AVX__
     static void set_avx(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
     static void load_avx(__m256i &a, const Goldilocks::Element *a4);
     static void load_avx_a(__m256i &a, const Goldilocks::Element *a4_a);
@@ -298,12 +303,12 @@ public:
     static void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a, const Element *b, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    
+#endif  // __USE_AVX__
 
     /*
         AVX512 operations
     */
-#ifdef __AVX512__
+#ifdef __USE_AVX512__
     static void load_avx512(__m512i &a, const Goldilocks::Element *a8);
     static void load_avx512_a(__m512i &a, const Goldilocks::Element *a8_a);
     static void store_avx512(Goldilocks::Element *a8, const __m512i &a);
@@ -422,7 +427,7 @@ public:
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, uint64_t offset_a);
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b);
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_]);
-#endif
+#endif  // __USE_AVX512__
 };
 
 /*
@@ -439,9 +444,11 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_tools.hpp"
 #include "goldilocks_base_field_scalar.hpp"
 #include "goldilocks_base_field_batch.hpp"
+#ifdef __USE_AVX__
 #include "goldilocks_base_field_avx.hpp"
-#ifdef __AVX512__
+#ifdef __USE_AVX512__
 #include "goldilocks_base_field_avx512.hpp"
+#endif
 #endif
 
 #endif // GOLDILOCKS_BASE

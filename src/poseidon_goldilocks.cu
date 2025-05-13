@@ -589,10 +589,12 @@ void PoseidonGoldilocks::merkletree_cuda(Goldilocks::Element *tree, Goldilocks::
     // is the input < 2 GB -> run on CPU
     if (num_rows * num_cols * dim <= (1ul << 32))
     {
-#ifdef __AVX512__
+#if defined(__USE_AVX512__)
         PoseidonGoldilocks::merkletree_avx512(tree, input, num_cols, num_rows, nThreads, dim);
-#else
+#elif defined(__USE_AVX__)
         PoseidonGoldilocks::merkletree_avx(tree, input, num_cols, num_rows, nThreads, dim);
+#else
+        PoseidonGoldilocks::merkletree_seq(tree, input, num_cols, num_rows, nThreads, dim);
 #endif
         return;
     }
