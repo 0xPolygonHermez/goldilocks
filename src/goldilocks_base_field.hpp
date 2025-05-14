@@ -9,6 +9,9 @@
 #ifdef __USE_AVX__
 #include <immintrin.h>
 #endif
+#ifdef __USE_NEON__
+#include <arm_neon.h>
+#endif
 
 #define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0
@@ -230,7 +233,7 @@ public:
     static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_b[4]);
     static void add_avx(Element *c4, const Element *a4, const Element b);
     static void add_avx(Element *c4, const Element *a4, const Element b, uint64_t offset_a);
-    static void add_avx(Element *c4, uint64_t offset_c, const Element *a4, uint64_t offset_a, const Element *b4,  uint64_t offset_b);
+    static void add_avx(Element *c4, uint64_t offset_c, const Element *a4, uint64_t offset_a, const Element *b4, uint64_t offset_b);
     static void add_avx(Element *c4, const Element *a4, const Element *b4, uint64_t offset_a, uint64_t offset_b);
     static void add_avx(Element *c4, const Element *a4, const Element *b4, const uint64_t offset_a[4], const uint64_t offset_b[4]);
     static void add_avx(Element *c4, const Element *a4, const Element b, const uint64_t offset_a[4]);
@@ -303,7 +306,7 @@ public:
     static void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a, const Element *b, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-#endif  // __USE_AVX__
+#endif // __USE_AVX__
 
     /*
         AVX512 operations
@@ -427,7 +430,43 @@ public:
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, uint64_t offset_a);
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const __m512i &a_, const Element *b, uint64_t offset_b);
     static void mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], const Element *a8, const __m512i &b_, const uint64_t offset_a[AVX512_SIZE_]);
-#endif  // __USE_AVX512__
+#endif // __USE_AVX512__
+
+/*
+        ARM NEON operations
+    */
+#ifdef __USE_NEON__
+    static void set_neon(uint64x2_t &d0, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
+    static void set_neon(uint64x2_t &d0, uint64x2_t &d1, const Goldilocks::Element &a0, const Goldilocks::Element &a1, const Goldilocks::Element &a2, const Goldilocks::Element &a3);
+    static void load_neon(uint64x2_t &d, const Goldilocks::Element *a2);
+    static void load_neon(uint64x2_t &d0, uint64x2_t &d1, const Goldilocks::Element *a4);
+    static void store_neon(Goldilocks::Element *a2, const uint64x2_t &d);
+    static void store_neon(Goldilocks::Element *a4, const uint64x2_t &d0, const uint64x2_t &d1);
+
+    static void add_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
+    static void sub_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
+
+    static void mult_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
+    static void mult_neon_8(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
+
+    static void mult_neon_128(uint64x2_t &c_h, uint64x2_t &c_l, const uint64x2_t &a, const uint64x2_t &b);
+    static void mult_neon_72(uint64x2_t &c_h, uint64x2_t &c_l, const uint64x2_t &a, const uint64x2_t &b);
+    static void reduce_neon_128_64(uint64x2_t &c, const uint64x2_t &c_h, const uint64x2_t &c_l);
+    static void reduce_neon_96_64(uint64x2_t &c, const uint64x2_t &c_h, const uint64x2_t &c_l);
+
+    static void square_neon(uint64x2_t &c, uint64x2_t &a);
+    static void square_neon_128(uint64x2_t &c_h, uint64x2_t &c_l, const uint64x2_t &a);
+
+    static Element dot_neon(const uint64x2_t &a0, const uint64x2_t &a1, const uint64x2_t &a2, const uint64x2_t &a3, const uint64x2_t &a4, const uint64x2_t &a5, const Element b[12]);
+    static void spmv_neon_4x12(uint64x2_t &c0, uint64x2_t &c1, const uint64x2_t &a0, const uint64x2_t &a1, const uint64x2_t &a2, const uint64x2_t &a3, const uint64x2_t &a4, const uint64x2_t &a5, const Element b[12]);
+    static void spmv_neon_4x12_8(uint64x2_t &c0, uint64x2_t &c1, const uint64x2_t &a0, const uint64x2_t &a1, const uint64x2_t &a2, const uint64x2_t &a3, const uint64x2_t &a4, const uint64x2_t &a5, const Element b_8[12]);
+    static void transpose(uint64x2_t &r00, uint64x2_t &r01, uint64x2_t &r10, uint64x2_t &r11, uint64x2_t &r20, uint64x2_t &r21, uint64x2_t &r30, uint64x2_t &r31,
+                          uint64x2_t &c00, uint64x2_t &c01, uint64x2_t &c10, uint64x2_t &c11, uint64x2_t &c20, uint64x2_t &c21, uint64x2_t &c30, uint64x2_t &c31);
+    static void mmult_neon_4x12(uint64x2_t &b0, uint64x2_t &b1, const uint64x2_t &a0, const uint64x2_t &a1, const uint64x2_t &a2, const uint64x2_t &a3, const uint64x2_t &a4, const uint64x2_t &a5, const Element M[48]);
+    static void mmult_neon_4x12_8(uint64x2_t &b0, uint64x2_t &b1, const uint64x2_t &a0, const uint64x2_t &a1, const uint64x2_t &a2, const uint64x2_t &a3, const uint64x2_t &a4, const uint64x2_t &a5, const Element M_8[48]);
+    static void mmult_neon(uint64x2_t &a0, uint64x2_t &a1, uint64x2_t &a2, uint64x2_t &a3, uint64x2_t &a4, uint64x2_t &a5, const Element M[144]);
+    static void mmult_neon_8(uint64x2_t &a0, uint64x2_t &a1, uint64x2_t &a2, uint64x2_t &a3, uint64x2_t &a4, uint64x2_t &a5, const Element M_8[144]);
+#endif // __USE_NEON__
 };
 
 /*
@@ -444,6 +483,11 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_tools.hpp"
 #include "goldilocks_base_field_scalar.hpp"
 #include "goldilocks_base_field_batch.hpp"
+
+#ifdef __USE_NEON__
+#include "goldilocks_base_field_neon.hpp"
+#endif
+
 #ifdef __USE_AVX__
 #include "goldilocks_base_field_avx.hpp"
 #ifdef __USE_AVX512__

@@ -39,6 +39,11 @@ private:
 #endif  // __USE_AVX512__
 #endif  // __USE_AVX__
 
+#ifdef __USE_NEON__
+    inline void static add_neon(uint64x2_t &st0, uint64x2_t &st1, uint64x2_t &st2, uint64x2_t &st3, uint64x2_t &st4, uint64x2_t &st5, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static pow7_neon(uint64x2_t &st0, uint64x2_t &st1, uint64x2_t &st2, uint64x2_t &st3, uint64x2_t &st4, uint64x2_t &st5);
+    inline void static add_neon_small(uint64x2_t &st0, uint64x2_t &st1, uint64x2_t &st2, uint64x2_t &st3, uint64x2_t &st4, uint64x2_t &st5, const Goldilocks::Element C[SPONGE_WIDTH]);
+#endif  // __USE_NEON__
 
 public:
     // Wrapper:
@@ -72,6 +77,11 @@ public:
     void static merkletree_batch_avx512(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1);
 #endif  // __USE_AVX512__
 #endif	// __USE_AVX__
+
+#ifdef __USE_NEON__
+    void static merkletree_neon(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
+    void static merkletree_batch_neon(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1);
+#endif  // __USE_NEON__
 
 #ifdef __USE_CUDA__
     void static merkletree_cuda(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
@@ -195,6 +205,10 @@ inline void PoseidonGoldilocks::hash_seq(Goldilocks::Element (&state)[CAPACITY],
 #else
 #include "poseidon_goldilocks_avx.hpp"
 #endif
+#endif
+
+#ifdef __USE_NEON__
+#include "poseidon_goldilocks_neon.hpp"
 #endif
 
 #endif

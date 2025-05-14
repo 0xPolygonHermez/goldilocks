@@ -28,6 +28,12 @@ else
   CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp -D__USE_AVX__ -D__USE_AVX512__ -mavx2 -mavx512f
 endif
 endif
+ARCH = $(shell uname -m)
+ifeq ($(ARCH),aarch64)
+ $(info ARM64 detected, using NEON by default)
+CXXFLAGS += -D__USE_NEON__
+endif
+
 LDFLAGS := -lpthread -lgmp -lstdc++ -lgmpxx -lbenchmark
 ASFLAGS := -felf64
 
@@ -57,9 +63,6 @@ INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
 
-testcpu: tests/tests.cpp $(ALLSRCS)
-	$(CXX) tests/tests.cpp src/*.cpp $(CXXFLAGS) -o $@ $(LDFLAGS) -lgtest
-
 $(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
 	$(CXX) $(OBJS) $(CXXFLAGS) -o $@ $(LDFLAGS)
 
@@ -79,6 +82,8 @@ $(BUILD_DIR_GPU)/%.cu.o: %.cu
 
 .PHONY: clean
 
+testcpu: tests/tests.cpp src/goldilocks_base_field.cpp src/goldilocks_cubic_extension.cpp src/ntt_goldilocks.cpp src/poseidon_goldilocks.cpp src/poseidon_goldilocks_neon.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@ $(LDFLAGS) -lgtest
 
 testgpu: $(BUILD_DIR_GPU)/tests/tests.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
 	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp
@@ -98,8 +103,8 @@ runfullgpu: full
 runfullcpu: full
 	./full --gtest_filter=GOLDILOCKS_TEST.full_cpu
 
-benchcpu: benchs/bench.cpp
-	$(CXX) benchs/bench.cpp src/*.cpp $(CXXFLAGS) -o $@ $(LDFLAGS) -lbenchmark
+benchcpu: benchs/bench.cpp src/goldilocks_base_field.cpp src/goldilocks_cubic_extension.cpp src/ntt_goldilocks.cpp src/poseidon_goldilocks.cpp src/poseidon_goldilocks_neon.cpp
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
 benchgpu: $(BUILD_DIR_GPU)/benchs/bench.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o
 	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp -lbenchmark
