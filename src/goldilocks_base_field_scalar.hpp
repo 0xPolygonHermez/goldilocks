@@ -199,37 +199,6 @@ inline void Goldilocks::mul(Element &result, const Element &in1, const Element &
 #endif
 }
 
-inline void Goldilocks::mul2(Element &result, const Element &in1, const Element &in2)
-{
-#if USE_MONTGOMERY == 1
-    __asm__("xor   %%r10, %%r10\n\t"
-            "mov   %1, %%rax\n\t"
-            "mul   %2\n\t"
-            "mov   %%rdx, %%r8\n\t"
-            "mov   %%rax, %%r9\n\t"
-            "mulq   %3\n\t"
-            "mulq   %4\n\t"
-            "add    %%r9, %%rax\n\t"
-            "adc    %%r8, %%rdx\n\t"
-            "cmovc %5, %%r10\n\t"
-            "add   %%r10, %%rdx\n\t"
-            : "=&d"(result.fe)
-            : "r"(in1.fe), "r"(in2.fe), "m"(MM), "m"(Q), "m"(CQ)
-            : "%rax", "%r8", "%r9", "%r10");
-#else
-    __asm__(
-        "mov   %1, %%rax\n\t"
-        "mul   %2\n\t"
-        "divq   %3\n\t"
-        : "=&d"(result.fe)
-        : "r"(in1.fe), "r"(in2.fe), "m"(Q)
-        : "%rax");
-#endif
-#if GOLDILOCKS_DEBUG == 1 && USE_MONTGOMERY == 0
-    result.fe = result.fe % GOLDILOCKS_PRIME;
-#endif
-}
-
 inline Goldilocks::Element Goldilocks::square(const Element &in1) { return mul(in1, in1); };
 
 inline void Goldilocks::square(Element &result, const Element &in1) { return mul(result, in1, in1); };

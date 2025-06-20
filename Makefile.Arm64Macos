@@ -1,0 +1,64 @@
+KERNEL = $(shell uname -s)
+ifneq ($(KERNEL),Darwin)
+ $(error "$(KERNEL), is not a valid kernel")
+endif
+
+BUILD_DIR := ./build
+SRC_DIRS := ./src
+TEST_DIRS := ./test
+
+CC := gcc
+CXX = g++
+CXXFLAGS := -I/opt/homebrew/opt/libomp/include -I/opt/homebrew/opt/gmp/include -I/opt/homebrew/opt/googletest/include -I/opt/homebrew/opt/google-benchmark/include -std=c++17 -Wall -Wno-missing-braces -Wno-vla-extension
+LDFLAGS := -L/opt/homebrew/opt/libomp/lib -L/opt/homebrew/opt/gmp/lib -L/opt/homebrew/opt/googletest/lib -L/opt/homebrew/opt/google-benchmark/lib -lomp -lgmp -lgmpxx -lgtest -lbenchmark
+
+ARCH = $(shell uname -m)
+ifeq ($(ARCH),arm64)
+ $(info ARM64 detected, using NEON by default)
+CXXFLAGS += -D__USE_NEON__
+endif
+
+# Debug build flags
+ifeq ($(dbg),1)
+      CXXFLAGS += -g
+else
+      CXXFLAGS += -O3
+endif
+
+SRCS := $(shell find $(SRC_DIRS) -name *.cpp)
+OBJS := $(SRCS:%=$(BUILD_DIR)/%.o)
+DEPS := $(OBJS:.o=.d)
+ALLSRCS := $(shell find $(SRC_DIRS) -name *.cpp -or -name *.hpp)
+
+INC_DIRS := $(shell find $(SRC_DIRS) -type d)
+INC_FLAGS := $(addprefix -I,$(INC_DIRS))
+
+# c++ source
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	$(MKDIR_P) $(dir $@)
+	$(CXX) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -c $< -o $@
+
+.PHONY: clean
+
+testcpu: tests/tests.cpp $(ALLSRCS)
+	$(CXX) $(CXXFLAGS) tests/tests.cpp src/*.cpp -o $@ $(LDFLAGS)
+
+runtestcpu: testcpu
+	./testcpu
+
+benchcpu: benchs/bench.cpp $(ALLSRCS)
+	$(CXX) $(CXXFLAGS) benchs/bench.cpp src/*.cpp -O3 -o $@ $(LDFLAGS)
+
+runbenchcpu: benchcpu
+	./benchcpu
+
+all: testcpu benchcpu
+
+clean:
+	$(RM) -r $(BUILD_DIR)
+	$(RM) -r $(BUILD_DIR_GPU)
+	$(RM) -f testcpu benchcpu
+
+-include $(DEPS)
+
+MKDIR_P ?= mkdir -p

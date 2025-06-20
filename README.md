@@ -6,6 +6,7 @@
 sudo apt-get install libgtest-dev libomp-dev libgmp-dev libbenchmark-dev
 ```
 
+### Dependencies for GPU acceleration
 For CUDA 12.3:
 
 ```
@@ -15,6 +16,15 @@ sudo dpkg -i cuda-keyring_1.1-1_all.deb
 sudo apt-get update
 sudo apt-get -y install cuda-toolkit-12-3
 ```
+
+### Dependencies for MacOS native compilation
+```
+brew install llvm
+brew install libomp
+brew install googletest
+brew install google-benchmark
+```
+
 
 ## Usage
 Compile:
@@ -36,6 +46,35 @@ To build the tests running on CPU+GPU: ``make testsgpu``.
 Similarly for benchmarks: ``make benchcpu`` and ``make benchgpu``.
 
 The script [``configure.sh``](configure.sh) finds the CUDA capability of the GPU installed on the host system and updates the file [``CudaArch.mk``](CudaArch.mk) which is used by the Makefile.
+
+## ARM and MacOS Support
+
+You can compile and run the code on an Apple Silicon system via Docker:
+```
+docker run -it -v ./:/goldilocks ubuntu:24.04 bash
+```
+
+Inside Docker:
+```
+# cd /goldilocks
+# apt update
+# apt -y install gcc g++ make libgtest-dev libomp-dev libgmp-dev libbenchmark-dev
+# make testcpu
+No AVX support detected
+ARM64 detected, using NEON by default
+g++  -I./src -MMD -MP -std=c++17 -Wall -pthread -fopenmp -D__USE_NEON__ -O3 tests/tests.cpp src/goldilocks_base_field.cpp src/goldilocks_cubic_extension.cpp src/ntt_goldilocks.cpp src/poseidon_goldilocks.cpp src/poseidon_goldilocks_neon.cpp -o testcpu -lpthread -lgmp -lstdc++ -lgmpxx -lbenchmark -lgtest
+# ./testcpu
+...
+# make benchcpu
+# ./benchcpu
+...
+```
+
+### MacOS Native
+```
+make -f Makefile.Arm64Macos runtestcpu
+make -f Makefile.Arm64Macos runbenchcpu
+```
 
 ## Profiling and Timers
 
