@@ -1,5 +1,3 @@
-TARGET_EXEC := example
-
 BUILD_DIR := ./build
 BUILD_DIR_GPU := ./build_gpu
 SRC_DIRS := ./src
@@ -62,9 +60,6 @@ INC_DIRS := $(shell find $(SRC_DIRS) -type d)
 INC_FLAGS := $(addprefix -I,$(INC_DIRS))
 
 CPPFLAGS ?= $(INC_FLAGS) -MMD -MP
-
-$(BUILD_DIR)/$(TARGET_EXEC): $(OBJS)
-	$(CXX) $(OBJS) $(CXXFLAGS) -o $@ $(LDFLAGS)
 
 # c++ source
 $(BUILD_DIR)/%.cpp.o: %.cpp
