@@ -57,7 +57,7 @@ all: testcpu benchcpu
 clean:
 	$(RM) -r $(BUILD_DIR)
 	$(RM) -r $(BUILD_DIR_GPU)
-	$(RM) -f testcpu benchcpu
+	$(RM) -f testcpu benchcpu testcpu.d benchcpu.d
 
 -include $(DEPS)
 

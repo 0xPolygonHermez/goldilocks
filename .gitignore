@@ -3,9 +3,10 @@ build
 null.d
 test
 bench
-testsgpu
-testscpu
+testgpu
+testcpu
 benchcpu
 benchgpu
 deviceQuery
 *.o
+*.d
