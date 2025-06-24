@@ -163,6 +163,7 @@ void PoseidonGoldilocks::merkletree_batch_seq(Goldilocks::Element *tree, Goldilo
     }
 }
 
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
 void PoseidonGoldilocks::linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)
 {
     uint64_t remaining = size;
@@ -288,13 +289,14 @@ void merkletree_batch_vect4(Goldilocks::Element *tree, Goldilocks::Element *inpu
         nextN = floor((pending - 1) / 2) + 1;
     }
 }
+#endif // __USE_AVX__ || __USE_NEON__
 
 #ifdef __USE_AVX__
-void PoseidonGoldilocks::merkletree_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1)
+void PoseidonGoldilocks::merkletree_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads, uint64_t dim)
 {
     merkletree_vect4(tree, input, num_cols, num_rows, nThreads, dim);
 }
-void PoseidonGoldilocks::merkletree_batch_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1)
+void PoseidonGoldilocks::merkletree_batch_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads, uint64_t dim)
 {
     merkletree_batch_vect4(tree, input, num_cols, num_rows, batch_size, nThreads, dim);
 }

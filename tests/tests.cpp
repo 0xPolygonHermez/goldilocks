@@ -16,14 +16,21 @@
 #define NROWS_HASH (1 << 6)
 
 #ifdef __USE_AVX__
-typedef __m256i vect_t;
-#endif
 #ifdef __USE_AVX512__
+#undef __USE_AVX__
 typedef __m512i vect_t;
+#define __USE_VECT__ 1
+#else
+typedef __m256i vect_t;
+#define __USE_VECT__ 1
+#endif
 #endif
 #ifdef __USE_NEON__
 typedef uint64x2_t vect_t;
+#define __USE_VECT__ 1
 #endif
+
+#ifdef __USE_VECT__
 
 #define CALL_FUNCTION_WITH_SUFFIX(base_name, suffix) base_name##suffix
 #define LOAD_FUNCTION(suffix) CALL_FUNCTION_WITH_SUFFIX(Goldilocks::load, suffix)
@@ -54,7 +61,8 @@ void test_vect_op(
     void (*op_funct)(vect_t &c, const vect_t &a, const vect_t &b),
     Goldilocks::Element (*base_op_funct)(const Goldilocks::Element &a, const Goldilocks::Element &b),
     bool is_2x2 = false,
-    uint8_t size = 4
+    uint8_t size = 4,
+    bool is_8bit = false
 ) {
     ASSERT_TRUE(size == 4 || size == 8);
 
@@ -70,24 +78,69 @@ void test_vect_op(
     Goldilocks::Element *b = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
     Goldilocks::Element *c = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
 
-    a[0] = p_1;
-    a[1] = a1;
-    a[2] = inE1;
-    a[3] = max;
-    b[0] = p_1;
-    b[1] = a2;
-    b[2] = inE2;
-    b[3] = max;
-
-    if (size == 8) {
-        a[4] = inE8;
-        a[5] = inE9;
-        a[6] = inE10;
-        a[7] = inE11;
-        b[4] = inE9;
-        b[5] = inE10;
-        b[6] = inE11;
-        b[7] = inE12;
+    if (is_8bit) {
+        int32_t in1 = 3;
+        int32_t in2 = 9;
+        int32_t in3 = 9;
+        int32_t in4 = 100;
+        int32_t in5 = 3;
+        int32_t in6 = 9;
+        int32_t in7 = 9;
+        int32_t in8 = 100;
+        if (size == 4) {
+            a[0] = Goldilocks::fromS32(in1);
+            a[1] = Goldilocks::fromS32(in2);
+            a[2] = Goldilocks::fromS32(in3);
+            a[3] = Goldilocks::fromS32(in4);
+            b[0] = Goldilocks::fromS32(in5);
+            b[1] = Goldilocks::fromS32(in6);
+            b[2] = Goldilocks::fromS32(in7);
+            b[3] = Goldilocks::fromS32(in8);
+        }
+        else {
+            a[0] = Goldilocks::fromS32(in1);
+            a[1] = Goldilocks::fromS32(in2);
+            a[2] = Goldilocks::fromS32(in3);
+            a[3] = Goldilocks::fromS32(in4);
+            a[4] = Goldilocks::fromS32(in5);
+            a[5] = Goldilocks::fromS32(in6);
+            a[6] = Goldilocks::fromS32(in7);
+            a[7] = Goldilocks::fromS32(in8);
+            b[0] = Goldilocks::fromS32(in5);
+            b[1] = Goldilocks::fromS32(in6);
+            b[2] = Goldilocks::fromS32(in7);
+            b[3] = Goldilocks::fromS32(in8);
+            b[4] = Goldilocks::fromS32(in1);
+            b[5] = Goldilocks::fromS32(in2);
+            b[6] = Goldilocks::fromS32(in3);
+            b[7] = Goldilocks::fromS32(in4);
+        }
+    }
+    else {
+        a[0] = p_1;
+        a[1] = a1;
+        a[2] = inE1;
+        a[3] = max;
+        b[0] = p_1;
+        b[1] = a2;
+        b[2] = inE2;
+        b[3] = max;
+        if (size == 8) {
+            a[4] = inE8;
+            a[5] = inE9;
+            a[6] = inE10;
+            a[7] = inE11;
+            b[4] = inE9;
+            b[5] = inE10;
+            a[4] = inE8;
+            a[5] = inE9;
+            a[6] = inE10;
+            a[7] = inE11;
+            b[4] = inE9;
+            b[5] = inE10;
+            b[6] = inE11;
+            b[7] = inE12;
+        }
     }
 
     vect_t a0_, a1_;
@@ -105,7 +158,7 @@ void test_vect_op(
         store_funct(c+2, c1_);
     }
 
-    for (uint8_t i = 0; i < size; i++) {
+    for (uint64_t i = 0; i < size; i++) {
         ASSERT_EQ(Goldilocks::toU64(base_op_funct(a[i], b[i])), Goldilocks::toU64(c[i]));
     }
 
@@ -129,7 +182,7 @@ void test_vect_op(
         store_funct(b+2, b1_);
     }
 
-    for (uint8_t i = 0; i < size; i++) {
+    for (uint64_t i = 0; i < size; i++) {
         ASSERT_EQ(Goldilocks::toU64(base_op_funct(a[i], c[i])), Goldilocks::toU64(b[i]));
     }
 
@@ -173,7 +226,7 @@ void test_unary_vect_op(
         store_funct(c+2, c1_);
     }
 
-    for (uint8_t i = 0; i < size; i++) {
+    for (uint64_t i = 0; i < size; i++) {
         ASSERT_EQ(Goldilocks::toU64(base_op_funct(a[i], a[i])), Goldilocks::toU64(c[i]));
     }
 
@@ -184,87 +237,11 @@ void test_unary_vect_op(
         store_funct(a+2, a1_);
     }
 
-    for (uint8_t i = 0; i < size; i++) {
+    for (uint64_t i = 0; i < size; i++) {
         ASSERT_EQ(Goldilocks::toU64(base_op_funct(c[i], c[i])), Goldilocks::toU64(a[i]));
     }
 
     free(a);
-    free(c);
-}
-
-void test_vect_mult_8bit(
-    void (*load_funct)(vect_t &d, const Goldilocks::Element *a),
-    void (*store_funct)(Goldilocks::Element *a, const vect_t &d),
-    void (*op_funct)(vect_t &c, const vect_t &a, const vect_t &b),
-    Goldilocks::Element (*base_op_funct)(const Goldilocks::Element &a, const Goldilocks::Element &b),
-    bool is_2x2 = false,
-    uint8_t size = 4
-) {
-    ASSERT_TRUE(size == 4 || size == 8);
-
-    int32_t in1 = 3;
-    int32_t in2 = 9;
-    int32_t in3 = 9;
-    int32_t in4 = 100;
-    int32_t in5 = 0;
-    int32_t in6 = 1;
-    int32_t in7 = 64;
-    int32_t in8 = 2;
-
-    Goldilocks::Element inE1 = Goldilocks::fromS32(in1);
-    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
-    Goldilocks::Element inE3 = Goldilocks::fromS32(in3);
-    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
-    Goldilocks::Element inE5 = Goldilocks::fromS32(in5);
-    Goldilocks::Element inE6 = Goldilocks::fromS32(in6);
-    Goldilocks::Element inE7 = Goldilocks::fromS32(in7);
-    Goldilocks::Element inE8 = Goldilocks::fromS32(in8);
-
-    Goldilocks::Element *a = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
-    Goldilocks::Element *b = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
-    Goldilocks::Element *c = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
-
-    a[0] = inE1;
-    a[1] = inE2;
-    a[2] = inE3;
-    a[3] = inE4;
-    b[0] = inE5;
-    b[1] = inE6;
-    b[2] = inE7;
-    b[3] = inE8;
-
-    if (size == 8) {
-        a[4] = inE1;
-        a[5] = inE2;
-        a[6] = inE3;
-        a[7] = inE4;
-        b[4] = inE5;
-        b[5] = inE6;
-        b[6] = inE7;
-        b[7] = inE8;
-    }
-
-    vect_t a_, a2_;
-    vect_t b_, b2_;
-    vect_t c_, c2_;
-
-    load_funct(a_, a);
-    load_funct(b_, b);
-    op_funct(c_, a_, b_);
-    store_funct(c, c_);
-    if (is_2x2) {
-        load_funct(a2_, a+2);
-        load_funct(b2_, b+2);
-        op_funct(c2_, a2_, b2_);
-        store_funct(c+2, c2_);
-    }
-
-    for (uint8_t i = 0; i < size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(base_op_funct(a[i], b[i])), Goldilocks::toU64(c[i]));
-    }
-
-    free(a);
-    free(b);
     free(c);
 }
 
@@ -349,16 +326,19 @@ void test_vect_dot_prod(
 #endif
     }
     else {
-        load_funct(a0_, a);
-        load_funct(a1_, a+8);
-        load_funct(a2_, a+16);
 #ifdef __USE_AVX__
         if (size == 4) {
+            load_funct(a0_, a);
+            load_funct(a1_, a+4);
+            load_funct(a2_, a+8);
             dotp2[0] = Goldilocks::dot_avx(a0_, a1_, a2_, b);
         }
 #endif
 #ifdef __USE_AVX512__
         if (size == 8) {
+            load_funct(a0_, a);
+            load_funct(a1_, a+8);
+            load_funct(a2_, a+16);
             Goldilocks::dot_avx512(dotp2, a0_, a1_, a2_, b);
             ASSERT_EQ(Goldilocks::toU64(dotp2[0]), Goldilocks::toU64(dotp2[1]));
         }
@@ -447,7 +427,7 @@ void test_vect_mult_4x12(
         }
     }
     else {
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             Goldilocks::Element sum = Goldilocks::zero();
             for (int k = 0; k < 3; ++k)
@@ -480,17 +460,20 @@ void test_vect_mult_4x12(
         store_funct(b2+2, b1_);
     }
     else {
-        load_funct(a0_, a);
-        load_funct(a1_, a+8);
-        load_funct(a2_, a+16);
 #ifdef __USE_AVX__
         if (size == 4) {
-            Goldilocks::mmult_avx_4x12(b0_, b1_, a0_, a1_, a2_, b);
+            load_funct(a0_, a);
+            load_funct(a1_, a+4);
+            load_funct(a2_, a+8);
+            Goldilocks::mmult_avx_4x12(b0_, a0_, a1_, a2_, &(Mat[0]));
         }
 #endif
 #ifdef __USE_AVX512__
         if (size == 8) {
-            Goldilocks::mmult_avx512_4x12_8(b_, a0_, a1_, a2_, &(Mat[0]));
+            load_funct(a0_, a);
+            load_funct(a1_, a+8);
+            load_funct(a2_, a+16);
+            Goldilocks::mmult_avx512_4x12(b0_, a0_, a1_, a2_, &(Mat[0]));
         }
 #endif
         store_funct(b2, b0_);
@@ -518,7 +501,7 @@ void test_vect_mult_4x12(
         }
     }
     else {
-        for (int i = 0; i < 8; ++i)
+        for (int i = 0; i < 4; ++i)
         {
             Goldilocks::Element sum = Goldilocks::zero();
             for (int k = 0; k < 3; ++k)
@@ -534,7 +517,7 @@ void test_vect_mult_4x12(
     }
     if (is_2x2) {
 #ifdef __USE_NEON__
-        Goldilocks::mmult_neon_4x12(b0_, b1_, a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
+        Goldilocks::mmult_neon_4x12_8(b0_, b1_, a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
 #endif
         store_funct(b2, b0_);
         store_funct(b2+2, b1_);
@@ -542,18 +525,18 @@ void test_vect_mult_4x12(
     else {
 #ifdef __USE_AVX__
         if (size == 4) {
-            Goldilocks::mmult_avx_4x12(b0_, b1_, a0_, a1_, a2_, b);
+            Goldilocks::mmult_avx_4x12_8(b0_, a0_, a1_, a2_, &(Mat[0]));
         }
 #endif
 #ifdef __USE_AVX512__
         if (size == 8) {
-            Goldilocks::mmult_avx512_4x12_8(b_, a0_, a1_, a2_, &(Mat[0]));
+            Goldilocks::mmult_avx512_4x12_8(b0_, a0_, a1_, a2_, &(Mat[0]));
         }
 #endif
         store_funct(b2, b0_);
     }
 
-    for (uint i = 0; i < size; i++) {
+    for (uint64_t i = 0; i < size; i++) {
         ASSERT_EQ(Goldilocks::toU64(b1[i]), Goldilocks::toU64(b2[i]));
     }
 
@@ -703,7 +686,7 @@ void test_vect_mmult(
         }
     }
 
-    for (uint i = 0; i < 3 * size; i++) {
+    for (uint64_t i = 0; i < 3 * size; i++) {
         ASSERT_EQ(Goldilocks::toU64(b[i]), Goldilocks::toU64(a[i]));
     }
 
@@ -733,7 +716,7 @@ void test_vect_mmult(
         store_funct(&(a[4]), a1_);
         store_funct(&(a[8]), a2_);
 
-        for (uint i = 0; i < 3 * size; i++) {
+        for (uint64_t i = 0; i < 3 * size; i++) {
             ASSERT_EQ(Goldilocks::toU64(b[i]), Goldilocks::toU64(a[i]));
         }
     }
@@ -823,7 +806,7 @@ void test_vect_mmult(
         }
     }
 
-    for (uint i = 0; i < 3 * size; i++) {
+    for (uint64_t i = 0; i < 3 * size; i++) {
         ASSERT_EQ(Goldilocks::toU64(b[i]), Goldilocks::toU64(a[i]));
     }
 
@@ -831,6 +814,8 @@ void test_vect_mmult(
     free(Mat);
     free(b);
 }
+
+#endif // __USE_VECT__
 
 TEST(GOLDILOCKS_TEST, one)
 {
@@ -1683,7 +1668,7 @@ TEST(GOLDILOCKS_TEST, sub_avx)
     test_vect_op(
         Goldilocks::load_avx,
         Goldilocks::store_avx,
-        Goldilocks::sub_avx
+        Goldilocks::sub_avx,
         Goldilocks::sub
     );
 }
@@ -1704,7 +1689,10 @@ TEST(GOLDILOCKS_TEST, mul_avx_8)
         Goldilocks::load_avx,
         Goldilocks::store_avx,
         Goldilocks::mult_avx_8,
-        Goldilocks::mul
+        Goldilocks::mul,
+        false,
+        4,
+        true
     );
 }
 
@@ -1731,7 +1719,7 @@ TEST(GOLDILOCKS_TEST, mult_avx_4x12)
 {
     test_vect_mult_4x12(
         Goldilocks::load_avx,
-        Goldilocks::store_avx,
+        Goldilocks::store_avx
     );
 }
 
@@ -1739,8 +1727,7 @@ TEST(GOLDILOCKS_TEST, mmult_avx)
 {
     test_vect_mmult(
         Goldilocks::load_avx,
-        Goldilocks::store_avx,
-        false
+        Goldilocks::store_avx
     );
 }
 #endif // __USE_AVX__
@@ -1784,13 +1771,14 @@ TEST(GOLDILOCKS_TEST, mul_avx512)
 
 TEST(GOLDILOCKS_TEST, mul_avx512_8)
 {
-    test_vect_mult_8bit(
+    test_vect_op(
         Goldilocks::load_avx512,
         Goldilocks::store_avx512,
         Goldilocks::mult_avx512_8,
         Goldilocks::mul,
         false,
-        8
+        8,
+        true
     );
 }
 
@@ -1873,11 +1861,13 @@ TEST(GOLDILOCKS_TEST, mul_neon)
 
 TEST(GOLDILOCKS_TEST, mul_neon_8)
 {
-    test_vect_mult_8bit(
+    test_vect_op(
         Goldilocks::load_neon,
         Goldilocks::store_neon,
         Goldilocks::mult_neon_8,
         Goldilocks::mul,
+        true,
+        4,
         true
     );
 }
