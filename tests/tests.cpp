@@ -7,6 +7,13 @@
 #include "../src/ntt_goldilocks.hpp"
 #include "../src/merklehash_goldilocks.hpp"
 
+#ifdef __USE_AVX__
+typedef __m256i vect_t;
+#endif
+#ifdef __USE_NEON__
+typedef uint64x2_t vect_t;
+#endif
+
 #define FFT_SIZE (1 << 4)
 #define NUM_REPS 5
 #define BLOWUP_FACTOR 1
@@ -14,29 +21,6 @@
 #define NPHASES 4
 #define NCOLS_HASH 128
 #define NROWS_HASH (1 << 6)
-
-#ifdef __USE_AVX__
-#ifdef __USE_AVX512__
-#undef __USE_AVX__
-typedef __m512i vect_t;
-#define __USE_VECT__ 1
-#else
-typedef __m256i vect_t;
-#define __USE_VECT__ 1
-#endif
-#endif
-#ifdef __USE_NEON__
-typedef uint64x2_t vect_t;
-#define __USE_VECT__ 1
-#endif
-
-#ifdef __USE_VECT__
-
-#define CALL_FUNCTION_WITH_SUFFIX(base_name, suffix) base_name##suffix
-#define LOAD_FUNCTION(suffix) CALL_FUNCTION_WITH_SUFFIX(Goldilocks::load, suffix)
-#define SET_FUNCTION(suffix) CALL_FUNCTION_WITH_SUFFIX(Goldilocks::set, suffix)
-#define STORE_FUNCTION(suffix) CALL_FUNCTION_WITH_SUFFIX(Goldilocks::store, suffix)
-#define ADD_FUNCTION(suffix) CALL_FUNCTION_WITH_SUFFIX(Goldilocks::add, suffix)
 
 #define INIT_CONSTANTS() \
     uint64_t in1 = 3; \
@@ -52,162 +36,675 @@ typedef uint64x2_t vect_t;
     Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000)); \
     Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF)); \
 
-/*
-* Test vectorized binary operations (add, sub, mul)
-*/
-void test_vect_op(
-    void (*load_funct)(vect_t &d, const Goldilocks::Element *a),
-    void (*store_funct)(Goldilocks::Element *a, const vect_t &d),
-    void (*op_funct)(vect_t &c, const vect_t &a, const vect_t &b),
-    Goldilocks::Element (*base_op_funct)(const Goldilocks::Element &a, const Goldilocks::Element &b),
-    bool is_2x2 = false,
-    uint8_t size = 4,
-    bool is_8bit = false
-) {
-    ASSERT_TRUE(size == 4 || size == 8);
+TEST(GOLDILOCKS_TEST, one)
+{
+    uint64_t a = 1;
+    uint64_t b = 1 + GOLDILOCKS_PRIME;
+    std::string c = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
 
+    Goldilocks::Element ina1 = Goldilocks::fromU64(a);
+    Goldilocks::Element ina2 = Goldilocks::fromS32(a);
+    Goldilocks::Element ina3 = Goldilocks::fromString(std::to_string(a));
+    Goldilocks::Element inb1 = Goldilocks::fromU64(b);
+    Goldilocks::Element inc1 = Goldilocks::fromString(c);
+
+    ASSERT_EQ(Goldilocks::toU64(ina1), a);
+    ASSERT_EQ(Goldilocks::toU64(ina2), a);
+    ASSERT_EQ(Goldilocks::toU64(ina3), a);
+    ASSERT_EQ(Goldilocks::toU64(inb1), a);
+    ASSERT_EQ(Goldilocks::toU64(inc1), a);
+}
+
+TEST(GOLDILOCKS_TEST, montgomery)
+{
+    for (uint64_t x = 0; x < 100000; x++)
+    {
+        uint64_t m1 = Goldilocks::to_montgomery(x);
+        uint64_t m2 = Goldilocks::from_montgomery(m1);
+        ASSERT_EQ(m2, x);
+    }
+    for (uint64_t x = GOLDILOCKS_PRIME - 1; x >= GOLDILOCKS_PRIME - 100000; x--)
+    {
+        uint64_t m1 = Goldilocks::to_montgomery(x);
+        uint64_t m2 = Goldilocks::from_montgomery(m1);
+        ASSERT_EQ(m2, x);
+    }
+}
+
+TEST(GOLDILOCKS_TEST, add)
+{
     INIT_CONSTANTS();
 
+    ASSERT_EQ(Goldilocks::toU64(p_1 + p_1), 2);
+    ASSERT_EQ(Goldilocks::toU64(max + max), 0X1FFFFFFFC);
+    ASSERT_EQ(Goldilocks::toU64(inE1 + inE2), in1 + in2);
+    ASSERT_EQ(Goldilocks::toU64(inE1 + inE2 + inE3), in1 + in2 + 1);
+    ASSERT_EQ(Goldilocks::toU64(inE1 + inE2 + inE3 + inE4), 1);
+
+    // Edge case (double carry)
+    Goldilocks::Element b1 = (a1 + a2);
+    Goldilocks::Element b2 = (b1 + b1);
+    ASSERT_EQ(Goldilocks::toU64(b2), 0x200000002);
+}
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, add_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, add_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    INIT_CONSTANTS();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+
+    a[0] = p_1;
+    a[1] = a1;
+    a[2] = inE1;
+    a[3] = max;
+
+    b[0] = p_1;
+    b[1] = a2;
+    b[2] = inE2;
+    b[3] = max;
+
+    vect_t a0_, a1_;
+    vect_t b0_, b1_;
+    vect_t c0_, c1_;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::add_avx(c_, a_, b_);
+    Goldilocks::store_avx(c, c_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a);
+    Goldilocks::load_neon(a1_, a+2);
+    Goldilocks::set_neon(b0_, b1_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::add_neon(c0_, a0_, b0_);
+    Goldilocks::add_neon(c1_, a1_, b1_);
+    Goldilocks::store_neon(c, c0_);
+    Goldilocks::store_neon(c+2, c1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] + b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] + b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] + b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] + b[3]), Goldilocks::toU64(c[3]));
+
+    a[0] = inE3;
+    a[1] = c[1];
+    a[2] = inE4;
+    a[3] = max;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::add_avx(b_, a_, c_);
+    Goldilocks::store_avx(b, b_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a1_, a);
+    Goldilocks::add_neon(b0_, a0_, c0_);
+    Goldilocks::add_neon(b1_, a1_, c1_);
+    Goldilocks::store_neon(b, b0_, b1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] + c[0]), Goldilocks::toU64(b[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] + c[1]), Goldilocks::toU64(b[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] + c[2]), Goldilocks::toU64(b[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] + c[3]), Goldilocks::toU64(b[3]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, add_avx512)
+{
+    INIT_CONSTANTS();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+
+    a[0] = p_1;
+    a[1] = a1;
+    a[2] = inE1;
+    a[3] = max;
+    a[4] = max;
+    a[5] = inE4;
+    a[6] = inE1;
+    a[7] = inE3;
+
+    b[0] = p_1;
+    b[1] = a2;
+    b[2] = inE2;
+    b[3] = max;
+    b[4] = inE1;
+    b[5] = inE2;
+    b[6] = inE3;
+    b[7] = inE4;
+
+    __m512i a_;
+    __m512i b_;
+    __m512i c_;
+
+    Goldilocks::load_avx512(a_, a);
+    Goldilocks::load_avx512(b_, b);
+    Goldilocks::add_avx512(c_, a_, b_);
+    Goldilocks::store_avx512(c, c_);
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] + b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] + b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] + b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] + b[3]), Goldilocks::toU64(c[3]));
+    ASSERT_EQ(Goldilocks::toU64(a[4] + b[4]), Goldilocks::toU64(c[4]));
+    ASSERT_EQ(Goldilocks::toU64(a[5] + b[5]), Goldilocks::toU64(c[5]));
+    ASSERT_EQ(Goldilocks::toU64(a[6] + b[6]), Goldilocks::toU64(c[6]));
+    ASSERT_EQ(Goldilocks::toU64(a[7] + b[7]), Goldilocks::toU64(c[7]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX512__
+
+TEST(GOLDILOCKS_TEST, sub)
+{
+    INIT_CONSTANTS();
+
+    ASSERT_EQ(Goldilocks::toU64(inE1 - inE2), GOLDILOCKS_PRIME + in1 - in2);
+    ASSERT_EQ(Goldilocks::toU64(inE1 - inE2 - inE3), GOLDILOCKS_PRIME + in1 - in2 - 1);
+    ASSERT_EQ(Goldilocks::toU64(inE1 - inE2 - inE3 - inE4), 5);
+
+    Goldilocks::Element a3 = (a1 + a2);
+    Goldilocks::Element b2 = Goldilocks::zero() - a3;
+    ASSERT_EQ(Goldilocks::toU64(b2), Goldilocks::from_montgomery(0XFFFFFFFE00000003LL));
+}
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, sub_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, sub_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    INIT_CONSTANTS();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::zero();
+    a[3] = a1;
+
+    b[0] = inE1;
+    b[1] = inE3;
+    b[2] = inE4;
+    b[3] = max;
+
+    vect_t a0_, a1_;
+    vect_t b0_, b1_;
+    vect_t c0_, c1_;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::sub_avx(c_, a_, b_);
+    Goldilocks::store_avx(c, c_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a);
+    Goldilocks::load_neon(a1_, a+2);
+    Goldilocks::set_neon(b0_, b1_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::sub_neon(c0_, a0_, b0_);
+    Goldilocks::sub_neon(c1_, a1_, b1_);
+    Goldilocks::store_neon(c, c0_);
+    Goldilocks::store_neon(c+2, c1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] - b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] - b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] - b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] - b[3]), Goldilocks::toU64(c[3]));
+
+    a[0] = p_1;
+    a[1] = a2;
+    a[2] = Goldilocks::zero();
+    a[3] = max;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::sub_avx(b_, a_, c_);
+    Goldilocks::store_avx(b, b_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a1_, a);
+    Goldilocks::sub_neon(b0_, a0_, c0_);
+    Goldilocks::sub_neon(b1_, a1_, c1_);
+    Goldilocks::store_neon(b, b0_, b1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] - c[0]), Goldilocks::toU64(b[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] - c[1]), Goldilocks::toU64(b[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] - c[2]), Goldilocks::toU64(b[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] - c[3]), Goldilocks::toU64(b[3]));
+
+    // edge case:
+    Goldilocks::Element a0 = Goldilocks::fromU64(1);
+    Goldilocks::Element b0 = Goldilocks::fromString("6824165416642549846");
+    Goldilocks::Element b1 = Goldilocks::fromString("13754891152847927955");
+    Goldilocks::Element b2 = Goldilocks::fromString("17916068787382203463");
+    Goldilocks::Element b3 = Goldilocks::fromU64(18446744071248801682ULL);
+
+    a[0] = a0;
+    a[1] = a0;
+    a[2] = a0;
+    a[3] = a0;
+
+    b[0] = b0;
+    b[1] = b1;
+    b[2] = b2;
+    b[3] = b3;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::load_avx(b_, b);
+    Goldilocks::sub_avx(c_, a_, b_);
+    Goldilocks::store_avx(c, c_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a1_, a);
+    Goldilocks::load_neon(b0_, b1_, b);
+    Goldilocks::sub_neon(c0_, a0_, b0_);
+    Goldilocks::sub_neon(c1_, a1_, b1_);
+    Goldilocks::store_neon(c, c0_, c1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] - b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] - b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] - b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] - b[3]), Goldilocks::toU64(c[3]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, sub_avx512)
+{
+    uint64_t in1 = 3;
+    int32_t in2 = 9;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+    int32_t in4 = -12;
+
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE5 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
+    Goldilocks::Element inE6 = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFFULL);
+    Goldilocks::Element inE7 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
     Goldilocks::Element inE8 = Goldilocks::fromU64(1);
     Goldilocks::Element inE9 = Goldilocks::fromString("6824165416642549846");
     Goldilocks::Element inE10 = Goldilocks::fromString("13754891152847927955");
     Goldilocks::Element inE11 = Goldilocks::fromString("17916068787382203463");
     Goldilocks::Element inE12 = Goldilocks::fromU64(18446744071248801682ULL);
 
-    Goldilocks::Element *a = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
-    Goldilocks::Element *b = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
-    Goldilocks::Element *c = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
 
-    if (is_8bit) {
-        int32_t in1 = 3;
-        int32_t in2 = 9;
-        int32_t in3 = 9;
-        int32_t in4 = 100;
-        int32_t in5 = 3;
-        int32_t in6 = 9;
-        int32_t in7 = 9;
-        int32_t in8 = 100;
-        if (size == 4) {
-            a[0] = Goldilocks::fromS32(in1);
-            a[1] = Goldilocks::fromS32(in2);
-            a[2] = Goldilocks::fromS32(in3);
-            a[3] = Goldilocks::fromS32(in4);
-            b[0] = Goldilocks::fromS32(in5);
-            b[1] = Goldilocks::fromS32(in6);
-            b[2] = Goldilocks::fromS32(in7);
-            b[3] = Goldilocks::fromS32(in8);
-        }
-        else {
-            a[0] = Goldilocks::fromS32(in1);
-            a[1] = Goldilocks::fromS32(in2);
-            a[2] = Goldilocks::fromS32(in3);
-            a[3] = Goldilocks::fromS32(in4);
-            a[4] = Goldilocks::fromS32(in5);
-            a[5] = Goldilocks::fromS32(in6);
-            a[6] = Goldilocks::fromS32(in7);
-            a[7] = Goldilocks::fromS32(in8);
-            b[0] = Goldilocks::fromS32(in5);
-            b[1] = Goldilocks::fromS32(in6);
-            b[2] = Goldilocks::fromS32(in7);
-            b[3] = Goldilocks::fromS32(in8);
-            b[4] = Goldilocks::fromS32(in1);
-            b[5] = Goldilocks::fromS32(in2);
-            b[6] = Goldilocks::fromS32(in3);
-            b[7] = Goldilocks::fromS32(in4);
-        }
-    }
-    else {
-        a[0] = p_1;
-        a[1] = a1;
-        a[2] = inE1;
-        a[3] = max;
-        b[0] = p_1;
-        b[1] = a2;
-        b[2] = inE2;
-        b[3] = max;
-        if (size == 8) {
-            a[4] = inE8;
-            a[5] = inE9;
-            a[6] = inE10;
-            a[7] = inE11;
-            b[4] = inE9;
-            b[5] = inE10;
-            a[4] = inE8;
-            a[5] = inE9;
-            a[6] = inE10;
-            a[7] = inE11;
-            b[4] = inE9;
-            b[5] = inE10;
-            b[6] = inE11;
-            b[7] = inE12;
-        }
-    }
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = inE5;
+    a[3] = inE7;
+    a[4] = inE8;
+    a[5] = inE8;
+    a[6] = inE8;
+    a[7] = inE8;
 
-    vect_t a0_, a1_;
-    vect_t b0_, b1_;
-    vect_t c0_, c1_;
+    b[0] = inE1;
+    b[1] = inE3;
+    b[2] = inE4;
+    b[3] = inE6;
+    b[4] = inE9;
+    b[5] = inE10;
+    b[6] = inE11;
+    b[7] = inE12;
 
-    load_funct(a0_, a);
-    load_funct(b0_, b);
-    op_funct(c0_, a0_, b0_);
-    store_funct(c, c0_);
-    if (is_2x2) {
-        load_funct(a1_, a+2);
-        load_funct(b1_, b+2);
-        op_funct(c1_, a1_, b1_);
-        store_funct(c+2, c1_);
-    }
+    __m512i a_;
+    __m512i b_;
+    __m512i c_;
 
-    for (uint64_t i = 0; i < size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(base_op_funct(a[i], b[i])), Goldilocks::toU64(c[i]));
-    }
+    Goldilocks::load_avx512(a_, a);
+    Goldilocks::load_avx512(b_, b);
+    Goldilocks::sub_avx512(c_, a_, b_);
+    Goldilocks::store_avx512(c, c_);
 
-    a[0] = inE3;
-    a[1] = Goldilocks::zero();
-    a[2] = inE4;
-    a[3] = max;
-    if (size == 8) {
-        a[4] = max;
-        a[5] = inE1;
-        a[6] = inE2;
-        a[7] = p_1;
-    }
-
-    load_funct(a0_, a);
-    op_funct(b0_, a0_, c0_);
-    store_funct(b, b0_);
-    if (is_2x2) {
-        load_funct(a1_, a+2);
-        op_funct(b1_, a1_, c1_);
-        store_funct(b+2, b1_);
-    }
-
-    for (uint64_t i = 0; i < size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(base_op_funct(a[i], c[i])), Goldilocks::toU64(b[i]));
-    }
+    ASSERT_EQ(Goldilocks::toU64(a[0] - b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] - b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] - b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] - b[3]), Goldilocks::toU64(c[3]));
+    ASSERT_EQ(Goldilocks::toU64(a[4] - b[4]), Goldilocks::toU64(c[4]));
+    ASSERT_EQ(Goldilocks::toU64(a[5] - b[5]), Goldilocks::toU64(c[5]));
+    ASSERT_EQ(Goldilocks::toU64(a[6] - b[6]), Goldilocks::toU64(c[6]));
+    ASSERT_EQ(Goldilocks::toU64(a[7] - b[7]), Goldilocks::toU64(c[7]));
 
     free(a);
     free(b);
     free(c);
 }
+#endif // __USE_AVX512__
 
-/*
-* Test vectorized unary operations (square)
-*/
-void test_unary_vect_op(
-    void (*load_funct)(vect_t &d, const Goldilocks::Element *a),
-    void (*store_funct)(Goldilocks::Element *a, const vect_t &d),
-    void (*op_funct)(vect_t &c, vect_t &a),
-    Goldilocks::Element (*base_op_funct)(const Goldilocks::Element &a, const Goldilocks::Element &b),
-    bool is_2x2 = false,
-    uint8_t size = 4
-) {
-    ASSERT_TRUE(size == 4 || size == 8);
-
+TEST(GOLDILOCKS_TEST, mul)
+{
     INIT_CONSTANTS();
 
-    Goldilocks::Element *a = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
-    Goldilocks::Element *c = (Goldilocks::Element *)malloc(size * (sizeof(Goldilocks::Element)));
+    ASSERT_EQ(Goldilocks::toU64(inE1 * inE2), in1 * in2);
+    ASSERT_EQ(Goldilocks::toU64(inE1 * inE2 * inE3), in1 * in2);
+    ASSERT_EQ(Goldilocks::toU64(inE1 * inE2 * inE3 * inE4), 0XFFFFFFFEFFFFFEBDLL);
+}
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, mul_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, mul_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    INIT_CONSTANTS();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::zero();
+    a[3] = inE4;
+
+    b[0] = a1;
+    b[1] = inE3;
+    b[2] = inE4;
+    b[3] = p_1;
+
+    vect_t a0_, a1_;
+    vect_t b0_, b1_;
+    vect_t c0_, c1_;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::mult_avx(c_, a_, b_);
+    Goldilocks::store_avx(c, c_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a1_, a);
+    Goldilocks::set_neon(b0_, b1_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::mult_neon(c0_, a0_, b0_);
+    Goldilocks::mult_neon(c1_, a1_, b1_);
+    Goldilocks::store_neon(c, c0_, c1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] * b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * b[3]), Goldilocks::toU64(c[3]));
+
+    a[0] = p_1;
+    a[1] = a2;
+    a[2] = Goldilocks::zero();
+    a[3] = max;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::mult_avx(b_, a_, c_);
+    Goldilocks::store_avx(b, b_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a1_, a);
+    Goldilocks::mult_neon(b0_, a0_, c0_);
+    Goldilocks::mult_neon(b1_, a1_, c1_);
+    Goldilocks::store_neon(b, b0_, b1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] * c[0]), Goldilocks::toU64(b[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * c[1]), Goldilocks::toU64(b[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * c[2]), Goldilocks::toU64(b[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * c[3]), Goldilocks::toU64(b[3]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, mul_avx512)
+{
+    uint64_t in1 = 3;
+    int32_t in2 = 9;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+    int32_t in4 = -12;
+
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE5 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
+    Goldilocks::Element inE6 = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFFULL);
+    Goldilocks::Element inE7 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+    Goldilocks::Element inE8 = Goldilocks::fromU64(1);
+    Goldilocks::Element inE9 = Goldilocks::fromString("6824165416642549846");
+    Goldilocks::Element inE10 = Goldilocks::fromString("13754891152847927955");
+    Goldilocks::Element inE11 = Goldilocks::fromString("17916068787382203463");
+    Goldilocks::Element inE12 = Goldilocks::fromU64(18446744071248801682ULL);
+    Goldilocks::Element inE13 = Goldilocks::zero();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = inE13;
+    a[3] = inE4;
+    a[4] = inE9;
+    a[5] = inE10;
+    a[6] = inE11;
+    a[7] = inE12;
+
+    b[0] = inE5;
+    b[1] = inE3;
+    b[2] = inE4;
+    b[3] = inE6;
+    b[4] = inE7;
+    b[5] = inE3;
+    b[6] = inE4;
+    b[7] = inE8;
+
+    __m512i a_;
+    __m512i b_;
+    __m512i c_;
+
+    Goldilocks::load_avx512(a_, a);
+    Goldilocks::load_avx512(b_, b);
+    Goldilocks::mult_avx512(c_, a_, b_);
+    Goldilocks::store_avx512(c, c_);
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] * b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * b[3]), Goldilocks::toU64(c[3]));
+    ASSERT_EQ(Goldilocks::toU64(a[4] * b[4]), Goldilocks::toU64(c[4]));
+    ASSERT_EQ(Goldilocks::toU64(a[5] * b[5]), Goldilocks::toU64(c[5]));
+    ASSERT_EQ(Goldilocks::toU64(a[6] * b[6]), Goldilocks::toU64(c[6]));
+    ASSERT_EQ(Goldilocks::toU64(a[7] * b[7]), Goldilocks::toU64(c[7]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX512__
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, mul_avx_8)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, mul_neon_8)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    int32_t in1 = 3;
+    int32_t in2 = 9;
+    int32_t in3 = 9;
+    int32_t in4 = 100;
+    int32_t in5 = 3;
+    int32_t in6 = 9;
+    int32_t in7 = 9;
+    int32_t in8 = 100;
+
+    Goldilocks::Element inE1 = Goldilocks::fromS32(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromS32(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE5 = Goldilocks::fromS32(in5);
+    Goldilocks::Element inE6 = Goldilocks::fromS32(in6);
+    Goldilocks::Element inE7 = Goldilocks::fromS32(in7);
+    Goldilocks::Element inE8 = Goldilocks::fromS32(in8);
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = inE3;
+    a[3] = inE4;
+
+    b[0] = inE5;
+    b[1] = inE6;
+    b[2] = inE7;
+    b[3] = inE8;
+
+    vect_t a0_, a1_;
+    vect_t b0_, b1_;
+    vect_t c0_, c1_;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::mult_avx_8(c_, a_, b_);
+    Goldilocks::store_avx(c, c_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a1_, a);
+    Goldilocks::set_neon(b0_, b1_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::mult_neon_8(c0_, a0_, b0_);
+    Goldilocks::mult_neon_8(c1_, a1_, b1_);
+    Goldilocks::store_neon(c, c0_, c1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] * b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * b[3]), Goldilocks::toU64(c[3]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, mul_avx512_8)
+{
+    int32_t in1 = 3;
+    int32_t in2 = 9;
+    int32_t in3 = 9;
+    int32_t in4 = 100;
+    int32_t in5 = 0;
+    int32_t in6 = 1;
+    int32_t in7 = 64;
+    int32_t in8 = 2;
+
+    Goldilocks::Element inE1 = Goldilocks::fromS32(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromS32(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE5 = Goldilocks::fromS32(in5);
+    Goldilocks::Element inE6 = Goldilocks::fromS32(in6);
+    Goldilocks::Element inE7 = Goldilocks::fromS32(in7);
+    Goldilocks::Element inE8 = Goldilocks::fromS32(in8);
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = inE3;
+    a[3] = inE4;
+    a[4] = inE5;
+    a[5] = inE7;
+    a[6] = inE8;
+    a[7] = inE2;
+
+    b[0] = inE5;
+    b[1] = inE6;
+    b[2] = inE7;
+    b[3] = inE8;
+    b[4] = inE6;
+    b[5] = inE1;
+    b[6] = inE2;
+    b[7] = inE3;
+
+    __m512i a_;
+    __m512i b_;
+    __m512i c_;
+
+    Goldilocks::load_avx512(a_, a);
+    Goldilocks::load_avx512(b_, b);
+    Goldilocks::mult_avx512_8(c_, a_, b_);
+    Goldilocks::store_avx512(c, c_);
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] * b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * b[3]), Goldilocks::toU64(c[3]));
+    ASSERT_EQ(Goldilocks::toU64(a[4] * b[4]), Goldilocks::toU64(c[4]));
+    ASSERT_EQ(Goldilocks::toU64(a[5] * b[5]), Goldilocks::toU64(c[5]));
+    ASSERT_EQ(Goldilocks::toU64(a[6] * b[6]), Goldilocks::toU64(c[6]));
+    ASSERT_EQ(Goldilocks::toU64(a[7] * b[7]), Goldilocks::toU64(c[7]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX512__
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, square_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, square_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    uint64_t in1 = 3;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(4 * (sizeof(Goldilocks::Element)));
 
     a[0] = inE1;
     a[1] = inE3;
@@ -217,43 +714,205 @@ void test_unary_vect_op(
     vect_t a0_, a1_;
     vect_t c0_, c1_;
 
-    load_funct(a0_, a);
-    op_funct(c0_, a0_);
-    store_funct(c, c0_);
-    if (is_2x2) {
-        load_funct(a1_, a+2);
-        op_funct(c1_, a1_);
-        store_funct(c+2, c1_);
-    }
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a_, a);
+    Goldilocks::square_avx(c_, a_);
+    Goldilocks::store_avx(c, c_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, a1_, a);
+    Goldilocks::square_neon(c0_, a0_);
+    Goldilocks::square_neon(c1_, a1_);
+    Goldilocks::store_neon(c, c0_, c1_);
+#endif
 
-    for (uint64_t i = 0; i < size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(base_op_funct(a[i], a[i])), Goldilocks::toU64(c[i]));
-    }
+    ASSERT_EQ(Goldilocks::toU64(a[0] * a[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * a[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * a[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * a[3]), Goldilocks::toU64(c[3]));
 
-    op_funct(a0_, c0_);
-    store_funct(a, a0_);
-    if (is_2x2) {
-        op_funct(a1_, c1_);
-        store_funct(a+2, a1_);
-    }
+#if defined(__USE_AVX__)
+    Goldilocks::square_avx(a_, c_);
+    Goldilocks::store_avx(a, a_);
+#elif defined(__USE_NEON__)
+    Goldilocks::square_neon(a0_, c0_);
+    Goldilocks::square_neon(a1_, c1_);
+    Goldilocks::store_neon(a, a0_, a1_);
+#endif
 
-    for (uint64_t i = 0; i < size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(base_op_funct(c[i], c[i])), Goldilocks::toU64(a[i]));
-    }
+    ASSERT_EQ(Goldilocks::toU64(c[0] * c[0]), Goldilocks::toU64(a[0]));
+    ASSERT_EQ(Goldilocks::toU64(c[1] * c[1]), Goldilocks::toU64(a[1]));
+    ASSERT_EQ(Goldilocks::toU64(c[2] * c[2]), Goldilocks::toU64(a[2]));
+    ASSERT_EQ(Goldilocks::toU64(c[3] * c[3]), Goldilocks::toU64(a[3]));
 
     free(a);
     free(c);
 }
+#endif // __USE_AVX__ || __USE_NEON__
 
-void test_vect_dot_prod(
-    void (*load_funct)(vect_t &d, const Goldilocks::Element *a),
-    void (*store_funct)(Goldilocks::Element *a, const vect_t &d),
-    bool is_2x2 = false,
-    uint8_t size = 4
-) {
-    ASSERT_TRUE(size == 4 || size == 8);
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, square_avx512)
+{
+    uint64_t in1 = 3;
+    int32_t in2 = 9;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+    int32_t in4 = -12;
 
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element inE5 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
+    Goldilocks::Element inE6 = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFFULL);
+    Goldilocks::Element inE7 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+    Goldilocks::Element inE8 = Goldilocks::fromU64(1);
+    Goldilocks::Element inE9 = Goldilocks::fromString("6824165416642549846");
+    Goldilocks::Element inE10 = Goldilocks::fromString("13754891152847927955");
+    Goldilocks::Element inE11 = Goldilocks::fromString("17916068787382203463");
+    Goldilocks::Element inE12 = Goldilocks::fromU64(18446744071248801682ULL);
+    Goldilocks::Element inE13 = Goldilocks::zero();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *b = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+    Goldilocks::Element *c = (Goldilocks::Element *)malloc(8 * (sizeof(Goldilocks::Element)));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = inE13;
+    a[3] = inE4;
+    a[4] = inE9;
+    a[5] = inE10;
+    a[6] = inE11;
+    a[7] = inE12;
+
+    b[0] = inE5;
+    b[1] = inE3;
+    b[2] = inE4;
+    b[3] = inE6;
+    b[4] = inE7;
+    b[5] = inE3;
+    b[6] = inE4;
+    b[7] = inE8;
+
+    __m512i a_;
+    __m512i b_;
+    __m512i c_;
+
+    Goldilocks::load_avx512(a_, a);
+    Goldilocks::square_avx512(c_, a_);
+    Goldilocks::store_avx512(c, c_);
+
+    ASSERT_EQ(Goldilocks::toU64(a[0] * a[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(a[1] * a[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(a[2] * a[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(a[3] * a[3]), Goldilocks::toU64(c[3]));
+    ASSERT_EQ(Goldilocks::toU64(a[4] * a[4]), Goldilocks::toU64(c[4]));
+    ASSERT_EQ(Goldilocks::toU64(a[5] * a[5]), Goldilocks::toU64(c[5]));
+    ASSERT_EQ(Goldilocks::toU64(a[6] * a[6]), Goldilocks::toU64(c[6]));
+    ASSERT_EQ(Goldilocks::toU64(a[7] * a[7]), Goldilocks::toU64(c[7]));
+
+    Goldilocks::load_avx512(b_, b);
+    Goldilocks::square_avx512(c_, b_);
+    Goldilocks::store_avx512(c, c_);
+
+    ASSERT_EQ(Goldilocks::toU64(b[0] * b[0]), Goldilocks::toU64(c[0]));
+    ASSERT_EQ(Goldilocks::toU64(b[1] * b[1]), Goldilocks::toU64(c[1]));
+    ASSERT_EQ(Goldilocks::toU64(b[2] * b[2]), Goldilocks::toU64(c[2]));
+    ASSERT_EQ(Goldilocks::toU64(b[3] * b[3]), Goldilocks::toU64(c[3]));
+    ASSERT_EQ(Goldilocks::toU64(b[4] * b[4]), Goldilocks::toU64(c[4]));
+    ASSERT_EQ(Goldilocks::toU64(b[5] * b[5]), Goldilocks::toU64(c[5]));
+    ASSERT_EQ(Goldilocks::toU64(b[6] * b[6]), Goldilocks::toU64(c[6]));
+    ASSERT_EQ(Goldilocks::toU64(b[7] * b[7]), Goldilocks::toU64(c[7]));
+
+    free(a);
+    free(b);
+    free(c);
+}
+#endif // __USE_AVX512__
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, dot_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, dot_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
     INIT_CONSTANTS();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(32, 12 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b = (Goldilocks::Element *)aligned_alloc(32, 12 * sizeof(Goldilocks::Element));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE4;
+    a[5] = max;
+    a[6] = a1;
+    a[7] = a2;
+    a[8] = max * max;
+    a[9] = p_1;
+    a[10] = a1 * a1;
+    a[11] = inE4 * p_1;
+
+    b[0] = max;
+    b[1] = a1;
+    b[2] = inE4;
+    b[3] = p_1;
+    b[4] = Goldilocks::zero();
+    b[5] = inE3;
+    b[6] = inE1;
+    b[7] = (a1 * inE1);
+    b[8] = max;
+    b[9] = inE4;
+    b[10] = p_1;
+    b[11] = Goldilocks::one();
+
+    Goldilocks::Element dotp1 = Goldilocks::zero();
+    for (int i = 0; i < 12; ++i)
+    {
+        dotp1 = dotp1 + a[i] * b[i];
+    }
+
+    vect_t a0_, a1_, a2_, a3_, a4_, a5_;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx_a(a0_, &(a[0]));
+    Goldilocks::load_avx_a(a1_, &(a[4]));
+    Goldilocks::load_avx_a(a2_, &(a[8]));
+    Goldilocks::Element dotp2 = Goldilocks::dot_avx(a0_, a1_, a2_, b);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, &(a[0]));
+    Goldilocks::load_neon(a1_, &(a[2]));
+    Goldilocks::load_neon(a2_, &(a[4]));
+    Goldilocks::load_neon(a3_, &(a[6]));
+    Goldilocks::load_neon(a4_, &(a[8]));
+    Goldilocks::load_neon(a5_, &(a[10]));
+    Goldilocks::Element dotp2 = Goldilocks::dot_neon(a0_, a1_, a2_, a3_, a4_, a5_, b);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(dotp1), Goldilocks::toU64(dotp2));
+    free(a);
+    free(b);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, dot_avx512)
+{
+    uint64_t in1 = 3;
+    int32_t in2 = 9;
+    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+    int32_t in4 = -12;
+
+    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
+    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
+    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
+    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
+    Goldilocks::Element p_1 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
+    Goldilocks::Element max = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFFULL);
+    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
+    Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF));
 
     Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(64, 24 * sizeof(Goldilocks::Element));
     Goldilocks::Element *b = (Goldilocks::Element *)aligned_alloc(64, 12 * sizeof(Goldilocks::Element));
@@ -297,114 +956,61 @@ void test_vect_dot_prod(
     b[11] = Goldilocks::one();
 
     Goldilocks::Element dotp1 = Goldilocks::zero();
-    if (size == 4) {
-        for (int i = 0; i < 12; ++i)
+    for (int k = 0; k < 3; k += 1)
+    {
+        for (int i = 0; i < 4; ++i)
         {
-            dotp1 = dotp1 + a[i] * b[i];
-        }
-    }
-    else {
-        for (int k = 0; k < 3; k += 1) {
-            for (int i = 0; i < 4; ++i) {
-                dotp1 = dotp1 + a[k * 8 + i] * b[k * 4 + i];
-            }
+            dotp1 = dotp1 + a[k * 8 + i] * b[k * 4 + i];
         }
     }
 
-    vect_t a0_, a1_, a2_, a3_, a4_, a5_;
-    Goldilocks::Element dotp2[2] = {Goldilocks::zero(), Goldilocks::zero()};
+    __m512i a0_;
+    __m512i a1_;
+    __m512i a2_;
 
-    if (is_2x2) {
-        load_funct(a0_, a);
-        load_funct(a1_, a+2);
-        load_funct(a2_, a+4);
-        load_funct(a3_, a+6);
-        load_funct(a4_, a+8);
-        load_funct(a5_, a+10);
-#ifdef __USE_NEON__
-        dotp2[0] = Goldilocks::dot_neon(a0_, a1_, a2_, a3_, a4_, a5_, b);
-#endif
-    }
-    else {
-#ifdef __USE_AVX__
-        if (size == 4) {
-            load_funct(a0_, a);
-            load_funct(a1_, a+4);
-            load_funct(a2_, a+8);
-            dotp2[0] = Goldilocks::dot_avx(a0_, a1_, a2_, b);
-        }
-#endif
-#ifdef __USE_AVX512__
-        if (size == 8) {
-            load_funct(a0_, a);
-            load_funct(a1_, a+8);
-            load_funct(a2_, a+16);
-            Goldilocks::dot_avx512(dotp2, a0_, a1_, a2_, b);
-            ASSERT_EQ(Goldilocks::toU64(dotp2[0]), Goldilocks::toU64(dotp2[1]));
-        }
-#endif
-    }
+    // Not aligned
+    Goldilocks::load_avx512(a0_, &(a[0]));
+    Goldilocks::load_avx512(a1_, &(a[8]));
+    Goldilocks::load_avx512(a2_, &(a[16]));
+
+    Goldilocks::Element dotp2[2];
+
+    Goldilocks::dot_avx512(dotp2, a0_, a1_, a2_, b);
+    ASSERT_EQ(Goldilocks::toU64(dotp2[0]), Goldilocks::toU64(dotp2[1]));
     ASSERT_EQ(Goldilocks::toU64(dotp1), Goldilocks::toU64(dotp2[0]));
 
     free(a);
     free(b);
 }
+#endif // __USE_AVX512__
 
-void test_vect_mult_4x12(
-    void (*load_funct)(vect_t &d, const Goldilocks::Element *a),
-    void (*store_funct)(Goldilocks::Element *a, const vect_t &d),
-    bool is_2x2 = false,
-    uint8_t size = 4
-) {
-    ASSERT_TRUE(size == 4 || size == 8);
-
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, mult_avx_4x12)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, mult_neon_4x12)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
     INIT_CONSTANTS();
 
-    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(8 * size, 3 * size * sizeof(Goldilocks::Element));
-    Goldilocks::Element *Mat = (Goldilocks::Element *)aligned_alloc(8 * size, 48 * sizeof(Goldilocks::Element));
-    Goldilocks::Element *b1 = (Goldilocks::Element *)aligned_alloc(8 * size, size * sizeof(Goldilocks::Element));
-    Goldilocks::Element *b2 = (Goldilocks::Element *)aligned_alloc(8 * size, size * sizeof(Goldilocks::Element));
+    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(32, 12 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *Mat = (Goldilocks::Element *)aligned_alloc(32, 48 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b1 = (Goldilocks::Element *)aligned_alloc(32, 4 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b2 = (Goldilocks::Element *)aligned_alloc(32, 4 * sizeof(Goldilocks::Element));
 
-    if (size == 4) {
-        a[0] = inE1;
-        a[1] = inE2;
-        a[2] = Goldilocks::one();
-        a[3] = inE3;
-        a[4] = inE4;
-        a[5] = max;
-        a[6] = a1;
-        a[7] = a2;
-        a[8] = max * max;
-        a[9] = p_1;
-        a[10] = a1 * a1;
-        a[11] = inE4 * p_1;
-    }
-    else {
-        a[0] = inE1;
-        a[1] = inE2;
-        a[2] = Goldilocks::one();
-        a[3] = inE3;
-        a[4] = inE1;
-        a[5] = inE2;
-        a[6] = Goldilocks::one();
-        a[7] = inE3;
-        a[8] = inE4;
-        a[9] = max;
-        a[10] = a1;
-        a[11] = a2;
-        a[12] = inE4;
-        a[13] = max;
-        a[14] = a1;
-        a[15] = a2;
-        a[16] = max * max;
-        a[17] = p_1;
-        a[18] = a1 * a1;
-        a[19] = inE4 * p_1;
-        a[20] = max * max;
-        a[21] = p_1;
-        a[22] = a1 * a1;
-        a[23] = inE4 * p_1;
-    }
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE4;
+    a[5] = max;
+    a[6] = a1;
+    a[7] = a2;
+    a[8] = max * max;
+    a[9] = p_1;
+    a[10] = a1 * a1;
+    a[11] = inE4 * p_1;
 
     for (int i = 0; i < 4; ++i)
     {
@@ -415,192 +1021,193 @@ void test_vect_mult_4x12(
     }
 
     // product
-    if (size == 4) {
-        for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
+    {
+        Goldilocks::Element sum = Goldilocks::zero();
+        for (int j = 0; j < 12; ++j)
         {
-            Goldilocks::Element sum = Goldilocks::zero();
-            for (int j = 0; j < 12; ++j)
-            {
-                sum = sum + (Mat[i * 12 + j] * a[j]);
-            }
-            b1[i] = sum;
+            sum = sum + (Mat[i * 12 + j] * a[j]);
+        }
+        b1[i] = sum;
+    }
+
+    // product
+    uint64x2_t a0_, a1_, a2_, a3_, a4_, a5_;
+    uint64x2_t b0_, b1_;
+
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a0_, &(a[0]));
+    Goldilocks::load_avx(a1_, &(a[4]));
+    Goldilocks::load_avx(a2_, &(a[8]));
+    Goldilocks::mmult_avx_4x12(b0_, a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx(b2, b0_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, &(a[0]));
+    Goldilocks::load_neon(a1_, &(a[2]));
+    Goldilocks::load_neon(a2_, &(a[4]));
+    Goldilocks::load_neon(a3_, &(a[6]));
+    Goldilocks::load_neon(a4_, &(a[8]));
+    Goldilocks::load_neon(a5_, &(a[10]));
+    Goldilocks::mmult_neon_4x12(b0_, b1_, a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
+    Goldilocks::store_neon(b2, b0_, b1_);
+#endif
+
+    ASSERT_EQ(Goldilocks::toU64(b1[0]), Goldilocks::toU64(b2[0]));
+    ASSERT_EQ(Goldilocks::toU64(b1[1]), Goldilocks::toU64(b2[1]));
+    ASSERT_EQ(Goldilocks::toU64(b1[2]), Goldilocks::toU64(b2[2]));
+    ASSERT_EQ(Goldilocks::toU64(b1[3]), Goldilocks::toU64(b2[3]));
+    free(a);
+    free(Mat);
+    free(b1);
+    free(b2);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, mult_avx512_4x12)
+{
+    INIT_CONSTANTS();
+
+    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(64, 24 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *Mat = (Goldilocks::Element *)aligned_alloc(64, 48 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b1 = (Goldilocks::Element *)aligned_alloc(64, 8 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b2 = (Goldilocks::Element *)aligned_alloc(64, 8 * sizeof(Goldilocks::Element));
+
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE1;
+    a[5] = inE2;
+    a[6] = Goldilocks::one();
+    a[7] = inE3;
+
+    a[8] = inE4;
+    a[9] = max;
+    a[10] = a1;
+    a[11] = a2;
+    a[12] = inE4;
+    a[13] = max;
+    a[14] = a1;
+    a[15] = a2;
+
+    a[16] = max * max;
+    a[17] = p_1;
+    a[18] = a1 * a1;
+    a[19] = inE4 * p_1;
+    a[20] = max * max;
+    a[21] = p_1;
+    a[22] = a1 * a1;
+    a[23] = inE4 * p_1;
+
+    for (int i = 0; i < 4; ++i)
+    {
+        for (int j = 0; j < 12; ++j)
+        {
+            Mat[i * 12 + j] = PoseidonGoldilocksConstants::M[i][j];
         }
     }
-    else {
-        for (int i = 0; i < 4; ++i)
+
+    // product
+    for (int i = 0; i < 4; ++i)
+    {
+        Goldilocks::Element sum = Goldilocks::zero();
+        for (int k = 0; k < 3; ++k)
         {
-            Goldilocks::Element sum = Goldilocks::zero();
-            for (int k = 0; k < 3; ++k)
+            for (int j = 0; j < 4; ++j)
             {
-                for (int j = 0; j < 4; ++j)
-                {
-                    sum = sum + (Mat[i * 12 + k * 4 + j] * a[k * 8 + j]);
-                }
+                sum = sum + (Mat[i * 12 + k * 4 + j] * a[k * 8 + j]);
             }
-            b1[i] = sum;
-            b1[i + 4] = sum;
         }
+        b1[i] = sum;
+        b1[i + 4] = sum;
     }
 
     // avx product
-    vect_t a0_, a1_, a2_, a3_, a4_, a5_;
-    vect_t b0_, b1_;
+    __m512i a0_;
+    __m512i a1_;
+    __m512i a2_;
 
-    if (is_2x2) {
-        load_funct(a0_, a);
-        load_funct(a1_, a+2);
-        load_funct(a2_, a+4);
-        load_funct(a3_, a+6);
-        load_funct(a4_, a+8);
-        load_funct(a5_, a+10);
-#ifdef __USE_NEON__
-        Goldilocks::mmult_neon_4x12(b0_, b1_, a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
-#endif
-        store_funct(b2, b0_);
-        store_funct(b2+2, b1_);
-    }
-    else {
-#ifdef __USE_AVX__
-        if (size == 4) {
-            load_funct(a0_, a);
-            load_funct(a1_, a+4);
-            load_funct(a2_, a+8);
-            Goldilocks::mmult_avx_4x12(b0_, a0_, a1_, a2_, &(Mat[0]));
-        }
-#endif
-#ifdef __USE_AVX512__
-        if (size == 8) {
-            load_funct(a0_, a);
-            load_funct(a1_, a+8);
-            load_funct(a2_, a+16);
-            Goldilocks::mmult_avx512_4x12(b0_, a0_, a1_, a2_, &(Mat[0]));
-        }
-#endif
-        store_funct(b2, b0_);
-    }
+    Goldilocks::load_avx512(a0_, &(a[0]));
+    Goldilocks::load_avx512(a1_, &(a[8]));
+    Goldilocks::load_avx512(a2_, &(a[16]));
+    __m512i b_;
+    Goldilocks::mmult_avx512_4x12(b_, a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx512(b2, b_);
 
-    for (uint i = 0; i < size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(b1[i]), Goldilocks::toU64(b2[i]));
-    }
+    ASSERT_EQ(Goldilocks::toU64(b1[0]), Goldilocks::toU64(b2[0]));
+    ASSERT_EQ(Goldilocks::toU64(b1[1]), Goldilocks::toU64(b2[1]));
+    ASSERT_EQ(Goldilocks::toU64(b1[2]), Goldilocks::toU64(b2[2]));
+    ASSERT_EQ(Goldilocks::toU64(b1[3]), Goldilocks::toU64(b2[3]));
+    ASSERT_EQ(Goldilocks::toU64(b1[4]), Goldilocks::toU64(b2[4]));
+    ASSERT_EQ(Goldilocks::toU64(b1[5]), Goldilocks::toU64(b2[5]));
+    ASSERT_EQ(Goldilocks::toU64(b1[6]), Goldilocks::toU64(b2[6]));
+    ASSERT_EQ(Goldilocks::toU64(b1[7]), Goldilocks::toU64(b2[7]));
 
     // avx product small coeficients
     for (int i = 0; i < 48; ++i)
     {
         Mat[i].fe = Mat[i].fe % 256;
     }
-    // product
-    if (size == 4) {
-        for (int i = 0; i < 4; ++i)
+    for (int i = 0; i < 4; ++i)
+    {
+        Goldilocks::Element sum = Goldilocks::zero();
+        for (int k = 0; k < 3; ++k)
         {
-            Goldilocks::Element sum = Goldilocks::zero();
-            for (int j = 0; j < 12; ++j)
+            for (int j = 0; j < 4; ++j)
             {
-                sum = sum + (Mat[i * 12 + j] * a[j]);
+                sum = sum + (Mat[i * 12 + k * 4 + j] * a[k * 8 + j]);
             }
-            b1[i] = sum;
         }
-    }
-    else {
-        for (int i = 0; i < 4; ++i)
-        {
-            Goldilocks::Element sum = Goldilocks::zero();
-            for (int k = 0; k < 3; ++k)
-            {
-                for (int j = 0; j < 4; ++j)
-                {
-                    sum = sum + (Mat[i * 12 + k * 4 + j] * a[k * 8 + j]);
-                }
-            }
-            b1[i] = sum;
-            b1[i + 4] = sum;
-        }
-    }
-    if (is_2x2) {
-#ifdef __USE_NEON__
-        Goldilocks::mmult_neon_4x12_8(b0_, b1_, a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
-#endif
-        store_funct(b2, b0_);
-        store_funct(b2+2, b1_);
-    }
-    else {
-#ifdef __USE_AVX__
-        if (size == 4) {
-            Goldilocks::mmult_avx_4x12_8(b0_, a0_, a1_, a2_, &(Mat[0]));
-        }
-#endif
-#ifdef __USE_AVX512__
-        if (size == 8) {
-            Goldilocks::mmult_avx512_4x12_8(b0_, a0_, a1_, a2_, &(Mat[0]));
-        }
-#endif
-        store_funct(b2, b0_);
+        b1[i] = sum;
+        b1[i + 4] = sum;
     }
 
-    for (uint64_t i = 0; i < size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(b1[i]), Goldilocks::toU64(b2[i]));
-    }
+    Goldilocks::mmult_avx512_4x12_8(b_, a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx512(b2, b_);
+
+    ASSERT_EQ(Goldilocks::toU64(b1[0]), Goldilocks::toU64(b2[0]));
+    ASSERT_EQ(Goldilocks::toU64(b1[1]), Goldilocks::toU64(b2[1]));
+    ASSERT_EQ(Goldilocks::toU64(b1[2]), Goldilocks::toU64(b2[2]));
+    ASSERT_EQ(Goldilocks::toU64(b1[3]), Goldilocks::toU64(b2[3]));
+    ASSERT_EQ(Goldilocks::toU64(b2[4]), Goldilocks::toU64(b2[4]));
+    ASSERT_EQ(Goldilocks::toU64(b2[5]), Goldilocks::toU64(b2[5]));
+    ASSERT_EQ(Goldilocks::toU64(b2[6]), Goldilocks::toU64(b2[6]));
+    ASSERT_EQ(Goldilocks::toU64(b2[7]), Goldilocks::toU64(b2[7]));
 
     free(a);
     free(Mat);
     free(b1);
     free(b2);
 }
+#endif // __USE_AVX512__
 
-void test_vect_mmult(
-    void (*load_funct)(vect_t &d, const Goldilocks::Element *a),
-    void (*store_funct)(Goldilocks::Element *a, const vect_t &d),
-    bool is_2x2 = false,
-    uint8_t size = 4
-)
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, mmult_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, mmult_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
 {
-    ASSERT_TRUE(size == 4 || size == 8);
+    INIT_CONSTANTS();
 
-    INIT_CONSTANTS()
+    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(32, 12 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *Mat = (Goldilocks::Element *)aligned_alloc(32, 144 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b = (Goldilocks::Element *)aligned_alloc(32, 12 * sizeof(Goldilocks::Element));
 
-    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(8 * size, 3 * size * sizeof(Goldilocks::Element));
-    Goldilocks::Element *Mat = (Goldilocks::Element *)aligned_alloc(8 * size, 144 * sizeof(Goldilocks::Element));
-    Goldilocks::Element *b = (Goldilocks::Element *)aligned_alloc(8 * size, 3 * size * sizeof(Goldilocks::Element));
-
-    if (size == 4) {
-        a[0] = inE1;
-        a[1] = inE2;
-        a[2] = Goldilocks::one();
-        a[3] = inE3;
-        a[4] = inE4;
-        a[5] = max;
-        a[6] = a1;
-        a[7] = a2;
-        a[8] = max * max;
-        a[9] = p_1;
-        a[10] = a1 * a1;
-        a[11] = inE4 * p_1;
-    }
-    else {
-        a[0] = inE1;
-        a[1] = inE2;
-        a[2] = Goldilocks::one();
-        a[3] = inE3;
-        a[4] = inE1;
-        a[5] = inE2;
-        a[6] = Goldilocks::one();
-        a[7] = inE3;
-        a[8] = inE4;
-        a[9] = max;
-        a[10] = a1;
-        a[11] = a2;
-        a[12] = inE4;
-        a[13] = max;
-        a[14] = a1;
-        a[15] = a2;
-        a[16] = max * max;
-        a[17] = p_1;
-        a[18] = a1 * a1;
-        a[19] = inE4 * p_1;
-        a[20] = max * max;
-        a[21] = p_1;
-        a[22] = a1 * a1;
-        a[23] = inE4 * p_1;
-    }
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE4;
+    a[5] = max;
+    a[6] = a1;
+    a[7] = a2;
+    a[8] = max * max;
+    a[9] = p_1;
+    a[10] = a1 * a1;
+    a[11] = inE4 * p_1;
 
     for (int i = 0; i < 12; ++i)
     {
@@ -611,318 +1218,316 @@ void test_vect_mmult(
     }
 
     // product
-    if (size == 4) {
-        for (int i = 0; i < 12; ++i)
+    for (int i = 0; i < 12; ++i)
+    {
+        Goldilocks::Element sum = Goldilocks::zero();
+        for (int j = 0; j < 12; ++j)
         {
-            Goldilocks::Element sum = Goldilocks::zero();
-            for (int j = 0; j < 12; ++j)
-            {
-                sum = sum + (Mat[i * 12 + j] * a[j]);
-            }
-            b[i] = sum;
+            sum = sum + (Mat[i * 12 + j] * a[j]);
         }
-    }
-    else {
-        for (int l = 0; l < 3; ++l)
-        {
-            for (int i = 0; i < 4; ++i)
-            {
-                Goldilocks::Element sum = Goldilocks::zero();
-                for (int k = 0; k < 3; ++k)
-                {
-                    for (int j = 0; j < 4; ++j)
-                    {
-                        sum = sum + (Mat[(l * 4 + i) * 12 + k * 4 + j] * a[k * 8 + j]);
-                    }
-                }
-                b[l * 8 + i] = sum;
-                b[l * 8 + 4 + i] = sum;
-            }
-        }
+        b[i] = sum;
     }
 
-    // product 1
-    vect_t a0_, a1_, a2_, a3_, a4_, a5_;
+    // avx product
+    uint64x2_t a0_, a1_, a2_, a3_, a4_, a5_;
 
-    if (is_2x2) {
-        load_funct(a0_, &(a[0]));
-        load_funct(a1_, &(a[2]));
-        load_funct(a2_, &(a[4]));
-        load_funct(a3_, &(a[6]));
-        load_funct(a4_, &(a[8]));
-        load_funct(a5_, &(a[10]));
-#ifdef __USE_NEON__
-        Goldilocks::mmult_neon(a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a0_, &(a[0]));
+    Goldilocks::load_avx(a1_, &(a[4]));
+    Goldilocks::load_avx(a2_, &(a[8]));
+    Goldilocks::mmult_avx(a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx(&(a[0]), a0_);
+    Goldilocks::store_avx(&(a[4]), a1_);
+    Goldilocks::store_avx(&(a[8]), a2_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, &(a[0]));
+    Goldilocks::load_neon(a1_, &(a[2]));
+    Goldilocks::load_neon(a2_, &(a[4]));
+    Goldilocks::load_neon(a3_, &(a[6]));
+    Goldilocks::load_neon(a4_, &(a[8]));
+    Goldilocks::load_neon(a5_, &(a[10]));
+    Goldilocks::mmult_neon(a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
+    Goldilocks::store_neon(&(a[0]), a0_);
+    Goldilocks::store_neon(&(a[2]), a1_);
+    Goldilocks::store_neon(&(a[4]), a2_);
+    Goldilocks::store_neon(&(a[6]), a3_);
+    Goldilocks::store_neon(&(a[8]), a4_);
+    Goldilocks::store_neon(&(a[10]), a5_);
 #endif
-        store_funct(&(a[0]), a0_);
-        store_funct(&(a[2]), a1_);
-        store_funct(&(a[4]), a2_);
-        store_funct(&(a[6]), a3_);
-        store_funct(&(a[8]), a4_);
-        store_funct(&(a[10]), a5_);
-    }
-    else {
-        if (size == 4) {
-            load_funct(a0_, &(a[0]));
-            load_funct(a1_, &(a[4]));
-            load_funct(a2_, &(a[8]));
-#ifdef __USE_AVX__
-        Goldilocks::mmult_avx(a0_, a1_, a2_, &(Mat[0]));
-#endif
-            store_funct(&(a[0]), a0_);
-            store_funct(&(a[4]), a1_);
-            store_funct(&(a[8]), a2_);
-        }
-        else {
-            load_funct(a0_, &(a[0]));
-            load_funct(a1_, &(a[8]));
-            load_funct(a2_, &(a[16]));
-#ifdef __USE_AVX512__
-            Goldilocks::mmult_avx512(a0_, a1_, a2_, &(Mat[0]));
-#endif
-            store_funct(&(a[0]), a0_);
-            store_funct(&(a[8]), a1_);
-            store_funct(&(a[16]), a2_);
-        }
-    }
 
-    for (uint64_t i = 0; i < 3 * size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(b[i]), Goldilocks::toU64(a[i]));
-    }
+    ASSERT_EQ(Goldilocks::toU64(b[0]), Goldilocks::toU64(a[0]));
+    ASSERT_EQ(Goldilocks::toU64(b[1]), Goldilocks::toU64(a[1]));
+    ASSERT_EQ(Goldilocks::toU64(b[2]), Goldilocks::toU64(a[2]));
+    ASSERT_EQ(Goldilocks::toU64(b[3]), Goldilocks::toU64(a[3]));
+    ASSERT_EQ(Goldilocks::toU64(b[4]), Goldilocks::toU64(a[4]));
+    ASSERT_EQ(Goldilocks::toU64(b[5]), Goldilocks::toU64(a[5]));
+    ASSERT_EQ(Goldilocks::toU64(b[6]), Goldilocks::toU64(a[6]));
+    ASSERT_EQ(Goldilocks::toU64(b[7]), Goldilocks::toU64(a[7]));
+    ASSERT_EQ(Goldilocks::toU64(b[8]), Goldilocks::toU64(a[8]));
+    ASSERT_EQ(Goldilocks::toU64(b[9]), Goldilocks::toU64(a[9]));
+    ASSERT_EQ(Goldilocks::toU64(b[10]), Goldilocks::toU64(a[10]));
+    ASSERT_EQ(Goldilocks::toU64(b[11]), Goldilocks::toU64(a[11]));
 
     // avx product aligned
-#ifdef __USE_AVX__
-    if (size == 4 && !is_2x2) {
-        a[0] = inE1;
-        a[1] = inE2;
-        a[2] = Goldilocks::one();
-        a[3] = inE3;
-        a[4] = inE4;
-        a[5] = max;
-        a[6] = a1;
-        a[7] = a2;
-        a[8] = max * max;
-        a[9] = p_1;
-        a[10] = a1 * a1;
-        a[11] = inE4 * p_1;
+#if defined(__USE_AVX__)
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE4;
+    a[5] = max;
+    a[6] = a1;
+    a[7] = a2;
+    a[8] = max * max;
+    a[9] = p_1;
+    a[10] = a1 * a1;
+    a[11] = inE4 * p_1;
+    Goldilocks::load_avx_a(a0_, &(a[0]));
+    Goldilocks::load_avx_a(a1_, &(a[4]));
+    Goldilocks::load_avx_a(a2_, &(a[8]));
+    Goldilocks::mmult_avx_a(a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx_a(&(a[0]), a0_);
+    Goldilocks::store_avx_a(&(a[4]), a1_);
+    Goldilocks::store_avx_a(&(a[8]), a2_);
 
-        load_funct(a0_, &(a[0]));
-        load_funct(a1_, &(a[4]));
-        load_funct(a2_, &(a[8]));
-
-        Goldilocks::mmult_avx_a(a0_, a1_, a2_, &(Mat[0]));
-
-        store_funct(&(a[0]), a0_);
-        store_funct(&(a[4]), a1_);
-        store_funct(&(a[8]), a2_);
-
-        for (uint64_t i = 0; i < 3 * size; i++) {
-            ASSERT_EQ(Goldilocks::toU64(b[i]), Goldilocks::toU64(a[i]));
-        }
-    }
-#endif // __USE_AVX__
+    ASSERT_EQ(Goldilocks::toU64(b[0]), Goldilocks::toU64(a[0]));
+    ASSERT_EQ(Goldilocks::toU64(b[1]), Goldilocks::toU64(a[1]));
+    ASSERT_EQ(Goldilocks::toU64(b[2]), Goldilocks::toU64(a[2]));
+    ASSERT_EQ(Goldilocks::toU64(b[3]), Goldilocks::toU64(a[3]));
+    ASSERT_EQ(Goldilocks::toU64(b[4]), Goldilocks::toU64(a[4]));
+    ASSERT_EQ(Goldilocks::toU64(b[5]), Goldilocks::toU64(a[5]));
+    ASSERT_EQ(Goldilocks::toU64(b[6]), Goldilocks::toU64(a[6]));
+    ASSERT_EQ(Goldilocks::toU64(b[7]), Goldilocks::toU64(a[7]));
+    ASSERT_EQ(Goldilocks::toU64(b[8]), Goldilocks::toU64(a[8]));
+    ASSERT_EQ(Goldilocks::toU64(b[9]), Goldilocks::toU64(a[9]));
+    ASSERT_EQ(Goldilocks::toU64(b[10]), Goldilocks::toU64(a[10]));
+    ASSERT_EQ(Goldilocks::toU64(b[11]), Goldilocks::toU64(a[11]));
+#endif
 
     // product_8
-    if (size == 4) {
-        a[0] = inE1;
-        a[1] = inE2;
-        a[2] = Goldilocks::one();
-        a[3] = inE3;
-        a[4] = inE4;
-        a[5] = max;
-        a[6] = a1;
-        a[7] = a2;
-        a[8] = max * max;
-        a[9] = p_1;
-        a[10] = a1 * a1;
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE4;
+    a[5] = max;
+    a[6] = a1;
+    a[7] = a2;
+    a[8] = max * max;
+    a[9] = p_1;
+    a[10] = a1 * a1;
     a[11] = inE4 * p_1;
-    }
-    else {
-        a[0] = inE1;
-        a[1] = inE2;
-        a[2] = Goldilocks::one();
-        a[3] = inE3;
-        a[4] = inE1;
-        a[5] = inE2;
-        a[6] = Goldilocks::one();
-        a[7] = inE3;
-        a[8] = inE4;
-        a[9] = max;
-        a[10] = a1;
-        a[11] = a2;
-        a[12] = inE4;
-        a[13] = max;
-        a[14] = a1;
-        a[15] = a2;
-        a[16] = max * max;
-        a[17] = p_1;
-        a[18] = a1 * a1;
-        a[19] = inE4 * p_1;
-        a[20] = max * max;
-        a[21] = p_1;
-        a[22] = a1 * a1;
-        a[23] = inE4 * p_1;
-    }
 
-   if (is_2x2) {
-        load_funct(a0_, &(a[0]));
-        load_funct(a1_, &(a[2]));
-        load_funct(a2_, &(a[4]));
-        load_funct(a3_, &(a[6]));
-        load_funct(a4_, &(a[8]));
-        load_funct(a5_, &(a[10]));
-#ifdef __USE_NEON__
-        Goldilocks::mmult_neon_8(a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
+#if defined(__USE_AVX__)
+    Goldilocks::load_avx(a0_, &(a[0]));
+    Goldilocks::load_avx(a1_, &(a[4]));
+    Goldilocks::load_avx(a2_, &(a[8]));
+    Goldilocks::mmult_avx_8(a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx(&(a[0]), a0_);
+    Goldilocks::store_avx(&(a[4]), a1_);
+    Goldilocks::store_avx(&(a[8]), a2_);
+#elif defined(__USE_NEON__)
+    Goldilocks::load_neon(a0_, &(a[0]));
+    Goldilocks::load_neon(a1_, &(a[2]));
+    Goldilocks::load_neon(a2_, &(a[4]));
+    Goldilocks::load_neon(a3_, &(a[6]));
+    Goldilocks::load_neon(a4_, &(a[8]));
+    Goldilocks::load_neon(a5_, &(a[10]));
+    Goldilocks::mmult_neon_8(a0_, a1_, a2_, a3_, a4_, a5_, &(Mat[0]));
+    Goldilocks::store_neon(&(a[0]), a0_);
+    Goldilocks::store_neon(&(a[2]), a1_);
+    Goldilocks::store_neon(&(a[4]), a2_);
+    Goldilocks::store_neon(&(a[6]), a3_);
+    Goldilocks::store_neon(&(a[8]), a4_);
+    Goldilocks::store_neon(&(a[10]), a5_);
 #endif
-        store_funct(&(a[0]), a0_);
-        store_funct(&(a[2]), a1_);
-        store_funct(&(a[4]), a2_);
-        store_funct(&(a[6]), a3_);
-        store_funct(&(a[8]), a4_);
-        store_funct(&(a[10]), a5_);
-    }
-    else {
-        if (size == 4) {
-            load_funct(a0_, &(a[0]));
-            load_funct(a1_, &(a[4]));
-            load_funct(a2_, &(a[8]));
-#ifdef __USE_AVX__
-        Goldilocks::mmult_avx_8(a0_, a1_, a2_, &(Mat[0]));
-#endif
-            store_funct(&(a[0]), a0_);
-            store_funct(&(a[4]), a1_);
-            store_funct(&(a[8]), a2_);
-        }
-        else {
-            load_funct(a0_, &(a[0]));
-            load_funct(a1_, &(a[8]));
-            load_funct(a2_, &(a[16]));
-#ifdef __USE_AVX512__
-            Goldilocks::mmult_avx512_8(a0_, a1_, a2_, &(Mat[0]));
-#endif
-            store_funct(&(a[0]), a0_);
-            store_funct(&(a[8]), a1_);
-            store_funct(&(a[16]), a2_);
-        }
-    }
 
-    for (uint64_t i = 0; i < 3 * size; i++) {
-        ASSERT_EQ(Goldilocks::toU64(b[i]), Goldilocks::toU64(a[i]));
-    }
+    ASSERT_EQ(Goldilocks::toU64(b[0]), Goldilocks::toU64(a[0]));
+    ASSERT_EQ(Goldilocks::toU64(b[1]), Goldilocks::toU64(a[1]));
+    ASSERT_EQ(Goldilocks::toU64(b[2]), Goldilocks::toU64(a[2]));
+    ASSERT_EQ(Goldilocks::toU64(b[3]), Goldilocks::toU64(a[3]));
+    ASSERT_EQ(Goldilocks::toU64(b[4]), Goldilocks::toU64(a[4]));
+    ASSERT_EQ(Goldilocks::toU64(b[5]), Goldilocks::toU64(a[5]));
+    ASSERT_EQ(Goldilocks::toU64(b[6]), Goldilocks::toU64(a[6]));
+    ASSERT_EQ(Goldilocks::toU64(b[7]), Goldilocks::toU64(a[7]));
+    ASSERT_EQ(Goldilocks::toU64(b[8]), Goldilocks::toU64(a[8]));
+    ASSERT_EQ(Goldilocks::toU64(b[9]), Goldilocks::toU64(a[9]));
+    ASSERT_EQ(Goldilocks::toU64(b[10]), Goldilocks::toU64(a[10]));
+    ASSERT_EQ(Goldilocks::toU64(b[11]), Goldilocks::toU64(a[11]));
 
     free(a);
     free(Mat);
     free(b);
 }
+#endif // __USE_AVX__ || __USE_NEON__
 
-#endif // __USE_VECT__
-
-TEST(GOLDILOCKS_TEST, one)
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, mmult_avx512)
 {
-    uint64_t a = 1;
-    uint64_t b = 1 + GOLDILOCKS_PRIME;
-    std::string c = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
+    INIT_CONSTANTS();
 
-    Goldilocks::Element ina1 = Goldilocks::fromU64(a);
-    Goldilocks::Element ina2 = Goldilocks::fromS32(a);
-    Goldilocks::Element ina3 = Goldilocks::fromString(std::to_string(a));
-    Goldilocks::Element inb1 = Goldilocks::fromU64(b);
-    Goldilocks::Element inc1 = Goldilocks::fromString(c);
+    Goldilocks::Element *a = (Goldilocks::Element *)aligned_alloc(64, 24 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *Mat = (Goldilocks::Element *)aligned_alloc(64, 144 * sizeof(Goldilocks::Element));
+    Goldilocks::Element *b = (Goldilocks::Element *)aligned_alloc(64, 24 * sizeof(Goldilocks::Element));
 
-    ASSERT_EQ(Goldilocks::toU64(ina1), a);
-    ASSERT_EQ(Goldilocks::toU64(ina2), a);
-    ASSERT_EQ(Goldilocks::toU64(ina3), a);
-    ASSERT_EQ(Goldilocks::toU64(inb1), a);
-    ASSERT_EQ(Goldilocks::toU64(inc1), a);
-}
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE1;
+    a[5] = inE2;
+    a[6] = Goldilocks::one();
+    a[7] = inE3;
 
-TEST(GOLDILOCKS_TEST, montgomery)
-{
-    for (uint64_t x = 0; x < 100000; x++)
+    a[8] = inE4;
+    a[9] = max;
+    a[10] = a1;
+    a[11] = a2;
+    a[12] = inE4;
+    a[13] = max;
+    a[14] = a1;
+    a[15] = a2;
+
+    a[16] = max * max;
+    a[17] = p_1;
+    a[18] = a1 * a1;
+    a[19] = inE4 * p_1;
+    a[20] = max * max;
+    a[21] = p_1;
+    a[22] = a1 * a1;
+    a[23] = inE4 * p_1;
+
+    for (int i = 0; i < 12; ++i)
     {
-        uint64_t m1 = Goldilocks::to_montgomery(x);
-        uint64_t m2 = Goldilocks::from_montgomery(m1);
-        ASSERT_EQ(m2, x);
+        for (int j = 0; j < 12; ++j)
+        {
+            Mat[i * 12 + j] = PoseidonGoldilocksConstants::M[i][j];
+        }
     }
-    for (uint64_t x = GOLDILOCKS_PRIME - 1; x >= GOLDILOCKS_PRIME - 100000; x--)
+
+    // product
+    for (int l = 0; l < 3; ++l)
     {
-        uint64_t m1 = Goldilocks::to_montgomery(x);
-        uint64_t m2 = Goldilocks::from_montgomery(m1);
-        ASSERT_EQ(m2, x);
+        for (int i = 0; i < 4; ++i)
+        {
+
+            Goldilocks::Element sum = Goldilocks::zero();
+            for (int k = 0; k < 3; ++k)
+            {
+                for (int j = 0; j < 4; ++j)
+                {
+                    sum = sum + (Mat[(l * 4 + i) * 12 + k * 4 + j] * a[k * 8 + j]);
+                }
+            }
+            b[l * 8 + i] = sum;
+            b[l * 8 + 4 + i] = sum;
+        }
     }
+
+    // avx product
+    __m512i a0_;
+    __m512i a1_;
+    __m512i a2_;
+
+    Goldilocks::load_avx512(a0_, &(a[0]));
+    Goldilocks::load_avx512(a1_, &(a[8]));
+    Goldilocks::load_avx512(a2_, &(a[16]));
+    Goldilocks::mmult_avx512(a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx512(&(a[0]), a0_);
+    Goldilocks::store_avx512(&(a[8]), a1_);
+    Goldilocks::store_avx512(&(a[16]), a2_);
+
+    ASSERT_EQ(Goldilocks::toU64(b[0]), Goldilocks::toU64(a[0]));
+    ASSERT_EQ(Goldilocks::toU64(b[1]), Goldilocks::toU64(a[1]));
+    ASSERT_EQ(Goldilocks::toU64(b[2]), Goldilocks::toU64(a[2]));
+    ASSERT_EQ(Goldilocks::toU64(b[3]), Goldilocks::toU64(a[3]));
+    ASSERT_EQ(Goldilocks::toU64(b[4]), Goldilocks::toU64(a[4]));
+    ASSERT_EQ(Goldilocks::toU64(b[5]), Goldilocks::toU64(a[5]));
+    ASSERT_EQ(Goldilocks::toU64(b[6]), Goldilocks::toU64(a[6]));
+    ASSERT_EQ(Goldilocks::toU64(b[7]), Goldilocks::toU64(a[7]));
+    ASSERT_EQ(Goldilocks::toU64(b[8]), Goldilocks::toU64(a[8]));
+    ASSERT_EQ(Goldilocks::toU64(b[9]), Goldilocks::toU64(a[9]));
+    ASSERT_EQ(Goldilocks::toU64(b[10]), Goldilocks::toU64(a[10]));
+    ASSERT_EQ(Goldilocks::toU64(b[11]), Goldilocks::toU64(a[11]));
+    ASSERT_EQ(Goldilocks::toU64(b[12]), Goldilocks::toU64(a[12]));
+    ASSERT_EQ(Goldilocks::toU64(b[13]), Goldilocks::toU64(a[13]));
+    ASSERT_EQ(Goldilocks::toU64(b[14]), Goldilocks::toU64(a[14]));
+    ASSERT_EQ(Goldilocks::toU64(b[15]), Goldilocks::toU64(a[15]));
+    ASSERT_EQ(Goldilocks::toU64(b[16]), Goldilocks::toU64(a[16]));
+    ASSERT_EQ(Goldilocks::toU64(b[17]), Goldilocks::toU64(a[17]));
+    ASSERT_EQ(Goldilocks::toU64(b[18]), Goldilocks::toU64(a[18]));
+    ASSERT_EQ(Goldilocks::toU64(b[19]), Goldilocks::toU64(a[19]));
+    ASSERT_EQ(Goldilocks::toU64(b[20]), Goldilocks::toU64(a[20]));
+    ASSERT_EQ(Goldilocks::toU64(b[21]), Goldilocks::toU64(a[21]));
+    ASSERT_EQ(Goldilocks::toU64(b[22]), Goldilocks::toU64(a[22]));
+    ASSERT_EQ(Goldilocks::toU64(b[23]), Goldilocks::toU64(a[23]));
+
+    // avx product coefs small
+    a[0] = inE1;
+    a[1] = inE2;
+    a[2] = Goldilocks::one();
+    a[3] = inE3;
+    a[4] = inE1;
+    a[5] = inE2;
+    a[6] = Goldilocks::one();
+    a[7] = inE3;
+
+    a[8] = inE4;
+    a[9] = max;
+    a[10] = a1;
+    a[11] = a2;
+    a[12] = inE4;
+    a[13] = max;
+    a[14] = a1;
+    a[15] = a2;
+
+    a[16] = max * max;
+    a[17] = p_1;
+    a[18] = a1 * a1;
+    a[19] = inE4 * p_1;
+    a[20] = max * max;
+    a[21] = p_1;
+    a[22] = a1 * a1;
+    a[23] = inE4 * p_1;
+
+    Goldilocks::load_avx512(a0_, &(a[0]));
+    Goldilocks::load_avx512(a1_, &(a[8]));
+    Goldilocks::load_avx512(a2_, &(a[16]));
+    Goldilocks::mmult_avx512_8(a0_, a1_, a2_, &(Mat[0]));
+    Goldilocks::store_avx512(&(a[0]), a0_);
+    Goldilocks::store_avx512(&(a[8]), a1_);
+    Goldilocks::store_avx512(&(a[16]), a2_);
+
+    ASSERT_EQ(Goldilocks::toU64(b[0]), Goldilocks::toU64(a[0]));
+    ASSERT_EQ(Goldilocks::toU64(b[1]), Goldilocks::toU64(a[1]));
+    ASSERT_EQ(Goldilocks::toU64(b[2]), Goldilocks::toU64(a[2]));
+    ASSERT_EQ(Goldilocks::toU64(b[3]), Goldilocks::toU64(a[3]));
+    ASSERT_EQ(Goldilocks::toU64(b[4]), Goldilocks::toU64(a[4]));
+    ASSERT_EQ(Goldilocks::toU64(b[5]), Goldilocks::toU64(a[5]));
+    ASSERT_EQ(Goldilocks::toU64(b[6]), Goldilocks::toU64(a[6]));
+    ASSERT_EQ(Goldilocks::toU64(b[7]), Goldilocks::toU64(a[7]));
+    ASSERT_EQ(Goldilocks::toU64(b[8]), Goldilocks::toU64(a[8]));
+    ASSERT_EQ(Goldilocks::toU64(b[9]), Goldilocks::toU64(a[9]));
+    ASSERT_EQ(Goldilocks::toU64(b[10]), Goldilocks::toU64(a[10]));
+    ASSERT_EQ(Goldilocks::toU64(b[11]), Goldilocks::toU64(a[11]));
+    ASSERT_EQ(Goldilocks::toU64(b[12]), Goldilocks::toU64(a[12]));
+    ASSERT_EQ(Goldilocks::toU64(b[13]), Goldilocks::toU64(a[13]));
+    ASSERT_EQ(Goldilocks::toU64(b[14]), Goldilocks::toU64(a[14]));
+    ASSERT_EQ(Goldilocks::toU64(b[15]), Goldilocks::toU64(a[15]));
+    ASSERT_EQ(Goldilocks::toU64(b[16]), Goldilocks::toU64(a[16]));
+    ASSERT_EQ(Goldilocks::toU64(b[17]), Goldilocks::toU64(a[17]));
+    ASSERT_EQ(Goldilocks::toU64(b[18]), Goldilocks::toU64(a[18]));
+    ASSERT_EQ(Goldilocks::toU64(b[19]), Goldilocks::toU64(a[19]));
+    ASSERT_EQ(Goldilocks::toU64(b[20]), Goldilocks::toU64(a[20]));
+    ASSERT_EQ(Goldilocks::toU64(b[21]), Goldilocks::toU64(a[21]));
+    ASSERT_EQ(Goldilocks::toU64(b[22]), Goldilocks::toU64(a[22]));
+    ASSERT_EQ(Goldilocks::toU64(b[23]), Goldilocks::toU64(a[23]));
+
+    free(a);
+    free(Mat);
+    free(b);
 }
-
-TEST(GOLDILOCKS_TEST, add)
-{
-    uint64_t in1 = 3;
-    int32_t in2 = 9;
-    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
-    int32_t in4 = -12;
-
-    Goldilocks::Element p_1 = Goldilocks::fromU64(0XFFFFFFFF00000002LL);
-    ASSERT_EQ(Goldilocks::toU64(p_1 + p_1), 2);
-
-    Goldilocks::Element max = Goldilocks::fromU64(0XFFFFFFFFFFFFFFFF);
-    ASSERT_EQ(Goldilocks::toU64(max + max), 0X1FFFFFFFC);
-
-    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
-    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
-    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
-    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
-
-    ASSERT_EQ(Goldilocks::toU64(inE1 + inE2), in1 + in2);
-    ASSERT_EQ(Goldilocks::toU64(inE1 + inE2 + inE3), in1 + in2 + 1);
-    ASSERT_EQ(Goldilocks::toU64(inE1 + inE2 + inE3 + inE4), 1);
-
-    // Edge case (double carry)
-    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000));
-    Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF));
-    Goldilocks::Element b1 = (a1 + a2);
-    Goldilocks::Element b2 = (b1 + b1);
-    ASSERT_EQ(Goldilocks::toU64(b2), 0x200000002);
-}
-
-TEST(GOLDILOCKS_TEST, sub)
-{
-
-    uint64_t in1 = 3;
-    int32_t in2 = 9;
-    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
-    int32_t in4 = -12;
-
-    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
-    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
-    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
-    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
-
-    ASSERT_EQ(Goldilocks::toU64(inE1 - inE2), GOLDILOCKS_PRIME + in1 - in2);
-    ASSERT_EQ(Goldilocks::toU64(inE1 - inE2 - inE3), GOLDILOCKS_PRIME + in1 - in2 - 1);
-    ASSERT_EQ(Goldilocks::toU64(inE1 - inE2 - inE3 - inE4), 5);
-
-    Goldilocks::Element a1 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFF00000000LL));
-    Goldilocks::Element a2 = Goldilocks::fromU64(Goldilocks::from_montgomery(0xFFFFFFFFLL));
-
-    Goldilocks::Element a3 = (a1 + a2);
-    Goldilocks::Element b2 = Goldilocks::zero() - a3;
-    ASSERT_EQ(Goldilocks::toU64(b2), Goldilocks::from_montgomery(0XFFFFFFFE00000003LL));
-}
-
-TEST(GOLDILOCKS_TEST, mul)
-{
-    uint64_t in1 = 3;
-    int32_t in2 = 9;
-    std::string in3 = "92233720347072921606"; // GOLDILOCKS_PRIME * 5 + 1
-    int32_t in4 = -12;
-
-    Goldilocks::Element inE1 = Goldilocks::fromU64(in1);
-    Goldilocks::Element inE2 = Goldilocks::fromS32(in2);
-    Goldilocks::Element inE3 = Goldilocks::fromString(in3);
-    Goldilocks::Element inE4 = Goldilocks::fromS32(in4);
-
-    ASSERT_EQ(Goldilocks::toU64(inE1 * inE2), in1 * in2);
-    ASSERT_EQ(Goldilocks::toU64(inE1 * inE2 * inE3), in1 * in2);
-    ASSERT_EQ(Goldilocks::toU64(inE1 * inE2 * inE3 * inE4), 0XFFFFFFFEFFFFFEBDLL);
-}
+#endif // __USE_AVX512__
 
 TEST(GOLDILOCKS_TEST, div)
 {
@@ -1000,6 +1605,90 @@ TEST(GOLDILOCKS_TEST, poseidon_seq)
     ASSERT_EQ(Goldilocks::toU64(result0[3]), 0XC71603F33A1144CA);
 }
 
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, poseidon_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, poseidon_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    Goldilocks::Element fibonacci[SPONGE_WIDTH];
+    Goldilocks::Element result[CAPACITY];
+
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+
+    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+
+    PoseidonGoldilocks::hash(result, fibonacci);
+
+    ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
+    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
+    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X8129DB5EC75C3226);
+    ASSERT_EQ(Goldilocks::toU64(result[3]), 0X8EC2B67AFB6B87ED);
+
+    Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
+    Goldilocks::Element result0[CAPACITY];
+
+    PoseidonGoldilocks::hash(result0, zero);
+
+    ASSERT_EQ(Goldilocks::toU64(result0[0]), 0X3C18A9786CB0B359);
+    ASSERT_EQ(Goldilocks::toU64(result0[1]), 0XC4055E3364A246C3);
+    ASSERT_EQ(Goldilocks::toU64(result0[2]), 0X7953DB0AB48808F4);
+    ASSERT_EQ(Goldilocks::toU64(result0[3]), 0XC71603F33A1144CA);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, poseidon_avx512)
+{
+
+    Goldilocks::Element input[2 * SPONGE_WIDTH];
+    Goldilocks::Element fibonacci[SPONGE_WIDTH];
+    Goldilocks::Element zero[SPONGE_WIDTH];
+    Goldilocks::Element result[2 * CAPACITY];
+    Goldilocks::Element result0[CAPACITY];
+    Goldilocks::Element result1[CAPACITY];
+
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+    zero[0] = Goldilocks::zero();
+    zero[1] = Goldilocks::zero();
+
+    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+        zero[i] = Goldilocks::zero();
+    }
+
+    for (int k = 0; k < 3; ++k)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            input[k * 8 + i] = fibonacci[k * 4 + i];
+            input[k * 8 + i + 4] = Goldilocks::zero();
+        }
+    }
+
+    PoseidonGoldilocks::hash_avx512(result, input);
+    PoseidonGoldilocks::hash(result0, fibonacci);
+    PoseidonGoldilocks::hash(result1, zero);
+
+    ASSERT_EQ(Goldilocks::toU64(result[0]), Goldilocks::toU64(result0[0]));
+    ASSERT_EQ(Goldilocks::toU64(result[1]), Goldilocks::toU64(result0[1]));
+    ASSERT_EQ(Goldilocks::toU64(result[2]), Goldilocks::toU64(result0[2]));
+    ASSERT_EQ(Goldilocks::toU64(result[3]), Goldilocks::toU64(result0[3]));
+    ASSERT_EQ(Goldilocks::toU64(result[4]), Goldilocks::toU64(result1[0]));
+    ASSERT_EQ(Goldilocks::toU64(result[5]), Goldilocks::toU64(result1[1]));
+    ASSERT_EQ(Goldilocks::toU64(result[6]), Goldilocks::toU64(result1[2]));
+    ASSERT_EQ(Goldilocks::toU64(result[7]), Goldilocks::toU64(result1[3]));
+}
+#endif // __USE_AVX512__
+
 TEST(GOLDILOCKS_TEST, poseidon_full_seq)
 {
 
@@ -1048,6 +1737,116 @@ TEST(GOLDILOCKS_TEST, poseidon_full_seq)
     ASSERT_EQ(Goldilocks::toU64(result0[11]), 0X1792B1C4342109D7);
 }
 
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, poseidon_full_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, poseidon_full_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    Goldilocks::Element fibonacci[SPONGE_WIDTH];
+    Goldilocks::Element result[SPONGE_WIDTH];
+
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+
+    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+
+    PoseidonGoldilocks::hash_full_result(result, fibonacci);
+
+    ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
+    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
+    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X8129DB5EC75C3226);
+    ASSERT_EQ(Goldilocks::toU64(result[3]), 0X8EC2B67AFB6B87ED);
+    ASSERT_EQ(Goldilocks::toU64(result[4]), 0XFC591F17D0FAB161);
+    ASSERT_EQ(Goldilocks::toU64(result[5]), 0X1D2B045CC2FEA1AD);
+    ASSERT_EQ(Goldilocks::toU64(result[6]), 0X8A4E3B0CB12D4527);
+    ASSERT_EQ(Goldilocks::toU64(result[7]), 0XFF217A756AE2211);
+    ASSERT_EQ(Goldilocks::toU64(result[8]), 0X78F6E79CFC407293);
+    ASSERT_EQ(Goldilocks::toU64(result[9]), 0X3DE827E086AE61C9);
+    ASSERT_EQ(Goldilocks::toU64(result[10]), 0X921456F6D2D11E27);
+    ASSERT_EQ(Goldilocks::toU64(result[11]), 0XF58A41D4028C66A5);
+
+    Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
+    Goldilocks::Element result0[SPONGE_WIDTH];
+
+    PoseidonGoldilocks::hash_full_result(result0, zero);
+
+    ASSERT_EQ(Goldilocks::toU64(result0[0]), 0X3C18A9786CB0B359);
+    ASSERT_EQ(Goldilocks::toU64(result0[1]), 0XC4055E3364A246C3);
+    ASSERT_EQ(Goldilocks::toU64(result0[2]), 0X7953DB0AB48808F4);
+    ASSERT_EQ(Goldilocks::toU64(result0[3]), 0XC71603F33A1144CA);
+    ASSERT_EQ(Goldilocks::toU64(result0[4]), 0XD7709673896996DC);
+    ASSERT_EQ(Goldilocks::toU64(result0[5]), 0X46A84E87642F44ED);
+    ASSERT_EQ(Goldilocks::toU64(result0[6]), 0XD032648251EE0B3C);
+    ASSERT_EQ(Goldilocks::toU64(result0[7]), 0X1C687363B207DF62);
+    ASSERT_EQ(Goldilocks::toU64(result0[8]), 0XDF8565563E8045FE);
+    ASSERT_EQ(Goldilocks::toU64(result0[9]), 0X40F5B37FF4254DAE);
+    ASSERT_EQ(Goldilocks::toU64(result0[10]), 0XD070F637B431067C);
+    ASSERT_EQ(Goldilocks::toU64(result0[11]), 0X1792B1C4342109D7);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, poseidon_full_avx512)
+{
+
+    Goldilocks::Element fibonacci[SPONGE_WIDTH];
+    Goldilocks::Element fibonacciAndZero[2 * SPONGE_WIDTH];
+    Goldilocks::Element result[2 * SPONGE_WIDTH];
+
+    // Evaluate fibonacci
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+
+    // Interleave both inputs
+    for (int k = 0; k < 3; ++k)
+    {
+        for (int i = 0; i < 4; ++i)
+        {
+            fibonacciAndZero[8 * k + i] = fibonacci[k * 4 + i];
+            fibonacciAndZero[8 * k + i + 4] = Goldilocks::zero();
+        }
+    }
+
+    PoseidonGoldilocks::hash_full_result_avx512(result, fibonacciAndZero);
+
+    // Ouptputs are also interleaved
+    ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
+    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
+    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X8129DB5EC75C3226);
+    ASSERT_EQ(Goldilocks::toU64(result[3]), 0X8EC2B67AFB6B87ED);
+    ASSERT_EQ(Goldilocks::toU64(result[4]), 0X3C18A9786CB0B359);
+    ASSERT_EQ(Goldilocks::toU64(result[5]), 0XC4055E3364A246C3);
+    ASSERT_EQ(Goldilocks::toU64(result[6]), 0X7953DB0AB48808F4);
+    ASSERT_EQ(Goldilocks::toU64(result[7]), 0XC71603F33A1144CA);
+    ASSERT_EQ(Goldilocks::toU64(result[8]), 0XFC591F17D0FAB161);
+    ASSERT_EQ(Goldilocks::toU64(result[9]), 0X1D2B045CC2FEA1AD);
+    ASSERT_EQ(Goldilocks::toU64(result[10]), 0X8A4E3B0CB12D4527);
+    ASSERT_EQ(Goldilocks::toU64(result[11]), 0XFF217A756AE2211);
+    ASSERT_EQ(Goldilocks::toU64(result[12]), 0XD7709673896996DC);
+    ASSERT_EQ(Goldilocks::toU64(result[13]), 0X46A84E87642F44ED);
+    ASSERT_EQ(Goldilocks::toU64(result[14]), 0XD032648251EE0B3C);
+    ASSERT_EQ(Goldilocks::toU64(result[15]), 0X1C687363B207DF62);
+    ASSERT_EQ(Goldilocks::toU64(result[16]), 0X78F6E79CFC407293);
+    ASSERT_EQ(Goldilocks::toU64(result[17]), 0X3DE827E086AE61C9);
+    ASSERT_EQ(Goldilocks::toU64(result[18]), 0X921456F6D2D11E27);
+    ASSERT_EQ(Goldilocks::toU64(result[19]), 0XF58A41D4028C66A5);
+    ASSERT_EQ(Goldilocks::toU64(result[20]), 0XDF8565563E8045FE);
+    ASSERT_EQ(Goldilocks::toU64(result[21]), 0X40F5B37FF4254DAE);
+    ASSERT_EQ(Goldilocks::toU64(result[22]), 0XD070F637B431067C);
+    ASSERT_EQ(Goldilocks::toU64(result[23]), 0X1792B1C4342109D7);
+}
+#endif // __USE_AVX512__
+
 TEST(GOLDILOCKS_TEST, linear_hash_seq)
 {
 
@@ -1068,6 +1867,62 @@ TEST(GOLDILOCKS_TEST, linear_hash_seq)
     ASSERT_EQ(Goldilocks::toU64(result[2]), 0X7338CC9DBA8256FD);
     ASSERT_EQ(Goldilocks::toU64(result[3]), 0XC1043293021620CE);
 }
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, linear_hash_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, linear_hash_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    Goldilocks::Element fibonacci[NCOLS_HASH];
+    Goldilocks::Element result[CAPACITY];
+
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+    for (uint64_t i = 2; i < NCOLS_HASH; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+    }
+
+    PoseidonGoldilocks::linear_hash(result, fibonacci, NCOLS_HASH);
+
+    ASSERT_EQ(Goldilocks::toU64(result[0]), 0XB214FEA22C79AE3C);
+    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X49DA61DEED54466A);
+    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X7338CC9DBA8256FD);
+    ASSERT_EQ(Goldilocks::toU64(result[3]), 0XC1043293021620CE);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, linear_hash_avx512)
+{
+    Goldilocks::Element fibonacci[2 * NCOLS_HASH];
+    Goldilocks::Element result[2 * CAPACITY];
+
+    fibonacci[0] = Goldilocks::zero();
+    fibonacci[1] = Goldilocks::one();
+    fibonacci[NCOLS_HASH] = Goldilocks::zero();
+    fibonacci[NCOLS_HASH + 1] = Goldilocks::one();
+    for (uint64_t i = 2; i < NCOLS_HASH; i++)
+    {
+        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
+        fibonacci[i + NCOLS_HASH] = fibonacci[i];
+    }
+
+    PoseidonGoldilocks::linear_hash_avx512(result, fibonacci, NCOLS_HASH);
+
+    ASSERT_EQ(Goldilocks::toU64(result[0]), 0XB214FEA22C79AE3C);
+    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X49DA61DEED54466A);
+    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X7338CC9DBA8256FD);
+    ASSERT_EQ(Goldilocks::toU64(result[3]), 0XC1043293021620CE);
+    ASSERT_EQ(Goldilocks::toU64(result[4]), 0XB214FEA22C79AE3C);
+    ASSERT_EQ(Goldilocks::toU64(result[5]), 0X49DA61DEED54466A);
+    ASSERT_EQ(Goldilocks::toU64(result[6]), 0X7338CC9DBA8256FD);
+    ASSERT_EQ(Goldilocks::toU64(result[7]), 0XC1043293021620CE);
+}
+#endif // __USE_AVX512__
 
 TEST(GOLDILOCKS_TEST, merkletree_seq)
 {
@@ -1136,6 +1991,164 @@ TEST(GOLDILOCKS_TEST, merkletree_seq)
     free(tree);
 }
 
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, merkletree_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, merkletree_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    uint64_t ncols_hash = 128;
+    uint64_t nrows_hash = (1 << 6);
+    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)ncols_hash * (uint64_t)nrows_hash * sizeof(Goldilocks::Element));
+#pragma omp parallel for
+    for (uint64_t i = 0; i < ncols_hash; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + ncols_hash] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+    for (uint64_t j = 2; j < nrows_hash; j++)
+    {
+#pragma omp parallel for
+        for (uint64_t i = 0; i < ncols_hash; i++)
+        {
+            cols[j * ncols_hash + i] = cols[(j - 2) * ncols_hash + i] + cols[(j - 1) * ncols_hash + i];
+        }
+    }
+
+    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+
+#if defined(__USE_AVX__)
+    PoseidonGoldilocks::merkletree_avx(tree, cols, ncols_hash, nrows_hash);
+#elif defined(__USE_NEON__)
+    PoseidonGoldilocks::merkletree_neon(tree, cols, ncols_hash, nrows_hash);
+#endif
+    Goldilocks::Element root[4];
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X918F7CD0C3E8701F);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X83A130E00F961B02);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0X6921497B364123F8);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XBD2B98A57B748BF4);
+
+    free(cols);
+    free(tree);
+
+    // Edge case, nrows_hash =0
+    ncols_hash = 0;
+    nrows_hash = (1 << 6);
+
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+#if defined(__USE_AVX__)
+    PoseidonGoldilocks::merkletree_avx(tree, cols, ncols_hash, nrows_hash);
+#elif defined(__USE_NEON__)
+    PoseidonGoldilocks::merkletree_neon(tree, cols, ncols_hash, nrows_hash);
+#endif
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X25225F1A5D49614A);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X5A1D2A648EEE8F03);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0xDDA8F741C47DFB10);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
+
+    free(tree);
+
+    // Edge case
+    ncols_hash = 0;
+    nrows_hash = (1 << 17);
+
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+#if defined(__USE_AVX__)
+    PoseidonGoldilocks::merkletree_avx(tree, cols, ncols_hash, nrows_hash);
+#elif defined(__USE_NEON__)
+    PoseidonGoldilocks::merkletree_neon(tree, cols, ncols_hash, nrows_hash);
+#endif
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
+
+    free(tree);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, merkletree_avx512)
+{
+    uint64_t ncols_hash = 128;
+    uint64_t nrows_hash = (1 << 6);
+    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)ncols_hash * (uint64_t)nrows_hash * sizeof(Goldilocks::Element));
+#pragma omp parallel for
+    for (uint64_t i = 0; i < ncols_hash; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + ncols_hash] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+    for (uint64_t j = 2; j < nrows_hash; j++)
+    {
+#pragma omp parallel for
+        for (uint64_t i = 0; i < ncols_hash; i++)
+        {
+            cols[j * ncols_hash + i] = cols[(j - 2) * ncols_hash + i] + cols[(j - 1) * ncols_hash + i];
+        }
+    }
+
+    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+
+    PoseidonGoldilocks::merkletree_seq(tree, cols, ncols_hash, nrows_hash);
+    Goldilocks::Element root[4];
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X918F7CD0C3E8701F);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X83A130E00F961B02);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0X6921497B364123F8);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XBD2B98A57B748BF4);
+
+    free(cols);
+    free(tree);
+
+    // Edge case, ncols_hash =0
+    ncols_hash = 0;
+    nrows_hash = (1 << 6);
+
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+    PoseidonGoldilocks::merkletree_seq(tree, cols, ncols_hash, nrows_hash);
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X25225F1A5D49614A);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X5A1D2A648EEE8F03);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0xDDA8F741C47DFB10);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
+
+    free(tree);
+    ncols_hash = 0;
+    nrows_hash = (1 << 17);
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+    PoseidonGoldilocks::merkletree_seq(tree, cols, ncols_hash, nrows_hash);
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
+
+    free(tree);
+}
+#endif // __USE_AVX512__
+
 TEST(GOLDILOCKS_TEST, merkletree_batch_seq)
 {
     uint64_t ncols_hash = 128;
@@ -1203,6 +2216,163 @@ TEST(GOLDILOCKS_TEST, merkletree_batch_seq)
 
     free(tree);
 }
+
+#ifdef __USE_AVX__
+TEST(GOLDILOCKS_TEST, merkletree_batch_avx)
+#endif
+#ifdef __USE_NEON__
+TEST(GOLDILOCKS_TEST, merkletree_batch_neon)
+#endif
+#if defined(__USE_AVX__) || defined(__USE_NEON__)
+{
+    uint64_t ncols_hash = 128;
+    uint64_t nrows_hash = (1 << 6);
+    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)ncols_hash * (uint64_t)nrows_hash * sizeof(Goldilocks::Element));
+#pragma omp parallel for
+    for (uint64_t i = 0; i < ncols_hash; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + ncols_hash] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+    for (uint64_t j = 2; j < nrows_hash; j++)
+    {
+#pragma omp parallel for
+        for (uint64_t i = 0; i < ncols_hash; i++)
+        {
+            cols[j * ncols_hash + i] = cols[(j - 2) * ncols_hash + i] + cols[(j - 1) * ncols_hash + i];
+        }
+    }
+
+    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+
+#if defined(__USE_AVX__)
+    PoseidonGoldilocks::merkletree_batch_avx(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+#elif defined(__USE_NEON__)
+    PoseidonGoldilocks::merkletree_batch_neon(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+#endif
+
+    Goldilocks::Element root[4];
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0xb2597514367e69fd);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0x1083bd8754affcb8);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x6ad216b78faa6470);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0x3e8670a179011526);
+
+    free(cols);
+    free(tree);
+
+    // Edge case, ncols_hash =0
+    ncols_hash = 0;
+    nrows_hash = (1 << 6);
+
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+#if defined(__USE_AVX__)
+    PoseidonGoldilocks::merkletree_batch_avx(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+#elif defined(__USE_NEON__)
+    PoseidonGoldilocks::merkletree_batch_neon(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+#endif
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X25225F1A5D49614A);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X5A1D2A648EEE8F03);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0xDDA8F741C47DFB10);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
+
+    free(tree);
+    ncols_hash = 0;
+    nrows_hash = (1 << 17);
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+#if defined(__USE_AVX__)
+    PoseidonGoldilocks::merkletree_batch_avx(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+#elif defined(__USE_NEON__)
+    PoseidonGoldilocks::merkletree_batch_neon(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+#endif
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
+
+    free(tree);
+}
+#endif // __USE_AVX__ || __USE_NEON__
+
+#ifdef __USE_AVX512__
+TEST(GOLDILOCKS_TEST, merkletree_batch_avx512)
+{
+    uint64_t ncols_hash = 128;
+    uint64_t nrows_hash = (1 << 6);
+    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)ncols_hash * (uint64_t)nrows_hash * sizeof(Goldilocks::Element));
+#pragma omp parallel for
+    for (uint64_t i = 0; i < ncols_hash; i++)
+    {
+        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
+        cols[i + ncols_hash] = Goldilocks::fromU64(i) + Goldilocks::one();
+    }
+    for (uint64_t j = 2; j < nrows_hash; j++)
+    {
+#pragma omp parallel for
+        for (uint64_t i = 0; i < ncols_hash; i++)
+        {
+            cols[j * ncols_hash + i] = cols[(j - 2) * ncols_hash + i] + cols[(j - 1) * ncols_hash + i];
+        }
+    }
+
+    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+
+    PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+
+    Goldilocks::Element root[4];
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0xb2597514367e69fd);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0x1083bd8754affcb8);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x6ad216b78faa6470);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0x3e8670a179011526);
+
+    free(cols);
+    free(tree);
+
+    // Edge case, ncols_hash =0
+    ncols_hash = 0;
+    nrows_hash = (1 << 6);
+
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+    PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X25225F1A5D49614A);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X5A1D2A648EEE8F03);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0xDDA8F741C47DFB10);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
+
+    free(tree);
+    ncols_hash = 0;
+    nrows_hash = (1 << 17);
+    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
+    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
+    cols = NULL;
+    PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
+    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
+
+    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
+    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
+    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
+    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
+
+    free(tree);
+}
+#endif
 
 TEST(GOLDILOCKS_TEST, ntt)
 {
@@ -1652,717 +2822,6 @@ TEST(GOLDILOCKS_CUBIC_TEST, one)
     ASSERT_EQ(inc1_res[2], a[2]);
 }
 
-#ifdef __USE_AVX__
-TEST(GOLDILOCKS_TEST, add_avx)
-{
-    test_vect_op(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx,
-        Goldilocks::add_avx,
-        Goldilocks::add
-    );
-}
-
-TEST(GOLDILOCKS_TEST, sub_avx)
-{
-    test_vect_op(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx,
-        Goldilocks::sub_avx,
-        Goldilocks::sub
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mul_avx)
-{
-    test_vect_op(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx,
-        Goldilocks::mult_avx,
-        Goldilocks::mul
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mul_avx_8)
-{
-    test_vect_op(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx,
-        Goldilocks::mult_avx_8,
-        Goldilocks::mul,
-        false,
-        4,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, square_avx)
-{
-    test_unary_vect_op(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx,
-        Goldilocks::square_avx,
-        Goldilocks::mul
-    );
-}
-
-TEST(GOLDILOCKS_TEST, dot_avx)
-{
-    test_vect_dot_prod(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx,
-        false
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mult_avx_4x12)
-{
-    test_vect_mult_4x12(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mmult_avx)
-{
-    test_vect_mmult(
-        Goldilocks::load_avx,
-        Goldilocks::store_avx
-    );
-}
-#endif // __USE_AVX__
-
-#ifdef __USE_AVX512__
-TEST(GOLDILOCKS_TEST, add_avx512)
-{
-    test_vect_op(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        Goldilocks::add_avx512,
-        Goldilocks::add,
-        false,
-        8
-    );
-}
-
-TEST(GOLDILOCKS_TEST, sub_avx512)
-{
-    test_vect_op(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        Goldilocks::sub_avx512,
-        Goldilocks::sub,
-        false,
-        8
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mul_avx512)
-{
-    test_vect_op(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        Goldilocks::mult_avx512,
-        Goldilocks::mul,
-        false,
-        8
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mul_avx512_8)
-{
-    test_vect_op(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        Goldilocks::mult_avx512_8,
-        Goldilocks::mul,
-        false,
-        8,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, square_avx512)
-{
-    test_unary_vect_op(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        Goldilocks::square_avx512,
-        Goldilocks::mul,
-        false,
-        8
-    );
-}
-
-TEST(GOLDILOCKS_TEST, dot_avx512)
-{
-    test_vect_dot_prod(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        false,
-        8
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mult_avx512_4x12)
-{
-    test_vect_mult_4x12(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        false,
-        8
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mmult_avx512)
-{
-    test_vect_mmult(
-        Goldilocks::load_avx512,
-        Goldilocks::store_avx512,
-        false,
-        8
-    );
-}
-#endif // __USE_AVX512__
-
-#ifdef __USE_NEON__
-TEST(GOLDILOCKS_TEST, add_neon)
-{
-    test_vect_op(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        Goldilocks::add_neon,
-        Goldilocks::add,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, sub_neon)
-{
-    test_vect_op(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        Goldilocks::sub_neon,
-        Goldilocks::sub,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mul_neon)
-{
-    test_vect_op(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        Goldilocks::mult_neon,
-        Goldilocks::mul,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mul_neon_8)
-{
-    test_vect_op(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        Goldilocks::mult_neon_8,
-        Goldilocks::mul,
-        true,
-        4,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, square_neon)
-{
-    test_unary_vect_op(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        Goldilocks::square_neon,
-        Goldilocks::mul,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, dot_neon)
-{
-    test_vect_dot_prod(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mult_neon_4x12)
-{
-    test_vect_mult_4x12(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        true
-    );
-}
-
-TEST(GOLDILOCKS_TEST, mmult_neon)
-{
-    test_vect_mmult(
-        Goldilocks::load_neon,
-        Goldilocks::store_neon,
-        true
-    );
-}
-#endif // __USE_NEON__
-
-#ifdef __USE_AVX__
-TEST(GOLDILOCKS_TEST, poseidon_avx)
-#endif
-#ifdef __USE_NEON__
-TEST(GOLDILOCKS_TEST, poseidon_neon)
-#endif
-#if defined(__USE_AVX__) || defined(__USE_NEON__)
-{
-
-    Goldilocks::Element fibonacci[SPONGE_WIDTH];
-    Goldilocks::Element result[CAPACITY];
-
-    fibonacci[0] = Goldilocks::zero();
-    fibonacci[1] = Goldilocks::one();
-
-    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
-    {
-        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
-    }
-
-    PoseidonGoldilocks::hash(result, fibonacci);
-
-    ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
-    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
-    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X8129DB5EC75C3226);
-    ASSERT_EQ(Goldilocks::toU64(result[3]), 0X8EC2B67AFB6B87ED);
-
-    Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
-    Goldilocks::Element result0[CAPACITY];
-
-    PoseidonGoldilocks::hash(result0, zero);
-
-    ASSERT_EQ(Goldilocks::toU64(result0[0]), 0X3C18A9786CB0B359);
-    ASSERT_EQ(Goldilocks::toU64(result0[1]), 0XC4055E3364A246C3);
-    ASSERT_EQ(Goldilocks::toU64(result0[2]), 0X7953DB0AB48808F4);
-    ASSERT_EQ(Goldilocks::toU64(result0[3]), 0XC71603F33A1144CA);
-}
-#endif // __USE_AVX__ || __USE_NEON__
-
-#ifdef __USE_AVX512__
-TEST(GOLDILOCKS_TEST, poseidon_avx512)
-{
-
-    Goldilocks::Element input[2 * SPONGE_WIDTH];
-    Goldilocks::Element fibonacci[SPONGE_WIDTH];
-    Goldilocks::Element zero[SPONGE_WIDTH];
-    Goldilocks::Element result[2 * CAPACITY];
-    Goldilocks::Element result0[CAPACITY];
-    Goldilocks::Element result1[CAPACITY];
-
-    fibonacci[0] = Goldilocks::zero();
-    fibonacci[1] = Goldilocks::one();
-    zero[0] = Goldilocks::zero();
-    zero[1] = Goldilocks::zero();
-
-    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
-    {
-        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
-        zero[i] = Goldilocks::zero();
-    }
-
-    for (int k = 0; k < 3; ++k)
-    {
-        for (int i = 0; i < 4; ++i)
-        {
-            input[k * 8 + i] = fibonacci[k * 4 + i];
-            input[k * 8 + i + 4] = Goldilocks::zero();
-        }
-    }
-
-    PoseidonGoldilocks::hash_avx512(result, input);
-    PoseidonGoldilocks::hash(result0, fibonacci);
-    PoseidonGoldilocks::hash(result1, zero);
-
-    ASSERT_EQ(Goldilocks::toU64(result[0]), Goldilocks::toU64(result0[0]));
-    ASSERT_EQ(Goldilocks::toU64(result[1]), Goldilocks::toU64(result0[1]));
-    ASSERT_EQ(Goldilocks::toU64(result[2]), Goldilocks::toU64(result0[2]));
-    ASSERT_EQ(Goldilocks::toU64(result[3]), Goldilocks::toU64(result0[3]));
-    ASSERT_EQ(Goldilocks::toU64(result[4]), Goldilocks::toU64(result1[0]));
-    ASSERT_EQ(Goldilocks::toU64(result[5]), Goldilocks::toU64(result1[1]));
-    ASSERT_EQ(Goldilocks::toU64(result[6]), Goldilocks::toU64(result1[2]));
-    ASSERT_EQ(Goldilocks::toU64(result[7]), Goldilocks::toU64(result1[3]));
-}
-#endif // __USE_AVX512__
-
-#ifdef __USE_AVX__
-TEST(GOLDILOCKS_TEST, poseidon_full_avx)
-#endif
-#ifdef __USE_NEON__
-TEST(GOLDILOCKS_TEST, poseidon_full_neon)
-#endif
-#if defined(__USE_AVX__) || defined(__USE_NEON__)
-{
-
-    Goldilocks::Element fibonacci[SPONGE_WIDTH];
-    Goldilocks::Element result[SPONGE_WIDTH];
-
-    fibonacci[0] = Goldilocks::zero();
-    fibonacci[1] = Goldilocks::one();
-
-    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
-    {
-        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
-    }
-
-    PoseidonGoldilocks::hash_full_result(result, fibonacci);
-
-    ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
-    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
-    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X8129DB5EC75C3226);
-    ASSERT_EQ(Goldilocks::toU64(result[3]), 0X8EC2B67AFB6B87ED);
-    ASSERT_EQ(Goldilocks::toU64(result[4]), 0XFC591F17D0FAB161);
-    ASSERT_EQ(Goldilocks::toU64(result[5]), 0X1D2B045CC2FEA1AD);
-    ASSERT_EQ(Goldilocks::toU64(result[6]), 0X8A4E3B0CB12D4527);
-    ASSERT_EQ(Goldilocks::toU64(result[7]), 0XFF217A756AE2211);
-    ASSERT_EQ(Goldilocks::toU64(result[8]), 0X78F6E79CFC407293);
-    ASSERT_EQ(Goldilocks::toU64(result[9]), 0X3DE827E086AE61C9);
-    ASSERT_EQ(Goldilocks::toU64(result[10]), 0X921456F6D2D11E27);
-    ASSERT_EQ(Goldilocks::toU64(result[11]), 0XF58A41D4028C66A5);
-
-    Goldilocks::Element zero[SPONGE_WIDTH] = {Goldilocks::zero()};
-    Goldilocks::Element result0[SPONGE_WIDTH];
-
-    PoseidonGoldilocks::hash_full_result(result0, zero);
-
-    ASSERT_EQ(Goldilocks::toU64(result0[0]), 0X3C18A9786CB0B359);
-    ASSERT_EQ(Goldilocks::toU64(result0[1]), 0XC4055E3364A246C3);
-    ASSERT_EQ(Goldilocks::toU64(result0[2]), 0X7953DB0AB48808F4);
-    ASSERT_EQ(Goldilocks::toU64(result0[3]), 0XC71603F33A1144CA);
-    ASSERT_EQ(Goldilocks::toU64(result0[4]), 0XD7709673896996DC);
-    ASSERT_EQ(Goldilocks::toU64(result0[5]), 0X46A84E87642F44ED);
-    ASSERT_EQ(Goldilocks::toU64(result0[6]), 0XD032648251EE0B3C);
-    ASSERT_EQ(Goldilocks::toU64(result0[7]), 0X1C687363B207DF62);
-    ASSERT_EQ(Goldilocks::toU64(result0[8]), 0XDF8565563E8045FE);
-    ASSERT_EQ(Goldilocks::toU64(result0[9]), 0X40F5B37FF4254DAE);
-    ASSERT_EQ(Goldilocks::toU64(result0[10]), 0XD070F637B431067C);
-    ASSERT_EQ(Goldilocks::toU64(result0[11]), 0X1792B1C4342109D7);
-}
-#endif // __USE_AVX__ || __USE_NEON__
-
-#ifdef __USE_AVX512__
-TEST(GOLDILOCKS_TEST, poseidon_full_avx512)
-{
-
-    Goldilocks::Element fibonacci[SPONGE_WIDTH];
-    Goldilocks::Element fibonacciAndZero[2 * SPONGE_WIDTH];
-    Goldilocks::Element result[2 * SPONGE_WIDTH];
-
-    // Evaluate fibonacci
-    fibonacci[0] = Goldilocks::zero();
-    fibonacci[1] = Goldilocks::one();
-    for (uint64_t i = 2; i < SPONGE_WIDTH; i++)
-    {
-        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
-    }
-
-    // Interleave both inputs
-    for (int k = 0; k < 3; ++k)
-    {
-        for (int i = 0; i < 4; ++i)
-        {
-            fibonacciAndZero[8 * k + i] = fibonacci[k * 4 + i];
-            fibonacciAndZero[8 * k + i + 4] = Goldilocks::zero();
-        }
-    }
-
-    PoseidonGoldilocks::hash_full_result_avx512(result, fibonacciAndZero);
-
-    // Ouptputs are also interleaved
-    ASSERT_EQ(Goldilocks::toU64(result[0]), 0X3095570037F4605D);
-    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X3D561B5EF1BC8B58);
-    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X8129DB5EC75C3226);
-    ASSERT_EQ(Goldilocks::toU64(result[3]), 0X8EC2B67AFB6B87ED);
-    ASSERT_EQ(Goldilocks::toU64(result[4]), 0X3C18A9786CB0B359);
-    ASSERT_EQ(Goldilocks::toU64(result[5]), 0XC4055E3364A246C3);
-    ASSERT_EQ(Goldilocks::toU64(result[6]), 0X7953DB0AB48808F4);
-    ASSERT_EQ(Goldilocks::toU64(result[7]), 0XC71603F33A1144CA);
-    ASSERT_EQ(Goldilocks::toU64(result[8]), 0XFC591F17D0FAB161);
-    ASSERT_EQ(Goldilocks::toU64(result[9]), 0X1D2B045CC2FEA1AD);
-    ASSERT_EQ(Goldilocks::toU64(result[10]), 0X8A4E3B0CB12D4527);
-    ASSERT_EQ(Goldilocks::toU64(result[11]), 0XFF217A756AE2211);
-    ASSERT_EQ(Goldilocks::toU64(result[12]), 0XD7709673896996DC);
-    ASSERT_EQ(Goldilocks::toU64(result[13]), 0X46A84E87642F44ED);
-    ASSERT_EQ(Goldilocks::toU64(result[14]), 0XD032648251EE0B3C);
-    ASSERT_EQ(Goldilocks::toU64(result[15]), 0X1C687363B207DF62);
-    ASSERT_EQ(Goldilocks::toU64(result[16]), 0X78F6E79CFC407293);
-    ASSERT_EQ(Goldilocks::toU64(result[17]), 0X3DE827E086AE61C9);
-    ASSERT_EQ(Goldilocks::toU64(result[18]), 0X921456F6D2D11E27);
-    ASSERT_EQ(Goldilocks::toU64(result[19]), 0XF58A41D4028C66A5);
-    ASSERT_EQ(Goldilocks::toU64(result[20]), 0XDF8565563E8045FE);
-    ASSERT_EQ(Goldilocks::toU64(result[21]), 0X40F5B37FF4254DAE);
-    ASSERT_EQ(Goldilocks::toU64(result[22]), 0XD070F637B431067C);
-    ASSERT_EQ(Goldilocks::toU64(result[23]), 0X1792B1C4342109D7);
-}
-#endif // __USE_AVX512__
-
-#ifdef __USE_AVX__
-TEST(GOLDILOCKS_TEST, linear_hash_avx)
-#endif
-#ifdef __USE_NEON__
-TEST(GOLDILOCKS_TEST, linear_hash_neon)
-#endif
-#if defined(__USE_AVX__) || defined(__USE_NEON__)
-{
-
-    Goldilocks::Element fibonacci[NCOLS_HASH];
-    Goldilocks::Element result[CAPACITY];
-
-    fibonacci[0] = Goldilocks::zero();
-    fibonacci[1] = Goldilocks::one();
-    for (uint64_t i = 2; i < NCOLS_HASH; i++)
-    {
-        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
-    }
-
-    PoseidonGoldilocks::linear_hash(result, fibonacci, NCOLS_HASH);
-
-    ASSERT_EQ(Goldilocks::toU64(result[0]), 0XB214FEA22C79AE3C);
-    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X49DA61DEED54466A);
-    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X7338CC9DBA8256FD);
-    ASSERT_EQ(Goldilocks::toU64(result[3]), 0XC1043293021620CE);
-}
-#endif // __USE_AVX__ || __USE_NEON__
-
-#ifdef __USE_AVX512__
-TEST(GOLDILOCKS_TEST, linear_hash_avx512)
-{
-
-    Goldilocks::Element fibonacci[2 * NCOLS_HASH];
-    Goldilocks::Element result[2 * CAPACITY];
-
-    fibonacci[0] = Goldilocks::zero();
-    fibonacci[1] = Goldilocks::one();
-    fibonacci[NCOLS_HASH] = Goldilocks::zero();
-    fibonacci[NCOLS_HASH + 1] = Goldilocks::one();
-    for (uint64_t i = 2; i < NCOLS_HASH; i++)
-    {
-        fibonacci[i] = fibonacci[i - 1] + fibonacci[i - 2];
-        fibonacci[i + NCOLS_HASH] = fibonacci[i];
-    }
-
-    PoseidonGoldilocks::linear_hash_avx512(result, fibonacci, NCOLS_HASH);
-
-    ASSERT_EQ(Goldilocks::toU64(result[0]), 0XB214FEA22C79AE3C);
-    ASSERT_EQ(Goldilocks::toU64(result[1]), 0X49DA61DEED54466A);
-    ASSERT_EQ(Goldilocks::toU64(result[2]), 0X7338CC9DBA8256FD);
-    ASSERT_EQ(Goldilocks::toU64(result[3]), 0XC1043293021620CE);
-    ASSERT_EQ(Goldilocks::toU64(result[4]), 0XB214FEA22C79AE3C);
-    ASSERT_EQ(Goldilocks::toU64(result[5]), 0X49DA61DEED54466A);
-    ASSERT_EQ(Goldilocks::toU64(result[6]), 0X7338CC9DBA8256FD);
-    ASSERT_EQ(Goldilocks::toU64(result[7]), 0XC1043293021620CE);
-}
-#endif // __USE_AVX512__
-
-#ifdef __USE_AVX__
-TEST(GOLDILOCKS_TEST, merkletree_avx)
-#endif
-#ifdef __USE_AVX512__
-TEST(GOLDILOCKS_TEST, merkletree_avx512)
-#endif
-#ifdef __USE_NEON__
-TEST(GOLDILOCKS_TEST, merkletree_neon)
-#endif
-#if defined(__USE_AVX__) || defined(__USE_AVX512__) || defined(__USE_NEON__)
-{
-    uint64_t ncols_hash = 128;
-    uint64_t nrows_hash = (1 << 6);
-    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)ncols_hash * (uint64_t)nrows_hash * sizeof(Goldilocks::Element));
-#pragma omp parallel for
-    for (uint64_t i = 0; i < ncols_hash; i++)
-    {
-        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
-        cols[i + ncols_hash] = Goldilocks::fromU64(i) + Goldilocks::one();
-    }
-    for (uint64_t j = 2; j < nrows_hash; j++)
-    {
-#pragma omp parallel for
-        for (uint64_t i = 0; i < ncols_hash; i++)
-        {
-            cols[j * ncols_hash + i] = cols[(j - 2) * ncols_hash + i] + cols[(j - 1) * ncols_hash + i];
-        }
-    }
-
-    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
-    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
-
-#if defined(__USE_AVX__)
-    PoseidonGoldilocks::merkletree_avx(tree, cols, ncols_hash, nrows_hash);
-#elif defined(__USE_AVX512__)
-    PoseidonGoldilocks::merkletree_avx512(tree, cols, ncols_hash, nrows_hash);
-#elif defined(__USE_NEON__)
-    PoseidonGoldilocks::merkletree_neon(tree, cols, ncols_hash, nrows_hash);
-#endif
-    Goldilocks::Element root[4];
-    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
-
-    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X918F7CD0C3E8701F);
-    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X83A130E00F961B02);
-    ASSERT_EQ(Goldilocks::toU64(root[2]), 0X6921497B364123F8);
-    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XBD2B98A57B748BF4);
-
-    free(cols);
-    free(tree);
-
-    // Edge case, nrows_hash =0
-    ncols_hash = 0;
-    nrows_hash = (1 << 6);
-
-    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
-    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
-    cols = NULL;
-#if defined(__USE_AVX__)
-    PoseidonGoldilocks::merkletree_avx(tree, cols, ncols_hash, nrows_hash);
-#elif defined(__USE_AVX512__)
-    PoseidonGoldilocks::merkletree_avx512(tree, cols, ncols_hash, nrows_hash);
-#elif defined(__USE_NEON__)
-    PoseidonGoldilocks::merkletree_neon(tree, cols, ncols_hash, nrows_hash);
-#endif
-    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
-
-    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X25225F1A5D49614A);
-    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X5A1D2A648EEE8F03);
-    ASSERT_EQ(Goldilocks::toU64(root[2]), 0xDDA8F741C47DFB10);
-    ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
-
-    free(tree);
-
-    // Edge case
-    ncols_hash = 0;
-    nrows_hash = (1 << 17);
-
-    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
-    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
-    cols = NULL;
-#if defined(__USE_AVX__)
-    PoseidonGoldilocks::merkletree_avx(tree, cols, ncols_hash, nrows_hash);
-#elif defined(__USE_AVX512__)
-    PoseidonGoldilocks::merkletree_avx512(tree, cols, ncols_hash, nrows_hash);
-#elif defined(__USE_NEON__)
-    PoseidonGoldilocks::merkletree_neon(tree, cols, ncols_hash, nrows_hash);
-#endif
-    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
-
-    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
-    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
-    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
-    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
-
-    free(tree);
-}
-#endif // __USE_AVX__ || __USE_AVX512__ || __USE_NEON__
-
-#ifdef __USE_AVX__
-TEST(GOLDILOCKS_TEST, merkletree_batch_avx)
-#endif
-#ifdef __USE_AVX512__
-TEST(GOLDILOCKS_TEST, merkletree_batch_avx512)
-#endif
-#ifdef __USE_NEON__
-TEST(GOLDILOCKS_TEST, merkletree_batch_neon)
-#endif
-#if defined(__USE_AVX__) || defined(__USE_AVX512__) || defined(__USE_NEON__)
-{
-    uint64_t ncols_hash = 128;
-    uint64_t nrows_hash = (1 << 6);
-    Goldilocks::Element *cols = (Goldilocks::Element *)malloc((uint64_t)ncols_hash * (uint64_t)nrows_hash * sizeof(Goldilocks::Element));
-#pragma omp parallel for
-    for (uint64_t i = 0; i < ncols_hash; i++)
-    {
-        cols[i] = Goldilocks::fromU64(i) + Goldilocks::one();
-        cols[i + ncols_hash] = Goldilocks::fromU64(i) + Goldilocks::one();
-    }
-    for (uint64_t j = 2; j < nrows_hash; j++)
-    {
-#pragma omp parallel for
-        for (uint64_t i = 0; i < ncols_hash; i++)
-        {
-            cols[j * ncols_hash + i] = cols[(j - 2) * ncols_hash + i] + cols[(j - 1) * ncols_hash + i];
-        }
-    }
-
-    uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
-    Goldilocks::Element *tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
-
-#if defined(__USE_AVX__)
-    PoseidonGoldilocks::merkletree_batch_avx(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#elif defined(__USE_AVX512__)
-    PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#elif defined(__USE_NEON__)
-    PoseidonGoldilocks::merkletree_batch_neon(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#endif
-
-    Goldilocks::Element root[4];
-    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
-
-    ASSERT_EQ(Goldilocks::toU64(root[0]), 0xb2597514367e69fd);
-    ASSERT_EQ(Goldilocks::toU64(root[1]), 0x1083bd8754affcb8);
-    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x6ad216b78faa6470);
-    ASSERT_EQ(Goldilocks::toU64(root[3]), 0x3e8670a179011526);
-
-    free(cols);
-    free(tree);
-
-    // Edge case, ncols_hash =0
-    ncols_hash = 0;
-    nrows_hash = (1 << 6);
-
-    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
-    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
-    cols = NULL;
-
-#if defined(__USE_AVX__)
-    PoseidonGoldilocks::merkletree_batch_avx(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#elif defined(__USE_AVX512__)
-    PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#elif defined(__USE_NEON__)
-    PoseidonGoldilocks::merkletree_batch_neon(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#endif
-
-    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
-
-    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X25225F1A5D49614A);
-    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X5A1D2A648EEE8F03);
-    ASSERT_EQ(Goldilocks::toU64(root[2]), 0xDDA8F741C47DFB10);
-    ASSERT_EQ(Goldilocks::toU64(root[3]), 0X49561260080D30C3);
-
-    free(tree);
-    ncols_hash = 0;
-    nrows_hash = (1 << 17);
-    numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
-    tree = (Goldilocks::Element *)malloc(numElementsTree * sizeof(Goldilocks::Element));
-    cols = NULL;
-
-#if defined(__USE_AVX__)
-    PoseidonGoldilocks::merkletree_batch_avx(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#elif defined(__USE_AVX512__)
-    PoseidonGoldilocks::merkletree_batch_avx512(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#elif defined(__USE_NEON__)
-    PoseidonGoldilocks::merkletree_batch_neon(tree, cols, ncols_hash, nrows_hash, (ncols_hash + 3) / 4);
-#endif
-
-    MerklehashGoldilocks::root(&(root[0]), tree, numElementsTree);
-
-    ASSERT_EQ(Goldilocks::toU64(root[0]), 0X5587AD00B6DDF0CB);
-    ASSERT_EQ(Goldilocks::toU64(root[1]), 0X279949E14530C250);
-    ASSERT_EQ(Goldilocks::toU64(root[2]), 0x2F8E22C79467775);
-    ASSERT_EQ(Goldilocks::toU64(root[3]), 0XAA45BE01F9E1610);
-
-    free(tree);
-}
-#endif // __USE_AVX__ || __USE_AVX512__ || __USE_NEON__
-
 #ifdef __USE_CUDA__
 TEST(GOLDILOCKS_TEST, merkletree_cuda)
 {
@@ -2382,7 +2841,6 @@ TEST(GOLDILOCKS_TEST, merkletree_cuda)
         {
             cols[j * ncols_hash + i] = cols[(j - 2) * ncols_hash + i] + cols[(j - 1) * ncols_hash + i];
         }
-
     }
 
     uint64_t numElementsTree = MerklehashGoldilocks::getTreeNumElements(nrows_hash);
@@ -2438,6 +2896,7 @@ int main(int argc, char **argv)
     ::testing::InitGoogleTest(&argc, argv);
     return RUN_ALL_TESTS();
 }
+
 // Build commands AVX:
 
 // g++:
