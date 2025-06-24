@@ -116,10 +116,10 @@ TEST(GOLDILOCKS_TEST, add_neon)
     vect_t c0_, c1_;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
-    Goldilocks::add_avx(c_, a_, b_);
-    Goldilocks::store_avx(c, c_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::set_avx(b0_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::add_avx(c0_, a0_, b0_);
+    Goldilocks::store_avx(c, c0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a);
     Goldilocks::load_neon(a1_, a+2);
@@ -141,9 +141,9 @@ TEST(GOLDILOCKS_TEST, add_neon)
     a[3] = max;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::add_avx(b_, a_, c_);
-    Goldilocks::store_avx(b, b_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::add_avx(b0_, a0_, c0_);
+    Goldilocks::store_avx(b, b0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a1_, a);
     Goldilocks::add_neon(b0_, a0_, c0_);
@@ -255,10 +255,10 @@ TEST(GOLDILOCKS_TEST, sub_neon)
     vect_t c0_, c1_;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
-    Goldilocks::sub_avx(c_, a_, b_);
-    Goldilocks::store_avx(c, c_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::set_avx(b0_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::sub_avx(c0_, a0_, b0_);
+    Goldilocks::store_avx(c, c0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a);
     Goldilocks::load_neon(a1_, a+2);
@@ -280,9 +280,9 @@ TEST(GOLDILOCKS_TEST, sub_neon)
     a[3] = max;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::sub_avx(b_, a_, c_);
-    Goldilocks::store_avx(b, b_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::sub_avx(b0_, a0_, c0_);
+    Goldilocks::store_avx(b, b0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a1_, a);
     Goldilocks::sub_neon(b0_, a0_, c0_);
@@ -313,10 +313,10 @@ TEST(GOLDILOCKS_TEST, sub_neon)
     b[3] = b3;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::load_avx(b_, b);
-    Goldilocks::sub_avx(c_, a_, b_);
-    Goldilocks::store_avx(c, c_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::load_avx(b0_, b);
+    Goldilocks::sub_avx(c0_, a0_, b0_);
+    Goldilocks::store_avx(c, c0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a1_, a);
     Goldilocks::load_neon(b0_, b1_, b);
@@ -441,10 +441,10 @@ TEST(GOLDILOCKS_TEST, mul_neon)
     vect_t c0_, c1_;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
-    Goldilocks::mult_avx(c_, a_, b_);
-    Goldilocks::store_avx(c, c_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::set_avx(b0_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::mult_avx(c0_, a0_, b0_);
+    Goldilocks::store_avx(c, c0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a1_, a);
     Goldilocks::set_neon(b0_, b1_, b[0], b[1], b[2], b[3]); // equivalent to load
@@ -464,9 +464,9 @@ TEST(GOLDILOCKS_TEST, mul_neon)
     a[3] = max;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::mult_avx(b_, a_, c_);
-    Goldilocks::store_avx(b, b_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::mult_avx(b0_, a0_, c0_);
+    Goldilocks::store_avx(b, b0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a1_, a);
     Goldilocks::mult_neon(b0_, a0_, c0_);
@@ -598,10 +598,10 @@ TEST(GOLDILOCKS_TEST, mul_neon_8)
     vect_t c0_, c1_;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::set_avx(b_, b[0], b[1], b[2], b[3]); // equivalent to load
-    Goldilocks::mult_avx_8(c_, a_, b_);
-    Goldilocks::store_avx(c, c_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::set_avx(b0_, b[0], b[1], b[2], b[3]); // equivalent to load
+    Goldilocks::mult_avx_8(c0_, a0_, b0_);
+    Goldilocks::store_avx(c, c0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a1_, a);
     Goldilocks::set_neon(b0_, b1_, b[0], b[1], b[2], b[3]); // equivalent to load
@@ -715,9 +715,9 @@ TEST(GOLDILOCKS_TEST, square_neon)
     vect_t c0_, c1_;
 
 #if defined(__USE_AVX__)
-    Goldilocks::load_avx(a_, a);
-    Goldilocks::square_avx(c_, a_);
-    Goldilocks::store_avx(c, c_);
+    Goldilocks::load_avx(a0_, a);
+    Goldilocks::square_avx(c0_, a0_);
+    Goldilocks::store_avx(c, c0_);
 #elif defined(__USE_NEON__)
     Goldilocks::load_neon(a0_, a1_, a);
     Goldilocks::square_neon(c0_, a0_);
@@ -731,8 +731,8 @@ TEST(GOLDILOCKS_TEST, square_neon)
     ASSERT_EQ(Goldilocks::toU64(a[3] * a[3]), Goldilocks::toU64(c[3]));
 
 #if defined(__USE_AVX__)
-    Goldilocks::square_avx(a_, c_);
-    Goldilocks::store_avx(a, a_);
+    Goldilocks::square_avx(a0_, c0_);
+    Goldilocks::store_avx(a, a0_);
 #elif defined(__USE_NEON__)
     Goldilocks::square_neon(a0_, c0_);
     Goldilocks::square_neon(a1_, c1_);
@@ -1032,8 +1032,8 @@ TEST(GOLDILOCKS_TEST, mult_neon_4x12)
     }
 
     // product
-    uint64x2_t a0_, a1_, a2_, a3_, a4_, a5_;
-    uint64x2_t b0_, b1_;
+    vect_t a0_, a1_, a2_, a3_, a4_, a5_;
+    vect_t b0_, b1_;
 
 #if defined(__USE_AVX__)
     Goldilocks::load_avx(a0_, &(a[0]));
@@ -1229,7 +1229,7 @@ TEST(GOLDILOCKS_TEST, mmult_neon)
     }
 
     // avx product
-    uint64x2_t a0_, a1_, a2_, a3_, a4_, a5_;
+    vect_t a0_, a1_, a2_, a3_, a4_, a5_;
 
 #if defined(__USE_AVX__)
     Goldilocks::load_avx(a0_, &(a[0]));
