@@ -21,9 +21,11 @@ else
 ifeq ($(HASAVX512),)
   $(info AVX support detected)
 CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp -D__USE_AVX__ -mavx2
+NVCCFLAGS := -D__USE_AVX__ -Xcompiler -mavx2
 else
   $(info AVX512 support detected)
-  CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp -D__USE_AVX__ -D__USE_AVX512__ -mavx2 -mavx512f
+CXXFLAGS := -std=c++17 -Wall -pthread -fopenmp -D__USE_AVX__ -D__USE_AVX512__ -mavx2 -mavx512f
+NVCCFLAGS := -D__USE_AVX__ -D__USE_AVX512__ -Xcompiler -mavx2 -Xcompiler -mavx512f
 endif
 endif
 ARCH = $(shell uname -m)
@@ -73,7 +75,7 @@ $(BUILD_DIR_GPU)/%.cpp.o: %.cpp
 
 $(BUILD_DIR_GPU)/%.cu.o: %.cu
 	$(MKDIR_P) $(dir $@)
-	$(NVCC) -D__USE_CUDA__ -DGPU_TIMING -Iutils -Xcompiler -O3 -Xcompiler -fopenmp -Xcompiler -fPIC -Xcompiler -mavx2 -arch=$(CUDA_ARCH) -dc $< --output-file $@
+	$(NVCC) -D__USE_CUDA__ -DGPU_TIMING -Iutils -Xcompiler -O3 -Xcompiler -fopenmp -Xcompiler -fPIC $(NVCCFLAGS) -arch=$(CUDA_ARCH) -dc $< --output-file $@
 
 .PHONY: clean
 
@@ -102,7 +104,7 @@ runfullcpu: full
 benchcpu: benchs/bench.cpp src/goldilocks_base_field.cpp src/goldilocks_cubic_extension.cpp src/ntt_goldilocks.cpp src/poseidon_goldilocks.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) $^ -o $@ $(LDFLAGS)
 
-benchgpu: $(BUILD_DIR_GPU)/benchs/bench.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o
+benchgpu: $(BUILD_DIR_GPU)/benchs/bench.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
 	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp -lbenchmark
 
 runbenchcpu: benchcpu
