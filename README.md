@@ -29,10 +29,19 @@ brew install google-benchmark
 ## Usage
 Compile:
 ```
-g++ tests/tests.cpp src/*.cpp -lgtest -lgmp -lomp -o test -g  -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//')
+make testcpu
+make benchcpu
 ```
+
+Run:
 ```
-g++ benchs/bench.cpp src/*.cpp -lbenchmark -lomp -lpthread -lgmp  -std=c++17 -Wall -pthread -fopenmp -mavx2 -L$(find /usr/lib/llvm-* -name "libomp.so" | sed 's/libomp.so//') -O3 -o bench
+./testcpu
+./benchcpu
+```
+
+Clean:
+```
+make clean
 ```
 
 ## CUDA support
@@ -72,6 +81,7 @@ g++  -I./src -MMD -MP -std=c++17 -Wall -pthread -fopenmp -D__USE_NEON__ -O3 test
 
 ### MacOS Native
 ```
+make -f Makefile.Arm64Macos clean
 make -f Makefile.Arm64Macos runtestcpu
 make -f Makefile.Arm64Macos runbenchcpu
 ```
