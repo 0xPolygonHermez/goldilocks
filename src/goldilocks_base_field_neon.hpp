@@ -4,12 +4,32 @@
 #include "goldilocks_base_field.hpp"
 #include <arm_neon.h>
 
+#ifdef __BOUNDS_CHECK__
+#include <assert.h>
+#define CHECK_BOUNDS_GOLDILOCKS(x) \
+    { \
+    Goldilocks::Element tmp[2]; \
+    Goldilocks::store_neon(tmp, x); \
+    assert(tmp[0].fe < GOLDILOCKS_PRIME); \
+    assert(tmp[1].fe < GOLDILOCKS_PRIME); \
+    }
+
+#else
+#define CHECK_BOUNDS_GOLDILOCKS(x)
+#endif
+
 static const uint64x2_t MSB = vdupq_n_u64(MSB_);
 static const uint64x2_t P = vdupq_n_u64(GOLDILOCKS_PRIME);
 static const uint64x2_t P_n = vdupq_n_u64(GOLDILOCKS_PRIME_NEG);
 static const uint64x2_t P_s = vdupq_n_u64(0x7FFFFFFF00000001);
 static const uint64x2_t LMASK = vdupq_n_u64(0xFFFFFFFF);
 static const uint64x2_t SQMASK = vdupq_n_u64(0x1FFFFFFFF);
+
+inline void Goldilocks::to_canonical_neon(uint64x2_t &b, const uint64x2_t &a)
+{
+    uint64x2_t mask = vcltq_u64(a, P);
+    b = vbslq_u64(mask, a, vsubq_u64(a, P));
+}
 
 inline void Goldilocks::set_neon(uint64x2_t &a, const Goldilocks::Element &a0, const Goldilocks::Element &a1)
 {
@@ -49,19 +69,27 @@ inline void Goldilocks::store_neon(Goldilocks::Element *a4, const uint64x2_t &d0
 
 inline void Goldilocks::add_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b)
 {
-    uint64x2_t c1 = vaddq_u64(a, b);
-    uint64x2_t d = vsubq_u64(P, a);
+    uint64x2_t a_c, b_c;
+    to_canonical_neon(a_c, a);
+    to_canonical_neon(b_c, b);
+    uint64x2_t c1 = vaddq_u64(a_c, b_c);
+    uint64x2_t d = vsubq_u64(P, a_c);
     uint64x2_t c2 = vaddq_u64(c1, P_n);
-    uint64x2_t mask_ = vcgtq_u64(b, d);
-    c = vbslq_u64(mask_, c2, c1);
+    uint64x2_t mask_ = vcltq_u64(b_c, d);
+    c = vbslq_u64(mask_, c1, c2);
+    CHECK_BOUNDS_GOLDILOCKS(c);
 }
 
 inline void Goldilocks::sub_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b)
 {
+    uint64x2_t a_c, b_c;
+    to_canonical_neon(a_c, a);
+    to_canonical_neon(b_c, b);
     uint64x2_t c1 = vsubq_u64(a, b);
     uint64x2_t mask_ = vcgeq_u64(a, b);
     uint64x2_t c2 = vaddq_u64(c1, P);
     c = vbslq_u64(mask_, c1, c2);
+    CHECK_BOUNDS_GOLDILOCKS(c);
 }
 
 inline void Goldilocks::mult_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b)
@@ -69,6 +97,7 @@ inline void Goldilocks::mult_neon(uint64x2_t &c, const uint64x2_t &a, const uint
     uint64x2_t c_h, c_l;
     mult_neon_128(c_h, c_l, a, b);
     reduce_neon_128_64(c, c_h, c_l);
+    CHECK_BOUNDS_GOLDILOCKS(c);
 }
 
 // We assume coeficients of b_8 can be expressed with 8 bits (<256)
@@ -77,6 +106,7 @@ inline void Goldilocks::mult_neon_8(uint64x2_t &c, const uint64x2_t &a, const ui
     uint64x2_t c_h, c_l;
     mult_neon_72(c_h, c_l, a, b_8);
     reduce_neon_96_64(c, c_h, c_l);
+    CHECK_BOUNDS_GOLDILOCKS(c);
 }
 
 inline void Goldilocks::mult_neon_72(uint64x2_t &c_h, uint64x2_t &c_l, const uint64x2_t &a, const uint64x2_t &b)

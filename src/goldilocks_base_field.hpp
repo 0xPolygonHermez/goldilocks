@@ -443,6 +443,8 @@ public:
     static void store_neon(Goldilocks::Element *a2, const uint64x2_t &d);
     static void store_neon(Goldilocks::Element *a4, const uint64x2_t &d0, const uint64x2_t &d1);
 
+    static void to_canonical_neon(uint64x2_t &b, const uint64x2_t &a);
+
     static void add_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
     static void sub_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
 
