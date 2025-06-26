@@ -1,6 +1,7 @@
 #ifndef GOLDILOCKS_AVX512
 #define GOLDILOCKS_AVX512
-#ifdef __AVX512__
+
+#ifdef __USE_AVX512__
 #include "goldilocks_base_field.hpp"
 #include <immintrin.h>
 
@@ -1422,5 +1423,5 @@ inline void Goldilocks::mul_avx512(Element *c, uint64_t offset_c[AVX512_SIZE_], 
     }
 };
 
-#endif
-#endif
+#endif  // __USE_AVX512__
+#endif  // GOLDILOCKS_AVX512
