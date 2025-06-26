@@ -41,7 +41,7 @@ $(BUILD_DIR)/%.cpp.o: %.cpp
 .PHONY: clean
 
 testcpu: tests/tests.cpp $(ALLSRCS)
-	$(CXX) $(CXXFLAGS) tests/tests.cpp src/*.cpp -o $@ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -Wno-unused-variable -Wno-unused-but-set-variable tests/tests.cpp src/*.cpp -o $@ $(LDFLAGS)
 
 runtestcpu: testcpu
 	./testcpu
