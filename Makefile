@@ -80,8 +80,9 @@ $(BUILD_DIR_GPU)/%.cu.o: %.cu
 testcpu: tests/tests.cpp src/goldilocks_base_field.cpp src/goldilocks_cubic_extension.cpp src/ntt_goldilocks.cpp src/poseidon_goldilocks.cpp
 	$(CXX) $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) -Wno-unused-variable -Wno-unused-but-set-variable $^ -o $@ $(LDFLAGS) -lgtest
 
-testgpu: $(BUILD_DIR_GPU)/tests/tests.cpp.o $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
-	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ -lgtest -lgmp
+testgpu: $(BUILD_DIR)/src/goldilocks_base_field.cpp.o $(BUILD_DIR)/src/goldilocks_cubic_extension.cpp.o $(BUILD_DIR)/utils/timer_gl.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cpp.o $(BUILD_DIR)/src/poseidon_goldilocks.cpp.o $(BUILD_DIR_GPU)/src/ntt_goldilocks.cu.o $(BUILD_DIR_GPU)/src/poseidon_goldilocks.cu.o $(BUILD_DIR_GPU)/utils/cuda_utils.cu.o
+	$(CXX) -D__USE_CUDA__ $(CFLAGS) $(CPPFLAGS) $(CXXFLAGS) -Wno-unused-variable -Wno-unused-but-set-variable -c tests/tests.cpp -o $(BUILD_DIR_GPU)/tests.o
+	$(NVCC) -Xcompiler -O3 -Xcompiler -fopenmp -arch=$(CUDA_ARCH) -o $@ $^ $(BUILD_DIR_GPU)/tests.o -lgtest -lgmp
 
 runtestcpu: testcpu
 	./testcpu --gtest_filter=GOLDILOCKS_TEST.merkletree_seq

@@ -48,9 +48,9 @@ make clean
 
 CUDA code is enabled with the flag ``__USE_CUDA__``.
 
-To build the tests running only on CPU: ``make testscpu``.
+To build the tests running only on CPU: ``make testcpu``.
 
-To build the tests running on CPU+GPU: ``make testsgpu``.
+To build the tests running on CPU+GPU: ``make testgpu``.
 
 Similarly for benchmarks: ``make benchcpu`` and ``make benchgpu``.
 
@@ -82,8 +82,10 @@ g++  -I./src -MMD -MP -std=c++17 -Wall -pthread -fopenmp -D__USE_NEON__ -O3 test
 ### MacOS Native
 ```
 make -f Makefile.Arm64Macos clean
-make -f Makefile.Arm64Macos runtestcpu
-make -f Makefile.Arm64Macos runbenchcpu
+make -f Makefile.Arm64Macos testcpu
+make -f Makefile.Arm64Macos benchcpu
+./testcpu
+./benchcpu
 ```
 
 ## Profiling and Timers
