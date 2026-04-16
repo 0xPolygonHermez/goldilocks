@@ -163,6 +163,7 @@ void PoseidonGoldilocks::merkletree_batch_seq(Goldilocks::Element *tree, Goldilo
     }
 }
 
+#ifdef GOLDILOCKS_HAS_AVX2
 void PoseidonGoldilocks::hash_full_result(Goldilocks::Element *state, const Goldilocks::Element *input)
 {
     const int length = SPONGE_WIDTH * sizeof(Goldilocks::Element);
@@ -350,6 +351,366 @@ void PoseidonGoldilocks::merkletree_batch_avx(Goldilocks::Element *tree, Goldilo
         nextN = floor((pending - 1) / 2) + 1;
     }
 }
+#endif // GOLDILOCKS_HAS_AVX2
+
+#ifdef GOLDILOCKS_HAS_NEON
+#include "simd/goldilocks_simd.hpp"
+
+void PoseidonGoldilocks::hash_full_result_neon(Goldilocks::Element *state, const Goldilocks::Element *input)
+{
+    using N = goldilocks::simd::GLSimd<goldilocks::simd::Neon>;
+    const int length = SPONGE_WIDTH * sizeof(Goldilocks::Element);
+    std::memcpy(state, input, length);
+
+    uint64x2_t st[6];
+    for (int i = 0; i < 6; ++i) st[i] = N::load(&state[i * 2]);
+
+    // Initial add
+    add_neon(st, &(PoseidonGoldilocksConstants::C[0]));
+
+    // First half full rounds (except last)
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; ++r) {
+        pow7_neon(st);
+        add_neon(st, &(PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]));
+        // Matrix mul (scalar): store, mvp_, reload
+        for (int i = 0; i < 6; ++i) N::store(&state[i * 2], st[i]);
+        mvp_neon(state, PoseidonGoldilocksConstants::M, /*mat_is_small=*/true);
+        for (int i = 0; i < 6; ++i) st[i] = N::load(&state[i * 2]);
+    }
+
+    // Last full round before partial
+    pow7_neon(st);
+    add_neon(st, &(PoseidonGoldilocksConstants::C[HALF_N_FULL_ROUNDS * SPONGE_WIDTH]));
+    for (int i = 0; i < 6; ++i) N::store(&state[i * 2], st[i]);
+    mvp_neon(state, PoseidonGoldilocksConstants::P);
+
+    // Partial rounds (scalar — mirrors _seq exactly)
+    for (int r = 0; r < N_PARTIAL_ROUNDS; ++r) {
+        pow7(state[0]);
+        state[0] = state[0] + PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r];
+        Goldilocks::Element s0 = dot_neon(state, &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r]));
+        Goldilocks::Element W_[SPONGE_WIDTH];
+        prod_(W_, state[0], &(PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r + SPONGE_WIDTH - 1]));
+        add_(state, W_);
+        state[0] = s0;
+    }
+
+    // Second half full rounds (except last)
+    for (int i = 0; i < 6; ++i) st[i] = N::load(&state[i * 2]);
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; ++r) {
+        pow7_neon(st);
+        add_neon(st, &(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]));
+        for (int i = 0; i < 6; ++i) N::store(&state[i * 2], st[i]);
+        mvp_neon(state, PoseidonGoldilocksConstants::M, /*mat_is_small=*/true);
+        for (int i = 0; i < 6; ++i) st[i] = N::load(&state[i * 2]);
+    }
+
+    // Final pow7 + mvp, then canonicalize once before exit (Phase 1h:
+    // intermediate muls are non-canonical for speed; single canonicalize
+    // at the state boundary).
+    pow7_neon(st);
+    for (int i = 0; i < 6; ++i) N::store(&state[i * 2], st[i]);
+    mvp_neon(state, PoseidonGoldilocksConstants::M, /*mat_is_small=*/true);
+    for (int i = 0; i < 6; ++i) {
+        N::store(&state[i * 2], N::canonicalize(N::load(&state[i * 2])));
+    }
+}
+
+// Phase 1c: 2-hash-parallel NEON Poseidon. Processes 2 independent hashes
+// simultaneously; lane 0 is hash A, lane 1 is hash B. Each operation naturally
+// parallelizes across both hashes. For full-round pow7 + add + mvp this doubles
+// hash throughput vs the single-hash NEON path.
+void PoseidonGoldilocks::hash_full_result_neon_2(
+    Goldilocks::Element *state_A, const Goldilocks::Element *input_A,
+    Goldilocks::Element *state_B, const Goldilocks::Element *input_B)
+{
+    using N = goldilocks::simd::GLSimd<goldilocks::simd::Neon>;
+
+    // Load: st[k] = {input_A[k], input_B[k]}
+    uint64x2_t st[12];
+    for (int k = 0; k < 12; ++k) {
+        st[k] = N::set(input_A[k].fe, input_B[k].fe);
+    }
+
+    // Initial add (C[0..11])
+    for (int k = 0; k < 12; ++k) {
+        st[k] = N::add(st[k], N::splat(PoseidonGoldilocksConstants::C[k].fe));
+    }
+
+    // Phase 1j: unrolled in pairs — two independent mul chains per iteration.
+    auto pow7_pair = [&]() {
+        for (int k = 0; k < 12; k += 2) {
+            auto a0 = st[k];
+            auto a1 = st[k + 1];
+            auto pw2_0 = N::square_reduced(a0);
+            auto pw2_1 = N::square_reduced(a1);
+            auto pw4_0 = N::square_reduced(pw2_0);
+            auto pw4_1 = N::square_reduced(pw2_1);
+            auto pw3_0 = N::mul_reduced(pw2_0, a0);
+            auto pw3_1 = N::mul_reduced(pw2_1, a1);
+            st[k]     = N::mul_reduced(pw3_0, pw4_0);
+            st[k + 1] = N::mul_reduced(pw3_1, pw4_1);
+        }
+    };
+    auto add_pair = [&](const Goldilocks::Element *C) {
+        for (int k = 0; k < 12; ++k) {
+            st[k] = N::add(st[k], N::splat(C[k].fe));
+        }
+    };
+
+    // First half full rounds (except last)
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; ++r) {
+        pow7_pair();
+        add_pair(&PoseidonGoldilocksConstants::C[(r + 1) * SPONGE_WIDTH]);
+        mvp_neon_2(st, PoseidonGoldilocksConstants::M, /*mat_is_small=*/true);
+    }
+
+    // Transition round
+    pow7_pair();
+    add_pair(&PoseidonGoldilocksConstants::C[HALF_N_FULL_ROUNDS * SPONGE_WIDTH]);
+    mvp_neon_2(st, PoseidonGoldilocksConstants::P);
+
+    // Partial rounds: pow7 on st[0] (both hashes in parallel), scalar S-box on state[0],
+    // lane-parallel dot product and lane-parallel W accumulation.
+    for (int r = 0; r < N_PARTIAL_ROUNDS; ++r) {
+        // pow7 on st[0] — both hashes parallel
+        auto pw2 = N::square_reduced(st[0]);
+        auto pw4 = N::square_reduced(pw2);
+        auto pw3 = N::mul_reduced(pw2, st[0]);
+        st[0] = N::mul_reduced(pw3, pw4);
+
+        // st[0] += C[...+r]
+        st[0] = N::add(st[0], N::splat(PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + r].fe));
+
+        // Phase 1o: bulk-reduce dot product. Accumulate 12 full 64-bit muls into
+        // (sum_lo, sum_hi, cl_carries, ch_carries) per lane, reduce once.
+        const Goldilocks::Element *S = &PoseidonGoldilocksConstants::S[(SPONGE_WIDTH * 2 - 1) * r];
+        uint64_t slo0 = 0, shi0 = 0, cl0 = 0, ch0 = 0;
+        uint64_t slo1 = 0, shi1 = 0, cl1 = 0, ch1 = 0;
+        for (int k = 0; k < SPONGE_WIDTH; ++k) {
+            uint64_t a0 = vgetq_lane_u64(st[k], 0);
+            uint64_t a1 = vgetq_lane_u64(st[k], 1);
+            N::accumulate_full_pair(a0, a1, S[k].fe,
+                slo0, shi0, cl0, ch0,
+                slo1, shi1, cl1, ch1);
+        }
+        uint64_t r0 = N::finalize_full_sum(slo0, shi0, cl0, ch0);
+        uint64_t r1 = N::finalize_full_sum(slo1, shi1, cl1, ch1);
+        uint64_t tmp_s0[2] = {r0, r1};
+        uint64x2_t s0 = vld1q_u64(tmp_s0);
+
+        // W[k] = st[0] * S[SPONGE_WIDTH - 1 + k], state[k] += W[k]
+        uint64x2_t st0_saved = st[0];
+        for (int k = 0; k < SPONGE_WIDTH; ++k) {
+            uint64x2_t W_k = N::mul_reduced(st0_saved, N::splat(S[SPONGE_WIDTH - 1 + k].fe));
+            st[k] = N::add(st[k], W_k);
+        }
+        st[0] = s0;
+    }
+
+    // Second half full rounds (except last)
+    for (int r = 0; r < HALF_N_FULL_ROUNDS - 1; ++r) {
+        pow7_pair();
+        add_pair(&PoseidonGoldilocksConstants::C[(HALF_N_FULL_ROUNDS + 1) * SPONGE_WIDTH + N_PARTIAL_ROUNDS + r * SPONGE_WIDTH]);
+        mvp_neon_2(st, PoseidonGoldilocksConstants::M, /*mat_is_small=*/true);
+    }
+
+    // Final pow7 + mvp
+    pow7_pair();
+    mvp_neon_2(st, PoseidonGoldilocksConstants::M, /*mat_is_small=*/true);
+
+    // Canonicalize at store (Phase 1h: muls inside the hash are non-canonical).
+    Goldilocks::Element lanes[2];
+    for (int k = 0; k < 12; ++k) {
+        N::store(lanes, N::canonicalize(st[k]));
+        state_A[k].fe = lanes[0].fe;
+        state_B[k].fe = lanes[1].fe;
+    }
+}
+
+void PoseidonGoldilocks::linear_hash_neon(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size)
+{
+    uint64_t remaining = size;
+    Goldilocks::Element state[SPONGE_WIDTH];
+
+    if (size <= CAPACITY) {
+        std::memcpy(output, input, size * sizeof(Goldilocks::Element));
+        std::memset(&output[size], 0, (CAPACITY - size) * sizeof(Goldilocks::Element));
+        return;
+    }
+    while (remaining) {
+        if (remaining == size) {
+            memset(state + RATE, 0, CAPACITY * sizeof(Goldilocks::Element));
+        } else {
+            std::memcpy(state + RATE, state, CAPACITY * sizeof(Goldilocks::Element));
+        }
+        uint64_t n = (remaining < RATE) ? remaining : RATE;
+        memset(&state[n], 0, (RATE - n) * sizeof(Goldilocks::Element));
+        std::memcpy(state, input + (size - remaining), n * sizeof(Goldilocks::Element));
+        hash_full_result_neon(state, state);
+        remaining -= n;
+    }
+    if (size > 0) {
+        std::memcpy(output, state, CAPACITY * sizeof(Goldilocks::Element));
+    } else {
+        memset(output, 0, CAPACITY * sizeof(Goldilocks::Element));
+    }
+}
+
+void PoseidonGoldilocks::linear_hash_neon_pair(
+    Goldilocks::Element *out_A, Goldilocks::Element *in_A,
+    Goldilocks::Element *out_B, Goldilocks::Element *in_B,
+    uint64_t size)
+{
+    uint64_t remaining = size;
+    Goldilocks::Element stateA[SPONGE_WIDTH], stateB[SPONGE_WIDTH];
+
+    if (size <= CAPACITY) {
+        std::memcpy(out_A, in_A, size * sizeof(Goldilocks::Element));
+        std::memset(&out_A[size], 0, (CAPACITY - size) * sizeof(Goldilocks::Element));
+        std::memcpy(out_B, in_B, size * sizeof(Goldilocks::Element));
+        std::memset(&out_B[size], 0, (CAPACITY - size) * sizeof(Goldilocks::Element));
+        return;
+    }
+    while (remaining) {
+        if (remaining == size) {
+            std::memset(stateA + RATE, 0, CAPACITY * sizeof(Goldilocks::Element));
+            std::memset(stateB + RATE, 0, CAPACITY * sizeof(Goldilocks::Element));
+        } else {
+            std::memcpy(stateA + RATE, stateA, CAPACITY * sizeof(Goldilocks::Element));
+            std::memcpy(stateB + RATE, stateB, CAPACITY * sizeof(Goldilocks::Element));
+        }
+        uint64_t n = (remaining < RATE) ? remaining : RATE;
+        std::memset(&stateA[n], 0, (RATE - n) * sizeof(Goldilocks::Element));
+        std::memset(&stateB[n], 0, (RATE - n) * sizeof(Goldilocks::Element));
+        std::memcpy(stateA, in_A + (size - remaining), n * sizeof(Goldilocks::Element));
+        std::memcpy(stateB, in_B + (size - remaining), n * sizeof(Goldilocks::Element));
+        hash_full_result_neon_2(stateA, stateA, stateB, stateB);
+        remaining -= n;
+    }
+    if (size > 0) {
+        std::memcpy(out_A, stateA, CAPACITY * sizeof(Goldilocks::Element));
+        std::memcpy(out_B, stateB, CAPACITY * sizeof(Goldilocks::Element));
+    } else {
+        std::memset(out_A, 0, CAPACITY * sizeof(Goldilocks::Element));
+        std::memset(out_B, 0, CAPACITY * sizeof(Goldilocks::Element));
+    }
+}
+
+void PoseidonGoldilocks::merkletree_neon(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads, uint64_t dim)
+{
+    if (num_rows == 0) return;
+    Goldilocks::Element *cursor = tree;
+    if (nThreads == 0) nThreads = omp_get_max_threads();
+
+    // Phase 1c: first-pass linear_hash uses 2-row-parallel variant when possible.
+    uint64_t paired_rows = num_rows & ~uint64_t{1};
+#pragma omp parallel for num_threads(nThreads)
+    for (uint64_t i = 0; i < paired_rows; i += 2) {
+        linear_hash_neon_pair(
+            &cursor[i * CAPACITY],       &input[i * num_cols * dim],
+            &cursor[(i+1) * CAPACITY],   &input[(i+1) * num_cols * dim],
+            num_cols * dim);
+    }
+    if (num_rows & 1) {
+        uint64_t i = num_rows - 1;
+        linear_hash_neon(&cursor[i * CAPACITY], &input[i * num_cols * dim], num_cols * dim);
+    }
+
+    // Phase 1i: pair-hash for tree rebuild as well. Adjacent output slots are
+    // independent hashes over independent pol_inputs; pair them via
+    // hash_full_result_neon_2. Odd tail uses single-hash fallback.
+    uint64_t pending = num_rows;
+    uint64_t nextN = floor((pending - 1) / 2) + 1;
+    uint64_t nextIndex = 0;
+    while (pending > 1) {
+        uint64_t paired = nextN & ~uint64_t{1};
+#pragma omp parallel for num_threads(nThreads)
+        for (uint64_t i = 0; i < paired; i += 2) {
+            Goldilocks::Element pol_A[SPONGE_WIDTH], pol_B[SPONGE_WIDTH];
+            memset(pol_A, 0, SPONGE_WIDTH * sizeof(Goldilocks::Element));
+            memset(pol_B, 0, SPONGE_WIDTH * sizeof(Goldilocks::Element));
+            std::memcpy(pol_A, &cursor[nextIndex + i       * RATE], RATE * sizeof(Goldilocks::Element));
+            std::memcpy(pol_B, &cursor[nextIndex + (i + 1) * RATE], RATE * sizeof(Goldilocks::Element));
+            Goldilocks::Element out_A[SPONGE_WIDTH], out_B[SPONGE_WIDTH];
+            hash_full_result_neon_2(out_A, pol_A, out_B, pol_B);
+            std::memcpy(&cursor[nextIndex + (pending + i      ) * CAPACITY], out_A, CAPACITY * sizeof(Goldilocks::Element));
+            std::memcpy(&cursor[nextIndex + (pending + i + 1  ) * CAPACITY], out_B, CAPACITY * sizeof(Goldilocks::Element));
+        }
+        if (nextN & 1) {
+            uint64_t i = nextN - 1;
+            Goldilocks::Element pol_input[SPONGE_WIDTH];
+            memset(pol_input, 0, SPONGE_WIDTH * sizeof(Goldilocks::Element));
+            std::memcpy(pol_input, &cursor[nextIndex + i * RATE], RATE * sizeof(Goldilocks::Element));
+            hash_neon((Goldilocks::Element(&)[CAPACITY])cursor[nextIndex + (pending + i) * CAPACITY], pol_input);
+        }
+        nextIndex += pending * CAPACITY;
+        pending = pending / 2;
+        nextN = floor((pending - 1) / 2) + 1;
+    }
+}
+
+void PoseidonGoldilocks::merkletree_batch_neon(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads, uint64_t dim)
+{
+    if (num_rows == 0) return;
+    Goldilocks::Element *cursor = tree;
+    uint64_t nbatches = 1;
+    if (num_cols > 0) {
+        nbatches = (num_cols + batch_size - 1) / batch_size;
+    }
+    uint64_t nlastb = num_cols - (nbatches - 1) * batch_size;
+    if (nThreads == 0) nThreads = omp_get_max_threads();
+
+#pragma omp parallel for num_threads(nThreads)
+    for (uint64_t i = 0; i < num_rows; i++) {
+        Goldilocks::Element buff0[nbatches * CAPACITY];
+        for (uint64_t j = 0; j < nbatches; j++) {
+            uint64_t nn = batch_size;
+            if (j == nbatches - 1) nn = nlastb;
+            linear_hash_neon(&buff0[j * CAPACITY], &input[i * num_cols * dim + j * batch_size * dim], nn * dim);
+        }
+        linear_hash_neon(&cursor[i * CAPACITY], buff0, nbatches * CAPACITY);
+    }
+
+    // Phase 1i: pair-hash for batch tree rebuild.
+    uint64_t pending = num_rows;
+    uint64_t nextN = floor((pending - 1) / 2) + 1;
+    uint64_t nextIndex = 0;
+    while (pending > 1) {
+        uint64_t paired = nextN & ~uint64_t{1};
+#pragma omp parallel for num_threads(nThreads)
+        for (uint64_t i = 0; i < paired; i += 2) {
+            Goldilocks::Element pol_A[SPONGE_WIDTH], pol_B[SPONGE_WIDTH];
+            memset(pol_A, 0, SPONGE_WIDTH * sizeof(Goldilocks::Element));
+            memset(pol_B, 0, SPONGE_WIDTH * sizeof(Goldilocks::Element));
+            std::memcpy(pol_A, &cursor[nextIndex + i       * RATE], RATE * sizeof(Goldilocks::Element));
+            std::memcpy(pol_B, &cursor[nextIndex + (i + 1) * RATE], RATE * sizeof(Goldilocks::Element));
+            Goldilocks::Element out_A[SPONGE_WIDTH], out_B[SPONGE_WIDTH];
+            hash_full_result_neon_2(out_A, pol_A, out_B, pol_B);
+            std::memcpy(&cursor[nextIndex + (pending + i      ) * CAPACITY], out_A, CAPACITY * sizeof(Goldilocks::Element));
+            std::memcpy(&cursor[nextIndex + (pending + i + 1  ) * CAPACITY], out_B, CAPACITY * sizeof(Goldilocks::Element));
+        }
+        if (nextN & 1) {
+            uint64_t i = nextN - 1;
+            Goldilocks::Element pol_input[SPONGE_WIDTH];
+            memset(pol_input, 0, SPONGE_WIDTH * sizeof(Goldilocks::Element));
+            std::memcpy(pol_input, &cursor[nextIndex + i * RATE], RATE * sizeof(Goldilocks::Element));
+            hash_neon((Goldilocks::Element(&)[CAPACITY])cursor[nextIndex + (pending + i) * CAPACITY], pol_input);
+        }
+        nextIndex += pending * CAPACITY;
+        pending = pending / 2;
+        nextN = floor((pending - 1) / 2) + 1;
+    }
+}
+#endif // GOLDILOCKS_HAS_NEON
+
+#ifdef GOLDILOCKS_HAS_METAL
+#include "metal/goldilocks_metal.hpp"
+void PoseidonGoldilocks::merkletree_metal(Goldilocks::Element *tree, Goldilocks::Element *input,
+                                          uint64_t num_cols, uint64_t num_rows) {
+    goldilocks_metal::merkletree_metal(tree, input, num_cols, num_rows);
+}
+#endif
 
 #ifdef __AVX512__
 void PoseidonGoldilocks::hash_full_result_avx512(Goldilocks::Element *state, const Goldilocks::Element *input)

@@ -4,6 +4,7 @@
 
 inline uint64_t Goldilocks::to_montgomery(const uint64_t &in1)
 {
+#ifdef GOLDILOCKS_ARCH_X86_64
     uint64_t res;
     __asm__(
         "xor   %%r10, %%r10\n\t"
@@ -21,9 +22,34 @@ inline uint64_t Goldilocks::to_montgomery(const uint64_t &in1)
         : "r"(in1), "m"(MM), "m"(Q), "m"(CQ), "m"(R2)
         : "%rax", "%r8", "%r9", "%r10");
     return res;
+#else
+    const uint64_t p = GOLDILOCKS_PRIME;
+    const uint64_t mm = MM.fe;
+    const uint64_t r2 = R2.fe;
+
+    __uint128_t t = (__uint128_t)in1 * r2;
+    uint64_t t_lo = (uint64_t)t;
+    uint64_t t_hi = (uint64_t)(t >> 64);
+
+    uint64_t m = t_lo * mm;
+    __uint128_t mp = (__uint128_t)m * p;
+    uint64_t mp_lo = (uint64_t)mp;
+    uint64_t mp_hi = (uint64_t)(mp >> 64);
+
+    uint64_t r_lo = t_lo + mp_lo;
+    uint64_t carry = (r_lo < t_lo) ? 1 : 0;
+
+    uint64_t r_hi_a = t_hi + mp_hi;
+    uint64_t c_a = (r_hi_a < t_hi) ? 1 : 0;
+    uint64_t r_hi = r_hi_a + carry;
+    uint64_t c_b = (r_hi < r_hi_a) ? 1 : 0;
+
+    return r_hi + (c_a | c_b) * CQ.fe;
+#endif
 }
 inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
 {
+#ifdef GOLDILOCKS_ARCH_X86_64
     uint64_t res;
     __asm__(
         "xor   %%r10, %%r10\n\t"
@@ -39,6 +65,23 @@ inline uint64_t Goldilocks::from_montgomery(const uint64_t &in1)
         : "r"(in1), "m"(MM), "m"(Q), "m"(CQ)
         : "%rax", "%r8", "%r9", "%r10");
     return res;
+#else
+    const uint64_t p = GOLDILOCKS_PRIME;
+    const uint64_t mm = MM.fe;
+
+    uint64_t m = in1 * mm;
+    __uint128_t mp = (__uint128_t)m * p;
+    uint64_t mp_lo = (uint64_t)mp;
+    uint64_t mp_hi = (uint64_t)(mp >> 64);
+
+    uint64_t r_lo = in1 + mp_lo;
+    uint64_t carry = (r_lo < in1) ? 1 : 0;
+
+    uint64_t r_hi = mp_hi + carry;
+    uint64_t carry2 = (mp_hi == UINT64_MAX && carry) ? 1 : 0;
+
+    return r_hi + carry2 * CQ.fe;
+#endif
 }
 
 inline const Goldilocks::Element &Goldilocks::zero() { return ZERO; };
@@ -118,7 +161,7 @@ inline Goldilocks::Element Goldilocks::fromString(const std::string &in1, int ra
 inline void Goldilocks::fromString(Element &result, const std::string &in1, int radix)
 {
     mpz_class aux(in1, radix);
-    aux = (aux + (uint64_t)GOLDILOCKS_PRIME) % (uint64_t)GOLDILOCKS_PRIME;
+    aux = (aux + (unsigned long)GOLDILOCKS_PRIME) % (unsigned long)GOLDILOCKS_PRIME;
 #if USE_MONTGOMERY == 1
     result.fe = Goldilocks::to_montgomery(aux.get_ui());
 #else
@@ -135,7 +178,7 @@ inline Goldilocks::Element Goldilocks::fromScalar(const mpz_class &scalar)
 
 inline void Goldilocks::fromScalar(Element &result, const mpz_class &scalar)
 {
-    mpz_class aux = (scalar + (uint64_t)GOLDILOCKS_PRIME) % (uint64_t)GOLDILOCKS_PRIME;
+    mpz_class aux = (scalar + (unsigned long)GOLDILOCKS_PRIME) % (unsigned long)GOLDILOCKS_PRIME;
 #if USE_MONTGOMERY == 1
     result.fe = Goldilocks::to_montgomery(aux.get_ui());
 #else
@@ -172,13 +215,13 @@ inline int64_t Goldilocks::toS64(const Element &in1)
 /* Converts a field element into a signed 64bits integer */
 inline void Goldilocks::toS64(int64_t &result, const Element &in1)
 {
-    mpz_class out = Goldilocks::toU64(in1);
+    mpz_class out((unsigned long)Goldilocks::toU64(in1));
 
-    mpz_class maxInt(((uint64_t)GOLDILOCKS_PRIME - 1) / 2);
+    mpz_class maxInt((unsigned long)(((unsigned long)GOLDILOCKS_PRIME - 1) / 2));
 
     if (out > maxInt)
     {
-        mpz_class onegative = (uint64_t)GOLDILOCKS_PRIME - out;
+        mpz_class onegative = (unsigned long)GOLDILOCKS_PRIME - out;
         result = -onegative.get_si();
     }
     else
@@ -191,14 +234,14 @@ inline void Goldilocks::toS64(int64_t &result, const Element &in1)
 /* Precondition:  Goldilocks::Element < 2^31 */
 inline bool Goldilocks::toS32(int32_t &result, const Element &in1)
 {
-    mpz_class out = Goldilocks::toU64(in1);
+    mpz_class out((unsigned long)Goldilocks::toU64(in1));
 
     mpz_class maxInt(0x7FFFFFFF);
-    mpz_class minInt = (uint64_t)GOLDILOCKS_PRIME - 0x80000000;
+    mpz_class minInt = (unsigned long)GOLDILOCKS_PRIME - 0x80000000;
 
     if (out > maxInt)
     {
-        mpz_class onegative = (uint64_t)GOLDILOCKS_PRIME - out;
+        mpz_class onegative = (unsigned long)GOLDILOCKS_PRIME - out;
         if (out > minInt)
         {
             result = -onegative.get_si();
@@ -225,7 +268,7 @@ inline std::string Goldilocks::toString(const Element &in1, int radix)
 
 inline void Goldilocks::toString(std::string &result, const Element &in1, int radix)
 {
-    mpz_class aux = Goldilocks::toU64(in1);
+    mpz_class aux((unsigned long)Goldilocks::toU64(in1));
     result = aux.get_str(radix);
 }
 
@@ -234,7 +277,7 @@ inline std::string Goldilocks::toString(const Element *in1, const uint64_t size,
     std::string result = "";
     for (uint64_t i = 0; i < size; i++)
     {
-        mpz_class aux = Goldilocks::toU64(in1[i]);
+        mpz_class aux((unsigned long)Goldilocks::toU64(in1[i]));
         result += std::to_string(i) + ": " + aux.get_str(radix) + "\n";
     }
     return result;

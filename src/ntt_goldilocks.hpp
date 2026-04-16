@@ -172,6 +172,13 @@ public:
     }
     void extendPol(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t N_Extended, uint64_t N, uint64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, u_int64_t nblock = NUM_BLOCKS);
 
+#ifdef GOLDILOCKS_HAS_METAL
+    // Expose internal roots array and its length (1 << s) for Metal twiddle staging.
+    inline const Goldilocks::Element* roots_ptr() const { return roots; }
+    inline uint64_t roots_len() const { return (s == 0) ? 0ULL : (1ULL << s); }
+    inline u_int32_t get_s() const { return s; }
+#endif // GOLDILOCKS_HAS_METAL
+
 #ifdef __USE_CUDA__
     // Calculating on a single GPU
     void LDE_MerkleTree_GPU(Goldilocks::Element *dst, Goldilocks::Element *src, u_int64_t size, u_int64_t ext_size, u_int64_t ncols, Goldilocks::Element *buffer = NULL, u_int64_t nphase = NUM_PHASES, bool buildMerkleTree = true);
@@ -187,6 +194,23 @@ public:
     void LDE_MerkleTree_MultiGPU_Init(u_int64_t size, u_int64_t ext_size, u_int64_t ncols);
     void LDE_MerkleTree_MultiGPU_Free();
 #endif  // __USE_CUDA__
+
+#ifdef GOLDILOCKS_HAS_METAL
+    void NTT_Metal(Goldilocks::Element* dst, Goldilocks::Element* src,
+                   uint64_t size, uint64_t ncols, bool inverse=false);
+
+    // Metal-accelerated Low-Degree Extension. Mirrors `extendPol` semantics:
+    //   INTT(input of size N×ncols, with coset shift) →
+    //   zero-extend to N_Extended →
+    //   forward NTT on N_Extended×ncols.
+    // Allocates the internal extended-domain roots the first time through;
+    // ensures `computeR(N)` has run so `r_` is populated.
+    void extendPol_Metal(Goldilocks::Element* output,
+                         Goldilocks::Element* input,
+                         uint64_t N_Extended,
+                         uint64_t N,
+                         uint64_t ncols);
+#endif
 };
 
 #endif

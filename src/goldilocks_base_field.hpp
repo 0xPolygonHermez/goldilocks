@@ -1,12 +1,22 @@
 #ifndef GOLDILOCKS_BASE
 #define GOLDILOCKS_BASE
 
+#include "platform.hpp"
+
 #include <stdint.h> // uint64_t
 #include <string>   // string
 #include <gmpxx.h>
 #include <iostream> // string
+#ifdef _OPENMP
 #include <omp.h>
+#endif
+#ifdef GOLDILOCKS_ARCH_X86_64
 #include <immintrin.h>
+#endif
+#ifdef GOLDILOCKS_HAS_NEON
+#include <arm_neon.h>
+#endif
+
 
 #define USE_MONTGOMERY 0
 #define GOLDILOCKS_DEBUG 0
@@ -162,8 +172,21 @@ public:
     static void mul_batch(Element *result, const Element *in1, const Element *in2, const uint64_t offsets1[4], const uint64_t offsets2[4]);
 
     /*
+        NEON operations (ARM64 only)
+    */
+#ifdef GOLDILOCKS_HAS_NEON
+    static inline void load_neon(uint64x2_t &a, const Goldilocks::Element *p);
+    static inline void store_neon(Goldilocks::Element *p, const uint64x2_t &a);
+    static inline void add_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
+    static inline void sub_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
+    static inline void mult_neon(uint64x2_t &c, const uint64x2_t &a, const uint64x2_t &b);
+    static inline void square_neon(uint64x2_t &c, const uint64x2_t &a);
+#endif // GOLDILOCKS_HAS_NEON
+
+    /*
         AVX operations
     */
+#ifdef GOLDILOCKS_HAS_AVX2
     static void set_avx(__m256i &a, const Goldilocks::Element &a3, const Goldilocks::Element &a2, const Goldilocks::Element &a1, const Goldilocks::Element &a0);
     static void load_avx(__m256i &a, const Goldilocks::Element *a4);
     static void load_avx_a(__m256i &a, const Goldilocks::Element *a4_a);
@@ -298,7 +321,8 @@ public:
     static void mul_avx(Element *c, uint64_t offset_c[4], const __m256i &a_, const Element *b, uint64_t offset_b);
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a4, const __m256i &b_, const uint64_t offset_a[4]);
     static void mul_avx(Element *c, uint64_t offset_c[4], const Element *a, const Element *b, const uint64_t offset_a[4], const uint64_t offset_b[4]);
-    
+#endif // GOLDILOCKS_HAS_AVX2
+
 
     /*
         AVX512 operations
@@ -439,9 +463,17 @@ inline Goldilocks::Element operator+(const Goldilocks::Element &in1) { return in
 #include "goldilocks_base_field_tools.hpp"
 #include "goldilocks_base_field_scalar.hpp"
 #include "goldilocks_base_field_batch.hpp"
+#ifdef GOLDILOCKS_HAS_AVX2
 #include "goldilocks_base_field_avx.hpp"
+#endif
 #ifdef __AVX512__
 #include "goldilocks_base_field_avx512.hpp"
 #endif
+
+// SIMD traits layer (Architect B, Phase 1). Header-only; no behavior change
+// for existing call sites. Templated consumers (Poseidon, cubic ext) opt in
+// by consuming GLSimd<B> primitives; legacy *_avx.hpp path is unaffected.
+// The umbrella defines the Goldilocks::*_neon public wrappers (ARM64 only).
+#include "simd/goldilocks_simd.hpp"
 
 #endif // GOLDILOCKS_BASE

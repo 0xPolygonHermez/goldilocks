@@ -3,7 +3,9 @@
 
 #include "poseidon_goldilocks_constants.hpp"
 #include "goldilocks_base_field.hpp"
+#ifdef GOLDILOCKS_ARCH_X86_64
 #include <immintrin.h>
+#endif
 
 #define RATE 8
 #define CAPACITY 4
@@ -26,10 +28,20 @@ private:
     inline Goldilocks::Element static dot_(Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static prod_(Goldilocks::Element *x, const Goldilocks::Element alpha, const Goldilocks::Element C[SPONGE_WIDTH]);
 
+#ifdef GOLDILOCKS_HAS_AVX2
     inline void static add_avx(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static pow7_avx(__m256i &st0, __m256i &st1, __m256i &st2);
     inline void static add_avx_a(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
     inline void static add_avx_small(__m256i &st0, __m256i &st1, __m256i &st2, const Goldilocks::Element C[SPONGE_WIDTH]);
+#endif // GOLDILOCKS_HAS_AVX2
+
+#ifdef GOLDILOCKS_HAS_NEON
+    inline void static add_neon(uint64x2_t st[6], const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static pow7_neon(uint64x2_t st[6]);
+    inline void static mvp_neon(Goldilocks::Element *state, const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH], bool mat_is_small = false);
+    inline Goldilocks::Element static dot_neon(const Goldilocks::Element *x, const Goldilocks::Element C[SPONGE_WIDTH]);
+    inline void static mvp_neon_2(uint64x2_t st[12], const Goldilocks::Element mat[SPONGE_WIDTH][SPONGE_WIDTH], bool mat_is_small = false);
+#endif // GOLDILOCKS_HAS_NEON
 
 #ifdef __AVX512__
     inline void static pow7_avx512(__m512i &st0, __m512i &st1, __m512i &st2);
@@ -53,11 +65,28 @@ public:
     // Vectorized AVX:
     // Note, the functions that do not have the _avx suffix are the default ones to
     // be used in the prover, they implement avx vectorixation though.
+#ifdef GOLDILOCKS_HAS_AVX2
     void static hash_full_result(Goldilocks::Element *, const Goldilocks::Element *);
     void static hash(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
     void static linear_hash(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
     void static merkletree_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
     void static merkletree_batch_avx(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1);
+#endif // GOLDILOCKS_HAS_AVX2
+
+#ifdef GOLDILOCKS_HAS_NEON
+    void static hash_full_result_neon(Goldilocks::Element *, const Goldilocks::Element *);
+    void static hash_full_result_neon_2(
+        Goldilocks::Element *state_A, const Goldilocks::Element *input_A,
+        Goldilocks::Element *state_B, const Goldilocks::Element *input_B);
+    inline void static hash_neon(Goldilocks::Element (&state)[CAPACITY], const Goldilocks::Element (&input)[SPONGE_WIDTH]);
+    void static linear_hash_neon(Goldilocks::Element *output, Goldilocks::Element *input, uint64_t size);
+    // Phase 1c: 2-row linear-hash. Assumes both rows have the same size.
+    void static linear_hash_neon_pair(Goldilocks::Element *out_A, Goldilocks::Element *in_A,
+                                       Goldilocks::Element *out_B, Goldilocks::Element *in_B,
+                                       uint64_t size);
+    void static merkletree_neon(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, int nThreads = 0, uint64_t dim = 1);
+    void static merkletree_batch_neon(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads = 0, uint64_t dim = 1);
+#endif // GOLDILOCKS_HAS_NEON
 
 #ifdef __AVX512__
     // Vectorized AVX512:
@@ -75,6 +104,11 @@ public:
     void static partial_hash_gpu(uint64_t *input, uint32_t num_cols, uint32_t num_rows, uint64_t *state);
     void static merkletree_cuda_multi_gpu_full(Goldilocks::Element *tree, uint64_t** gpu_inputs, uint64_t** gpu_trees, void* gpu_streams, uint64_t num_cols, uint64_t num_rows, uint64_t num_rows_device, uint32_t const ngpu, uint64_t dim = 1);
 #endif
+
+#ifdef GOLDILOCKS_HAS_METAL
+    static void merkletree_metal(Goldilocks::Element *tree, Goldilocks::Element *input,
+                                 uint64_t num_cols, uint64_t num_rows);
+#endif
 };
 
 // WRAPPERS
@@ -83,16 +117,24 @@ inline void PoseidonGoldilocks::merkletree(Goldilocks::Element *tree, Goldilocks
 {
 #ifdef __AVX512__
     merkletree_avx512(tree, input, num_cols, num_rows, nThreads, dim);
-#else
+#elif defined(GOLDILOCKS_HAS_AVX2)
     merkletree_avx(tree, input, num_cols, num_rows, nThreads, dim);
+#elif defined(GOLDILOCKS_HAS_NEON)
+    merkletree_neon(tree, input, num_cols, num_rows, nThreads, dim);
+#else
+    merkletree_seq(tree, input, num_cols, num_rows, nThreads, dim);
 #endif
 }
 inline void PoseidonGoldilocks::merkletree_batch(Goldilocks::Element *tree, Goldilocks::Element *input, uint64_t num_cols, uint64_t num_rows, uint64_t batch_size, int nThreads, uint64_t dim)
 {
 #ifdef __AVX512__
     merkletree_batch_avx512(tree, input, num_cols, num_rows, batch_size, nThreads, dim);
-#else
+#elif defined(GOLDILOCKS_HAS_AVX2)
     merkletree_batch_avx(tree, input, num_cols, num_rows, batch_size, nThreads, dim);
+#elif defined(GOLDILOCKS_HAS_NEON)
+    merkletree_batch_neon(tree, input, num_cols, num_rows, batch_size, nThreads, dim);
+#else
+    merkletree_batch_seq(tree, input, num_cols, num_rows, batch_size, nThreads, dim);
 #endif
 }
 
@@ -176,7 +218,13 @@ inline void PoseidonGoldilocks::hash_seq(Goldilocks::Element (&state)[CAPACITY],
     std::memcpy(state, aux, CAPACITY * sizeof(Goldilocks::Element));
 }
 
+#ifdef GOLDILOCKS_HAS_AVX2
 #include "poseidon_goldilocks_avx.hpp"
+#endif
+
+#ifdef GOLDILOCKS_HAS_NEON
+#include "poseidon_goldilocks_neon.hpp"
+#endif
 
 #ifdef __AVX512__
 #include "poseidon_goldilocks_avx512.hpp"

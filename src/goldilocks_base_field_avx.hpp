@@ -1,7 +1,9 @@
 #ifndef GOLDILOCKS_AVX
 #define GOLDILOCKS_AVX
 #include "goldilocks_base_field.hpp"
+#ifdef GOLDILOCKS_ARCH_X86_64
 #include <immintrin.h>
+#endif
 
 // NOTATION:
 // _c value is in canonical form
@@ -18,11 +20,13 @@
 // 3. (unsigned) a < (unsigned) b iff (signed) a_s < (singed) b_s (AVX2 does not support unsingend 64-bit comparisons)
 // 4. a_s + b = (a+b)_s. Dem: a+(1<<63)+b = a+b+(1<<63)
 
+#ifdef GOLDILOCKS_HAS_AVX2
 const __m256i MSB = _mm256_set_epi64x(MSB_, MSB_, MSB_, MSB_);
 const __m256i P = _mm256_set_epi64x(GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME, GOLDILOCKS_PRIME);
 const __m256i P_n = _mm256_set_epi64x(GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG, GOLDILOCKS_PRIME_NEG);
 const __m256i P_s = _mm256_xor_si256(P, MSB);
 const __m256i sqmask = _mm256_set_epi64x(0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF, 0x1FFFFFFFF);
+#endif // GOLDILOCKS_HAS_AVX2
 
 inline void Goldilocks::set_avx(__m256i &a, const Goldilocks::Element &a0, const Goldilocks::Element &a1, const Goldilocks::Element &a2, const Goldilocks::Element &a3)
 {

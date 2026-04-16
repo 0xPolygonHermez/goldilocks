@@ -5,7 +5,34 @@ test
 bench
 testsgpu
 testscpu
+testcpu
 benchcpu
 benchgpu
 deviceQuery
+check_neon_mul
+check_neon_mul_bench
+check_simd_traits_compile
+
+# SME probe binaries (see benchs/sme_probes/)
+benchs/sme_probes/01_stream_nop
+benchs/sme_probes/02_zero_za
+benchs/sme_probes/03_i16_i64_matmul
 *.o
+
+# Metal GPU artifacts (see src/metal/, benchs/metal_probes/, tools/)
+testmetal
+goldilocks.metallib
+benchs/metal_probes/probe_device
+benchs/metal_probes/probe_field
+benchs/metal_probes/probe_poseidon
+benchs/metal_probes/probe_merkle
+benchs/metal_probes/bench_merkle
+benchs/metal_probes/bench_merkle_batch
+benchs/metal_probes/bench_ntt
+benchs/metal_probes/probe_kernel_gpu_time
+*.air
+# Generated from src/poseidon_goldilocks_constants.hpp at build time
+src/metal/kernels/constants.metal.inc
+
+# Editor / tooling artifacts
+.claude/

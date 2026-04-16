@@ -3,7 +3,9 @@
 
 #include "poseidon_goldilocks.hpp"
 #include "goldilocks_base_field.hpp"
+#ifdef GOLDILOCKS_ARCH_X86_64
 #include <immintrin.h>
+#endif
 
 inline void PoseidonGoldilocks::hash(Goldilocks::Element (&state)[CAPACITY], Goldilocks::Element const (&input)[SPONGE_WIDTH])
 {
